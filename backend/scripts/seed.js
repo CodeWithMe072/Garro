@@ -1,11 +1,14 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-require('dotenv').config();
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const User = require('../models/User');
-const Garage = require('../models/Garage');
-const Helper = require('../models/Helper');
-const Settings = require('../models/Settings');
+import User from '../models/User.js';
+import Garage from '../models/Garage.js';
+import Helper from '../models/Helper.js';
+import Settings from '../models/Settings.js';
+import Request from '../models/Request.js';
+import Vehicle from '../models/Vehicle.js';
 
 const seedDB = async () => {
   try {
@@ -43,8 +46,8 @@ const seedDB = async () => {
       }
     });
     await Settings.deleteMany({ key: 'assignMode' });
-    await require('../models/Request').deleteMany({});
-    await require('../models/Vehicle').deleteMany({});
+    await Request.deleteMany({});
+    await Vehicle.deleteMany({});
 
     console.log('Cleaned old test data.');
 
