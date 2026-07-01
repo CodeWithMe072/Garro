@@ -1,0 +1,15 @@
+meta {
+  name: Get System Mode
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/admin/settings/mode
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}

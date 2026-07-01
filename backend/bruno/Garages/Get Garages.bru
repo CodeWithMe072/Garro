@@ -1,0 +1,15 @@
+meta {
+  name: Get Garages
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/garages
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}

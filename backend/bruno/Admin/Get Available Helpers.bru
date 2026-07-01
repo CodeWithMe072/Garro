@@ -1,0 +1,15 @@
+meta {
+  name: Get Available Helpers
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/admin/available-helpers
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}

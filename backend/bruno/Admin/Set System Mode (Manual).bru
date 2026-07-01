@@ -1,0 +1,21 @@
+meta {
+  name: Set System Mode (Manual)
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/admin/settings/mode
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "mode": "manual"
+  }
+}

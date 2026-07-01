@@ -1,0 +1,22 @@
+meta {
+  name: Manual Assign Request
+  type: http
+  seq: 6
+}
+
+patch {
+  url: {{baseUrl}}/api/admin/requests/{{requestId}}/manual-assign
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "garageId": "{{garageId}}",
+    "helperId": "{{helperId}}"
+  }
+}

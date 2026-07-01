@@ -1,0 +1,33 @@
+meta {
+  name: Create Request
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/requests
+  body: multipartForm
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:multipart-form {
+  vehicleId: {{vehicleId}}
+  serviceType: minor_service
+  description: Engine oil change needed
+  location: {"lat":25.2048,"lng":55.2708}
+  preferredDate: 2026-06-28
+}
+
+vars:pre-request {
+  vehicleId: 1
+}
+
+script:post-response {
+  if (res.body && res.body.success && res.body.request) {
+    bru.setVar("requestId", res.body.request._id);
+  }
+}

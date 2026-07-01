@@ -1,0 +1,31 @@
+meta {
+  name: Add Vehicle
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/vehicles
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "make": "Toyaotasss",
+    "model": "Camry",
+    "year": 2021,
+    "engineType": "2.5L Petrol",
+    "registrationNumber": "Dubai A 12345"
+  }
+}
+
+script:post-response {
+  if (res.body && res.body.success && res.body.vehicle) {
+    bru.setVar("vehicleId", res.body.vehicle._id);
+  }
+}

@@ -1,0 +1,24 @@
+meta {
+  name: Login
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "sysadmin@garro.ae",
+    "password": "Admin@1234"
+  }
+}
+
+script:post-response {
+  if (res.body && res.body.token) {
+    bru.setVar("jwt_token", res.body.token);
+  }
+}
