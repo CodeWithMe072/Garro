@@ -219,6 +219,9 @@ const GarageManagement = () => {
           <Link to="/search" className="sidebar-link">
             <span className="icon">🔍</span>Find Garages
           </Link>
+          <Link to="/admin/catalog" className="sidebar-link">
+            <span className="icon">⚙️</span>System Catalog
+          </Link>
           <Link to="/my-bookings" className="sidebar-link">
             <span className="icon">📋</span>Bookings
           </Link>

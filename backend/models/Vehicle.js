@@ -7,7 +7,8 @@ const vehicleSchema = new mongoose.Schema({
   year:               { type: Number, required: true },
   engineType:         { type: String },
   registrationNumber: { type: String, required: true },
-  VIN:                { type: String }
+  VIN:                { type: String },
+  isActive:           { type: Boolean, default: true }
 }, { timestamps: true });
 
 export default mongoose.model('Vehicle', vehicleSchema);

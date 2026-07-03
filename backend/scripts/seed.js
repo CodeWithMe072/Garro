@@ -10,6 +10,14 @@ import Settings from '../models/Settings.js';
 import Request from '../models/Request.js';
 import Vehicle from '../models/Vehicle.js';
 
+// New metadata models
+import Brand from '../models/Brand.js';
+import VehicleModel from '../models/VehicleModel.js';
+import ServiceCategory from '../models/ServiceCategory.js';
+import ServiceSubCategory from '../models/ServiceSubCategory.js';
+import City from '../models/City.js';
+import Area from '../models/Area.js';
+
 const seedDB = async () => {
   try {
     if (!process.env.MONGO_URI) {
@@ -49,7 +57,15 @@ const seedDB = async () => {
     await Request.deleteMany({});
     await Vehicle.deleteMany({});
 
-    console.log('Cleaned old test data.');
+    // Clean new metadata collections
+    await Brand.deleteMany({});
+    await VehicleModel.deleteMany({});
+    await ServiceCategory.deleteMany({});
+    await ServiceSubCategory.deleteMany({});
+    await City.deleteMany({});
+    await Area.deleteMany({});
+
+    console.log('Cleaned old test data and catalog tables.');
 
     // 1. Seed settings
     await Settings.create({ key: 'assignMode', value: 'manual' });
@@ -287,6 +303,108 @@ const seedDB = async () => {
     await User.findByIdAndUpdate(helperUser6._id, { garageId: garage6._id });
 
     console.log('Seeded Helpers');
+
+    // 5. Seed Catalog: Brands & Models
+    const mockBrands = [
+      { name: 'Toyota', models: ['Camry', 'Corolla', 'Land Cruiser', 'RAV4', 'Yaris'] },
+      { name: 'Nissan', models: ['Altima', 'Sunny', 'Patrol', 'X-Trail', 'Sentra'] },
+      { name: 'Honda', models: ['Civic', 'Accord', 'CR-V', 'City', 'Pilot'] },
+      { name: 'BMW', models: ['3 Series', '5 Series', '7 Series', 'X5', 'X3'] },
+      { name: 'Mercedes-Benz', models: ['C-Class', 'E-Class', 'S-Class', 'GLC', 'GLE'] },
+      { name: 'Ford', models: ['Mustang', 'Explorer', 'Edge', 'F-150', 'Ranger'] },
+      { name: 'Hyundai', models: ['Elantra', 'Sonata', 'Tucson', 'Santa Fe', 'Creta'] },
+      { name: 'Audi', models: ['A4', 'A6', 'Q5', 'Q7', 'A8'] }
+    ];
+
+    for (const b of mockBrands) {
+      const brand = await Brand.create({ name: b.name });
+      for (const m of b.models) {
+        await VehicleModel.create({ brandId: brand._id, name: m });
+      }
+    }
+    console.log(`Seeded ${mockBrands.length} Brands and their sub-models`);
+
+    // 6. Seed Catalog: Service Categories & Subcategories
+    const mockServices = [
+      {
+        name: 'Mechanical Repair',
+        slug: 'mechanical_repair',
+        subs: ['Engine Repair', 'Brake Repair', 'Suspension Repair', 'Transmission Service', 'Steering Repair']
+      },
+      {
+        name: 'Electrical & AC',
+        slug: 'electrical_ac',
+        subs: ['AC Repair', 'Battery Replacement', 'Diagnostics', 'Electrical Fix']
+      },
+      {
+        name: 'Body & Paint',
+        slug: 'body_paint',
+        subs: ['Scratch Removal', 'Dent Repair', 'Ceramic Coating', 'Window Tinting', 'Full Detailing']
+      },
+      {
+        name: 'General Maintenance',
+        slug: 'general_maintenance',
+        subs: ['Minor Service', 'Major Service', 'Oil Change', 'Safety Inspection', 'Annual Inspection']
+      }
+    ];
+
+    for (const s of mockServices) {
+      const cat = await ServiceCategory.create({ name: s.name, slug: s.slug });
+      for (const subName of s.subs) {
+        const subSlug = subName.toLowerCase().replace(/ & /g, '_').replace(/ /g, '_');
+        await ServiceSubCategory.create({ categoryId: cat._id, name: subName, slug: subSlug });
+      }
+    }
+    console.log(`Seeded ${mockServices.length} Service Categories and subcategories`);
+
+    // 7. Seed Catalog: Cities & Areas
+    const mockLocations = [
+      {
+        city: 'Dubai',
+        areas: [
+          'Dubai Marina',
+          'Jumeirah',
+          'Downtown Dubai',
+          'Silicon Oasis',
+          'Al Quoz',
+          'Al Barsha',
+          'Mirdif',
+          'Business Bay',
+          'Deira',
+          'Bur Dubai'
+        ]
+      },
+      {
+        city: 'Abu Dhabi',
+        areas: ['Yas Island', 'Al Reem Island', 'Khalifa City', 'Al Khalidiyah']
+      },
+      {
+        city: 'Sharjah',
+        areas: ['Al Majaz', 'Al Nahda', 'Muwaileh']
+      }
+    ];
+
+    for (const loc of mockLocations) {
+      const city = await City.create({ name: loc.city });
+      for (const area of loc.areas) {
+        await Area.create({ cityId: city._id, name: area });
+      }
+    }
+    console.log(`Seeded ${mockLocations.length} Cities and local neighborhood areas`);
+
+    // 8. Seed Customer Vehicle (just one active vehicle linked to test customer)
+    await Vehicle.create({
+      userId: customer._id,
+      make: 'Toyota',
+      model: 'Camry',
+      year: 2023,
+      engineType: 'V6 Gas',
+      registrationNumber: 'DXB-K-99081',
+      VIN: '1T1Y1819920980AAS',
+      isActive: true
+    });
+    console.log('Seeded 1 Customer Vehicle for test client');
+
     console.log('Seeding finished successfully');
     process.exit(0);
   } catch (error) {

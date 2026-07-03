@@ -32,6 +32,7 @@ const StaffDashboard = React.lazy(() => import('./pages/StaffDashboard'));
 const StaffManagement = React.lazy(() => import('./pages/StaffManagement'));
 const CreateStaff = React.lazy(() => import('./pages/CreateStaff'));
 const GarageManagement = React.lazy(() => import('./pages/GarageManagement'));
+const CatalogManagement = React.lazy(() => import('./pages/CatalogManagement'));
 const About = React.lazy(() => import('./pages/About'));
 const Contact = React.lazy(() => import('./pages/Contact'));
 const Blog = React.lazy(() => import('./pages/Blog'));
@@ -108,6 +109,11 @@ const App = () => {
             <Route path="/admin/manage-garages" element={
               <ProtectedRoute roles={['manager', 'superadmin']}>
                 <PageLayout><GarageManagement /></PageLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/catalog" element={
+              <ProtectedRoute roles={['manager', 'superadmin']}>
+                <PageLayout><CatalogManagement /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/create-staff" element={

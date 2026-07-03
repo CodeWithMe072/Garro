@@ -24,6 +24,7 @@ import trackingRoutes from './routes/tracking.routes.js';
 import invoiceRoutes from './routes/invoice.routes.js';
 import complaintRoutes from './routes/complaint.routes.js';
 import paymentRoutes from './routes/payment.routes.js';
+import catalogRoutes from './routes/catalog.routes.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -76,6 +77,7 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/tracking', trackingRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/complaints', complaintRoutes);
+app.use('/api/admin/catalog', catalogRoutes);
 
 // Debug auto-assign route
 app.post('/api/test/auto-assign', async (req, res) => {
