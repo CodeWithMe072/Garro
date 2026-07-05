@@ -12,7 +12,27 @@ const helperSchema = new mongoose.Schema({
   },
   activeJobId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Job', default: null },
   rating:          { type: Number, default: 5 },
-  totalJobs:       { type: Number, default: 0 }
+  totalJobs:       { type: Number, default: 0 },
+  workingHours: {
+    timezone: { type: String, default: 'Asia/Dubai' },
+    schedule: {
+      type: [{
+        day: { type: String, enum: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] },
+        isWorking: { type: Boolean, default: true },
+        startTime: { type: String, default: '09:00' },
+        endTime: { type: String, default: '21:00' }
+      }],
+      default: () => [
+        { day: 'monday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+        { day: 'tuesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+        { day: 'wednesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+        { day: 'thursday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+        { day: 'friday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+        { day: 'saturday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+        { day: 'sunday', isWorking: true, startTime: '09:00', endTime: '21:00' }
+      ]
+    }
+  }
 }, { timestamps: true });
 
 export default mongoose.model('Helper', helperSchema);

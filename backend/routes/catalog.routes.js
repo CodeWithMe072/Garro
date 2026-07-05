@@ -3,6 +3,7 @@ const router = express.Router();
 import auth from '../middleware/auth.middleware.js';
 import role from '../middleware/role.middleware.js';
 import * as ctrl from '../controllers/catalog.controller.js';
+import * as ctrlBulk from '../controllers/catalogBulk.controller.js';
 
 // Protect all catalog endpoints for Admin role only
 router.use(auth, role('admin'));
@@ -39,5 +40,13 @@ router.delete('/cities/:id', ctrl.deleteCity);
 router.post('/cities/:cityId/areas', ctrl.createArea);
 router.put('/areas/:id', ctrl.updateArea);
 router.delete('/areas/:id', ctrl.deleteArea);
+
+// 5. Bulk Export & Import (CSV)
+router.get('/export/brands',     ctrlBulk.exportBrands);
+router.post('/import/brands',    ctrlBulk.importBrands);
+router.get('/export/services',   ctrlBulk.exportServices);
+router.post('/import/services',  ctrlBulk.importServices);
+router.get('/export/locations',  ctrlBulk.exportLocations);
+router.post('/import/locations', ctrlBulk.importLocations);
 
 export default router;

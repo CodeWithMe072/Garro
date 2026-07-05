@@ -7,12 +7,13 @@ import * as reqCtrl from '../controllers/request.controller.js';
 
 router.use(auth, role('admin'));
 
-router.get('/dashboard',            ctrl.getDashboard);
-router.get('/reports/revenue',      ctrl.getRevenueReport);
-router.get('/reports/garages',      ctrl.getGarageReport);
-router.get('/available-helpers',    ctrl.getAvailableHelpers);
-router.get('/settings/mode',        ctrl.getSystemMode);
-router.patch('/settings/mode',      ctrl.setSystemMode);
-router.patch('/requests/:id/manual-assign', reqCtrl.manualAssign);
+router.get('/dashboard',                          ctrl.getDashboard);
+router.get('/reports/revenue',                    ctrl.getRevenueReport);
+router.get('/reports/garages',                    ctrl.getGarageReport);
+router.get('/available-helpers',                  ctrl.getAvailableHelpers);
+router.get('/helpers/:helperId/schedule',         ctrl.getHelperSchedule);
+router.get('/settings/mode',                      ctrl.getSystemMode);
+router.patch('/settings/mode',                    ctrl.setSystemMode);
+router.patch('/requests/:id/manual-assign',       reqCtrl.manualAssign);
 
 export default router;

@@ -4,12 +4,31 @@ import { Link } from 'react-router-dom';
 const StaffManagement = () => {
   const [helpers, setHelpers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Modal State
+  const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
+  const [selectedHelper, setSelectedHelper] = useState(null);
+  const [scheduleFormData, setScheduleFormData] = useState({
+    timezone: 'Asia/Dubai',
+    schedule: [
+      { day: 'monday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'tuesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'wednesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'thursday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'friday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'saturday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'sunday', isWorking: true, startTime: '09:00', endTime: '21:00' }
+    ]
+  });
+  const [savingSchedule, setSavingSchedule] = useState(false);
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchHelpers = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const token = localStorage.getItem('token');
         const response = await fetch(`${API_BASE}/api/helpers`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -24,7 +43,70 @@ const StaffManagement = () => {
       }
     };
     fetchHelpers();
-  }, []);
+  }, [refreshTrigger]);
+
+  const handleOpenScheduleModal = (helper) => {
+    setSelectedHelper(helper);
+    
+    const defaultSchedule = [
+      { day: 'monday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'tuesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'wednesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'thursday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'friday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'saturday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'sunday', isWorking: true, startTime: '09:00', endTime: '21:00' }
+    ];
+
+    setScheduleFormData({
+      timezone: helper.workingHours?.timezone || 'Asia/Dubai',
+      schedule: helper.workingHours?.schedule?.length ? helper.workingHours.schedule : defaultSchedule
+    });
+    setScheduleModalOpen(true);
+  };
+
+  const handleDayCheckChange = (dayName, isChecked) => {
+    const updated = scheduleFormData.schedule.map(d => {
+      if (d.day === dayName) return { ...d, isWorking: isChecked };
+      return d;
+    });
+    setScheduleFormData({ ...scheduleFormData, schedule: updated });
+  };
+
+  const handleDayTimeChange = (dayName, field, value) => {
+    const updated = scheduleFormData.schedule.map(d => {
+      if (d.day === dayName) return { ...d, [field]: value };
+      return d;
+    });
+    setScheduleFormData({ ...scheduleFormData, schedule: updated });
+  };
+
+  const handleScheduleSubmit = async (e) => {
+    e.preventDefault();
+    setSavingSchedule(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/helpers/${selectedHelper._id}/working-hours`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ workingHours: scheduleFormData })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setScheduleModalOpen(false);
+        setRefreshTrigger(prev => prev + 1);
+        alert('Working hours schedule updated successfully.');
+      } else {
+        alert(data.message || 'Failed to update working hours.');
+      }
+    } catch (err) {
+      alert('An error occurred.');
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
 
   const staffList = helpers.map(h => {
     const [first_name, ...rest] = (h.name || '').split(' ');
@@ -38,7 +120,8 @@ const StaffManagement = () => {
       email: '',
       phone: h.phone,
       department: h.garageId ? h.garageId.name : 'Unassigned',
-      is_active: h.isAvailable
+      is_active: h.isAvailable,
+      raw: h
     };
   });
 
@@ -63,7 +146,7 @@ const StaffManagement = () => {
       <div className="ph">
         <div>
           <h1>👔 Staff Management</h1>
-          <p>{staffList.length} staff members · Manage accounts and invitations</p>
+          <p>{staffList.length} staff members · Manage accounts and scheduling</p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <Link to="/admin/create-staff" className="btn-primary">+ Create Account Directly</Link>
@@ -97,7 +180,9 @@ const StaffManagement = () => {
                   {s.department && <span><span className="material-icons-round" style={{ fontSize: '14px', color: '#94a3b8' }}>business</span>{s.department}</span>}
                 </div>
                 <div className="sc-actions">
-                  <button className="sc-btn edit">✏️ Edit</button>
+                  <button onClick={() => handleOpenScheduleModal(s.raw)} className="sc-btn edit" style={{ flex: 1 }}>
+                    ✏️ Schedule
+                  </button>
                   {s.is_active ? (
                     <button className="sc-btn deact" style={{ flex: 1 }}>🚫 Deactivate</button>
                   ) : (
@@ -166,22 +251,90 @@ const StaffManagement = () => {
               ))}
             </div>
           </div>
-
-          {/* Quick links */}
-          <div className="panel">
-            <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <Link to="/admin/create-staff" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f8fafc', borderRadius: '10px', textDecoration: 'none', color: '#374151', fontWeight: '600', fontSize: '13.5px', transition: 'all .15s' }}>
-                <span style={{ fontSize: '20px' }}>✏️</span>
-                <div>
-                  <div>Create Account Directly</div>
-                  <div style={{ fontSize: '11.5px', fontWeight: '400', color: '#94a3b8', marginTop: '2px' }}>Set a temporary password for them</div>
-                </div>
-              </Link>
-            </div>
-          </div>
-
         </div>
       </div>
+
+      {/* ── Helper Schedule / Working Hours Modal ── */}
+      {scheduleModalOpen && selectedHelper && (
+        <div className="custom-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050 }}>
+          <div className="custom-modal" style={{ background: '#1e293b', padding: '24px', borderRadius: '16px', maxWidth: '520px', width: '90%', color: 'white', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 className="fw-bold mb-1">🗓️ Edit Working Hours</h3>
+            <p className="text-white-50 small mb-4">Set timezone and active days for <strong>{selectedHelper.name}</strong></p>
+
+            <form onSubmit={handleScheduleSubmit}>
+              {/* Timezone */}
+              <div className="mb-4">
+                <label className="form-label small fw-bold text-white-50">Local Timezone</label>
+                <select 
+                  className="form-select text-white bg-dark border-secondary"
+                  value={scheduleFormData.timezone}
+                  onChange={e => setScheduleFormData({ ...scheduleFormData, timezone: e.target.value })}
+                  required
+                >
+                  <option value="Asia/Dubai">Asia/Dubai (UTC+4)</option>
+                  <option value="Europe/London">Europe/London (GMT/BST)</option>
+                  <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
+                  <option value="UTC">Coordinated Universal Time (UTC)</option>
+                </select>
+              </div>
+
+              {/* Weekly Schedule days list */}
+              <div className="mb-4">
+                <label className="form-label small fw-bold text-white-50 mb-2">Weekly Schedule</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {scheduleFormData.schedule.map((dayItem, idx) => (
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', gap: '12px', background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '120px' }}>
+                        <input 
+                          type="checkbox"
+                          className="form-check-input"
+                          id={`check-${dayItem.day}`}
+                          checked={dayItem.isWorking}
+                          onChange={e => handleDayCheckChange(dayItem.day, e.target.checked)}
+                        />
+                        <label className="form-check-label small fw-semibold text-capitalize" htmlFor={`check-${dayItem.day}`}>
+                          {dayItem.day.slice(0, 3)}
+                        </label>
+                      </div>
+
+                      {dayItem.isWorking ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+                          <input 
+                            type="time" 
+                            className="form-control form-control-sm bg-dark text-white border-secondary"
+                            value={dayItem.startTime}
+                            onChange={e => handleDayTimeChange(dayItem.day, 'startTime', e.target.value)}
+                            required
+                          />
+                          <span className="small text-white-50">to</span>
+                          <input 
+                            type="time" 
+                            className="form-control form-control-sm bg-dark text-white border-secondary"
+                            value={dayItem.endTime}
+                            onChange={e => handleDayTimeChange(dayItem.day, 'endTime', e.target.value)}
+                            required
+                          />
+                        </div>
+                      ) : (
+                        <div className="small text-white-50 text-center flex-grow-1" style={{ fontStyle: 'italic' }}>
+                          Off Duty
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'end', gap: '10px', marginTop: '20px' }}>
+                <button type="button" className="btn btn-sm btn-outline-light" onClick={() => setScheduleModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn-sm btn-primary" disabled={savingSchedule}>
+                  {savingSchedule ? 'Saving...' : 'Save Schedule'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

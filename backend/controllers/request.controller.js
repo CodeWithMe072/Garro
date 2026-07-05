@@ -1,6 +1,8 @@
 import Request from '../models/Request.js';
 import Helper from '../models/Helper.js';
 import Job from '../models/Job.js';
+import HelperBookingSlot from '../models/HelperBookingSlot.js';
+import { checkHelperAvailability, SERVICE_DURATION_MAP } from './helper.controller.js';
 import { uploadToR2  } from '../utils/upload.js';
 import { success, error  } from '../utils/response.js';
 import { notifyCustomer } from '../utils/notify.js';
@@ -94,29 +96,73 @@ export const getRequest = async (req, res) => {
 // PATCH /api/requests/:id/manual-assign (admin only)
 export const manualAssign = async (req, res) => {
   try {
-    const { garageId, helperId } = req.body;
+    const { garageId, helperId, scheduledDate, scheduledTime, estimatedDuration } = req.body;
     if (!garageId || !helperId) return error(res, 'garageId and helperId are required', 400);
 
-    const request = await Request.findByIdAndUpdate(
-      req.params.id,
-      { garageId, helperId, status: 'assigned', assignMode: 'manual' },
-      { new: true }
-    ).populate('garageId', 'name').populate('helperId', 'name phone');
+    const request = await Request.findById(req.params.id);
+    if (!request) return error(res, 'Request not found', 404);
 
-     if (!request) return error(res, 'Request not found', 404);
+    const helper = await Helper.findById(helperId);
+    if (!helper) return error(res, 'Helper not found', 404);
 
-    // Mark helper as unavailable
-    await Helper.findByIdAndUpdate(helperId, { isAvailable: false });
+    // Calculate requested window
+    let startTime;
+    if (scheduledDate && scheduledTime) {
+      startTime = new Date(`${scheduledDate}T${scheduledTime}:00`);
+    } else {
+      startTime = request.preferredDate || new Date();
+    }
+
+    const durationHours = Number(estimatedDuration) || SERVICE_DURATION_MAP[request.serviceType] || 2;
+    const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000);
+
+    // Validate availability (avoid race conditions)
+    const isAvailable = await checkHelperAvailability(helper, startTime, endTime);
+    if (!isAvailable) {
+      return error(res, 'Helper is not available for this time slot (outside working hours or overlapping job exists)', 400);
+    }
+
+    // Cancel any existing active slots for this request first
+    await HelperBookingSlot.updateMany({ bookingId: request._id, status: { $in: ['reserved', 'in_progress'] } }, { status: 'cancelled' });
+
+    // Create the booking slot
+    await HelperBookingSlot.create({
+      helperId,
+      bookingId: request._id,
+      date: startTime,
+      startTime,
+      endTime,
+      status: 'reserved'
+    });
+
+    // Complete the assignment on the Request
+    request.garageId = garageId;
+    request.helperId = helperId;
+    request.status = 'assigned';
+    request.assignMode = 'manual';
+    request.scheduledArrivalDate = startTime;
+    request.estimatedDuration = durationHours;
+    await request.save();
+
+    const populatedRequest = await Request.findById(request._id)
+      .populate('garageId', 'name')
+      .populate('helperId', 'name phone');
+
+    // Sync isAvailable status (busy indicator) if slot is active right now
+    const now = new Date();
+    if (startTime <= now && endTime >= now) {
+      await Helper.findByIdAndUpdate(helperId, { isAvailable: false });
+    }
 
     // Trigger notification
     try {
-      const populatedRequest = await Request.findById(request._id)
+      const notifyPopulated = await Request.findById(request._id)
         .populate('userId')
         .populate('helperId');
-      if (populatedRequest && populatedRequest.userId) {
-        await notifyCustomer(populatedRequest.userId, 'assigned', {
-          helperName: populatedRequest.helperId ? populatedRequest.helperId.name : 'Service Tech',
-          requestId: populatedRequest._id
+      if (notifyPopulated && notifyPopulated.userId) {
+        await notifyCustomer(notifyPopulated.userId, 'assigned', {
+          helperName: notifyPopulated.helperId ? notifyPopulated.helperId.name : 'Service Tech',
+          requestId: notifyPopulated._id
         });
       }
     } catch (notifyErr) {
@@ -125,10 +171,10 @@ export const manualAssign = async (req, res) => {
 
     const io = req.app.get('io');
     if (io) {
-      io.emit('request:assigned', request);
+      io.emit('request:assigned', populatedRequest);
     }
 
-    success(res, { request, message: 'Manually assigned successfully' });
+    success(res, { request: populatedRequest, message: 'Manually assigned successfully' });
   } catch (err) {
     error(res, err.message, 500);
   }
@@ -152,9 +198,13 @@ export const cancelRequest = async (req, res) => {
     request.status = 'cancelled';
     await request.save();
 
-    // If helper was assigned, mark them as available again
+    // If helper was assigned, mark them as available again and cancel booking slot
     if (request.helperId) {
       await Helper.findByIdAndUpdate(request.helperId, { isAvailable: true });
+      await HelperBookingSlot.updateMany(
+        { bookingId: request._id, status: { $in: ['reserved', 'in_progress'] } },
+        { status: 'cancelled' }
+      );
     }
 
     const io = req.app.get('io');
@@ -258,6 +308,16 @@ export const respondToScheduleProposal = async (req, res) => {
         job.estimatedArrival = new Date(new Date(request.proposedDate).getTime() + 2 * 60 * 60 * 1000);
         await job.save();
       }
+
+      // Update HelperBookingSlot
+      const startTime = request.proposedDate;
+      const durationHours = SERVICE_DURATION_MAP[request.serviceType] || 2;
+      const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000);
+
+      await HelperBookingSlot.updateMany(
+        { bookingId: request._id, status: { $in: ['reserved', 'in_progress'] } },
+        { date: startTime, startTime, endTime }
+      );
     } else {
       request.proposedDateStatus = 'rejected';
     }

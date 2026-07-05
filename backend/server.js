@@ -23,6 +23,9 @@ import jobRoutes from './routes/job.routes.js';
 import trackingRoutes from './routes/tracking.routes.js';
 import invoiceRoutes from './routes/invoice.routes.js';
 import complaintRoutes from './routes/complaint.routes.js';
+import auth from './middleware/auth.middleware.js';
+import role from './middleware/role.middleware.js';
+import { manualAssign } from './controllers/request.controller.js';
 import paymentRoutes from './routes/payment.routes.js';
 import catalogRoutes from './routes/catalog.routes.js';
 
@@ -41,6 +44,8 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5174',
     'http://localhost:3000',
     'https://your-frontend.vercel.app',
     process.env.FRONTEND_URL
@@ -78,6 +83,12 @@ app.use('/api/tracking', trackingRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/admin/catalog', catalogRoutes);
+
+// Time-slot based booking assignment
+app.post('/api/bookings/:bookingId/assign', auth, role('admin'), (req, res, next) => {
+  req.params.id = req.params.bookingId;
+  next();
+}, manualAssign);
 
 // Debug auto-assign route
 app.post('/api/test/auto-assign', async (req, res) => {

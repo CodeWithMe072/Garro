@@ -1,13 +1,52 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const ServiceSelection = () => {
   const navigate = useNavigate();
 
+  const [catalogBrands, setCatalogBrands] = useState([]);
+  const [catalogServices, setCatalogServices] = useState([]);
+  const [catalogLocations, setCatalogLocations] = useState([]);
+  
+  const [selectedCat, setSelectedCat] = useState('');
+  const [selectedBrand, setSelectedBrand] = useState('');
+  const [selectedCity, setSelectedCity] = useState('');
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        const [brandsRes, servicesRes, locationsRes] = await Promise.all([
+          fetch(`${API_BASE}/api/vehicles/catalog/brands`),
+          fetch(`${API_BASE}/api/vehicles/catalog/services`),
+          fetch(`${API_BASE}/api/vehicles/catalog/locations`)
+        ]);
+
+        const [brandsData, servicesData, locationsData] = await Promise.all([
+          brandsRes.json(),
+          servicesRes.json(),
+          locationsRes.json()
+        ]);
+
+        if (brandsRes.ok && brandsData.success) {
+          setCatalogBrands(brandsData.brands || []);
+        }
+        if (servicesRes.ok && servicesData.success) {
+          setCatalogServices(servicesData.categories || []);
+        }
+        if (locationsRes.ok && locationsData.success) {
+          setCatalogLocations(locationsData.cities || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch public catalog data:', err);
+      }
+    };
+    fetchCatalog();
+  }, []);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // In a real app, you would gather the form data and pass it to the search page or API
-    // For now, just navigate to the GarageList (search page)
     navigate('/garages');
   };
 
@@ -23,31 +62,26 @@ const ServiceSelection = () => {
             <div className="gq-row gq-row-2">
               <div>
                 <div className="gq-label"><span className="material-icons-round">search</span> Service Category</div>
-                <select name="category" className="gq-select" required defaultValue="">
+                <select 
+                  name="category" 
+                  className="gq-select" 
+                  required 
+                  value={selectedCat} 
+                  onChange={e => setSelectedCat(e.target.value)}
+                >
                   <option value="">Select main category</option>
-                  <option value="major_minor">Major &amp; Minor Fixes</option>
-                  <option value="diagnostics">Diagnostics &amp; Inspections</option>
-                  <option value="aesthetics">Aesthetics &amp; Detailing</option>
-                  <option value="insurance">Insurance &amp; Protection</option>
-                  <option value="roadside">Roadside Assistance</option>
-                  <option value="eol">End-of-Life &amp; Scrap</option>
-                  <option value="other">Other</option>
+                  {catalogServices.map(c => (
+                    <option key={c._id} value={c.slug}>{c.name}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <div className="gq-label"><span className="material-icons-round">list</span> Sub-Category</div>
                 <select name="sub_category" className="gq-select" defaultValue="">
                   <option value="">Select sub-category</option>
-                  <option value="oil_change">Oil Change</option>
-                  <option value="brake_repair">Brake Repair</option>
-                  <option value="battery">Battery Replacement</option>
-                  <option value="engine">Engine Repair</option>
-                  <option value="tyre">Tyre Replacement</option>
-                  <option value="ac">AC Service</option>
-                  <option value="suspension">Suspension Fix</option>
-                  <option value="full_detailing">Full Detailing</option>
-                  <option value="towing">Towing Service</option>
-                  <option value="other">Other</option>
+                  {catalogServices.find(c => c.slug === selectedCat)?.subCategories.map(s => (
+                    <option key={s._id} value={s.slug}>{s.name}</option>
+                  ))}
                 </select>
               </div>
             </div>
@@ -56,19 +90,16 @@ const ServiceSelection = () => {
             <div className="gq-row gq-row-5">
               <div>
                 <div className="gq-label"><span className="material-icons-round">directions_car</span> Brand</div>
-                <select name="car_brand" className="gq-select" defaultValue="">
+                <select 
+                  name="car_brand" 
+                  className="gq-select" 
+                  value={selectedBrand} 
+                  onChange={e => setSelectedBrand(e.target.value)}
+                >
                   <option value="">Select Brand</option>
-                  <option value="Toyota">Toyota</option>
-                  <option value="Nissan">Nissan</option>
-                  <option value="Honda">Honda</option>
-                  <option value="BMW">BMW</option>
-                  <option value="Mercedes-Benz">Mercedes-Benz</option>
-                  <option value="Audi">Audi</option>
-                  <option value="Hyundai">Hyundai</option>
-                  <option value="Kia">Kia</option>
-                  <option value="Land Rover">Land Rover</option>
-                  <option value="Lexus">Lexus</option>
-                  <option value="Ford">Ford</option>
+                  {catalogBrands.map(b => (
+                    <option key={b._id} value={b.name}>{b.name}</option>
+                  ))}
                   <option value="Other">Other</option>
                 </select>
               </div>
@@ -88,11 +119,16 @@ const ServiceSelection = () => {
               </div>
               <div>
                 <div className="gq-label"><span className="material-icons-round">location_city</span> City</div>
-                <select name="city" className="gq-select" defaultValue="">
+                <select 
+                  name="city" 
+                  className="gq-select" 
+                  value={selectedCity} 
+                  onChange={e => setSelectedCity(e.target.value)}
+                >
                   <option value="">City</option>
-                  <option value="Dubai">Dubai</option>
-                  <option value="Abu Dhabi">Abu Dhabi</option>
-                  <option value="Sharjah">Sharjah</option>
+                  {catalogLocations.map(c => (
+                    <option key={c._id} value={c.name}>{c.name}</option>
+                  ))}
                 </select>
               </div>
               <div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
@@ -17,6 +17,60 @@ const Home = () => {
   const [cityName, setCityName] = useState('Dubai');
   const [area, setArea] = useState('');
   const [urgency, setUrgency] = useState('');
+
+  // Catalog states
+  const [catalogBrands, setCatalogBrands] = useState([]);
+  const [catalogServices, setCatalogServices] = useState([]);
+  const [catalogLocations, setCatalogLocations] = useState([]);
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        const [brandsRes, servicesRes, locationsRes] = await Promise.all([
+          fetch(`${API_BASE}/api/vehicles/catalog/brands`),
+          fetch(`${API_BASE}/api/vehicles/catalog/services`),
+          fetch(`${API_BASE}/api/vehicles/catalog/locations`)
+        ]);
+
+        const [brandsData, servicesData, locationsData] = await Promise.all([
+          brandsRes.json(),
+          servicesRes.json(),
+          locationsRes.json()
+        ]);
+
+        if (brandsRes.ok && brandsData.success) {
+          setCatalogBrands(brandsData.brands || []);
+        }
+        if (servicesRes.ok && servicesData.success) {
+          setCatalogServices(servicesData.categories || []);
+        }
+        if (locationsRes.ok && locationsData.success) {
+          setCatalogLocations(locationsData.cities || []);
+        }
+      } catch (err) {
+        console.error('Failed to fetch public catalog data:', err);
+      }
+    };
+    fetchCatalog();
+  }, []);
+
+  // Compute dynamic lists based on parent selection
+  const categoryOptions = catalogServices.map(c => ({ value: c.slug, label: c.name }));
+  
+  const activeCat = catalogServices.find(c => c.slug === category);
+  const subCategoryOptions = activeCat ? activeCat.subCategories.map(s => ({ value: s.slug, label: s.name })) : [];
+
+  const brandOptions = catalogBrands.map(b => b.name);
+
+  const activeBrand = catalogBrands.find(b => b.name === carBrand);
+  const modelOptions = activeBrand ? [...activeBrand.models.map(m => m.name), 'Other'] : ['Other'];
+
+  const cityOptions = catalogLocations.map(c => c.name);
+
+  const activeCity = catalogLocations.find(c => c.name === cityName);
+  const areaOptions = activeCity ? activeCity.areas.map(a => a.name) : [];
 
   const handleQuoteSubmit = async (e) => {
     e.preventDefault();
@@ -101,6 +155,7 @@ const Home = () => {
           serviceType: serviceTypeCode,
           description: problem_title || `Requesting quote for ${sub_category || category || 'general service'}`,
           preferredDate: preferredDateObj,
+          urgency: urgency || 'flexible',
           location: {
             address: `${area || ''}, ${city_name || ''}`.trim() || 'Dubai',
             lat: 25.2048,
@@ -171,16 +226,12 @@ const Home = () => {
                 <CustomDropdown
                   name="category"
                   placeholder="Select main category"
-                  options={[
-                    { value: 'major_minor', label: 'Major & Minor Fixes' },
-                    { value: 'diagnostics', label: 'Diagnostics & Inspections' },
-                    { value: 'aesthetics', label: 'Aesthetics & Detailing' },
-                    { value: 'insurance', label: 'Insurance & Protection' },
-                    { value: 'roadside', label: 'Roadside Assistance' },
-                    { value: 'eol', label: 'End-of-Life & Scrap' }
-                  ]}
+                  options={categoryOptions}
                   value={category}
-                  onChange={setCategory}
+                  onChange={(val) => {
+                    setCategory(val);
+                    setSubCategory('');
+                  }}
                   required
                 />
               </div>
@@ -188,18 +239,8 @@ const Home = () => {
                 <div className="qform-label"><span className="material-icons-round">list</span> Sub-Category</div>
                 <CustomDropdown
                   name="sub_category"
-                  placeholder="Select sub-category"
-                  options={[
-                    { value: 'oil_change', label: 'Oil Change' },
-                    { value: 'brake_repair', label: 'Brake Repair' },
-                    { value: 'battery', label: 'Battery Replacement' },
-                    { value: 'engine', label: 'Engine Repair' },
-                    { value: 'tyre', label: 'Tyre Replacement' },
-                    { value: 'ac', label: 'AC Service' },
-                    { value: 'full_detailing', label: 'Full Detailing' },
-                    { value: 'towing', label: 'Towing Service' },
-                    { value: 'other', label: 'Other' }
-                  ]}
+                  placeholder={category ? "Select sub-category" : "Select main category first"}
+                  options={subCategoryOptions}
                   value={subCategory}
                   onChange={setSubCategory}
                   required
@@ -212,9 +253,12 @@ const Home = () => {
                 <CustomDropdown
                   name="car_brand"
                   placeholder="Brand"
-                  options={['Toyota', 'Nissan', 'Honda', 'BMW', 'Mercedes-Benz', 'Ford', 'Hyundai', 'Audi']}
+                  options={brandOptions}
                   value={carBrand}
-                  onChange={setCarBrand}
+                  onChange={(val) => {
+                    setCarBrand(val);
+                    setCarModel('');
+                  }}
                   required
                 />
               </div>
@@ -222,8 +266,8 @@ const Home = () => {
                 <div className="qform-label"><span className="material-icons-round">tune</span> Model</div>
                 <CustomDropdown
                   name="car_model"
-                  placeholder="Model"
-                  options={['Camry', 'Corolla', 'Land Cruiser', 'Patrol', 'Altima', 'Civic', 'Accord', '3 Series', '5 Series', 'X5', 'Mustang', 'Elantra', 'A4', 'Other']}
+                  placeholder={carBrand ? "Model" : "Select Brand first"}
+                  options={modelOptions}
                   value={carModel}
                   onChange={setCarModel}
                   required
@@ -245,9 +289,12 @@ const Home = () => {
                 <CustomDropdown
                   name="city_name"
                   placeholder="City"
-                  options={['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman']}
+                  options={cityOptions}
                   value={cityName}
-                  onChange={setCityName}
+                  onChange={(val) => {
+                    setCityName(val);
+                    setArea('');
+                  }}
                   required
                 />
               </div>
@@ -255,8 +302,8 @@ const Home = () => {
                 <div className="qform-label"><span className="material-icons-round">location_on</span> Area</div>
                 <CustomDropdown
                   name="area"
-                  placeholder="Area"
-                  options={['Al Quoz', 'Deira', 'Bur Dubai', 'Dubai Marina', 'Downtown Dubai', 'Al Barsha', 'Jumeirah', 'Silicon Oasis', 'Business Bay', 'Mirdif']}
+                  placeholder={cityName ? "Area" : "Select City first"}
+                  options={areaOptions}
                   value={area}
                   onChange={setArea}
                   required

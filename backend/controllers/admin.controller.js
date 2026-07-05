@@ -4,15 +4,97 @@ import Request from '../models/Request.js';
 import Job from '../models/Job.js';
 import Invoice from '../models/Invoice.js';
 import Complaint from '../models/Complaint.js';
+import HelperBookingSlot from '../models/HelperBookingSlot.js';
+import { checkHelperAvailability, SERVICE_DURATION_MAP } from './helper.controller.js';
 import { success, error  } from '../utils/response.js';
 
 // GET /api/admin/available-helpers
 export const getAvailableHelpers = async (req, res) => {
   try {
-    const helpers = await Helper.find({ isAvailable: true })
-      .populate('garageId', 'name location')
-      .sort({ rating: -1 });
-    success(res, { helpers });
+    const { requestId } = req.query;
+    let start = new Date();
+    let end = new Date(start.getTime() + 2 * 60 * 60 * 1000); // default 2 hours
+
+    if (requestId) {
+      const request = await Request.findById(requestId);
+      if (request) {
+        start = request.preferredDate || new Date();
+        const durationHours = SERVICE_DURATION_MAP[request.serviceType] || 2;
+        end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+      }
+    }
+
+    const helpers = await Helper.find().populate('garageId', 'name location');
+    const availableHelpers = [];
+
+    for (const helper of helpers) {
+      const isAvailable = await checkHelperAvailability(helper, start, end);
+      if (isAvailable) {
+        // Fetch next 3 upcoming slots for admin visual scheduling context
+        const upcomingSlots = await HelperBookingSlot.find({
+          helperId: helper._id,
+          status: { $in: ['reserved', 'in_progress'] },
+          startTime: { $gte: new Date() }
+        })
+        .sort({ startTime: 1 })
+        .limit(3)
+        .populate('bookingId', 'serviceType');
+
+        availableHelpers.push({
+          ...helper.toObject(),
+          upcomingSlots
+        });
+      }
+    }
+
+    // Sort by rating desc
+    availableHelpers.sort((a, b) => (b.rating || 5) - (a.rating || 5));
+
+    success(res, { helpers: availableHelpers });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/admin/helpers/:helperId/schedule?date=YYYY-MM-DD
+export const getHelperSchedule = async (req, res) => {
+  try {
+    const { helperId } = req.params;
+    const { date } = req.query;
+
+    if (!date) return error(res, 'date query param required (YYYY-MM-DD)', 400);
+
+    const dayStart = new Date(`${date}T00:00:00.000Z`);
+    const dayEnd   = new Date(`${date}T23:59:59.999Z`);
+
+    const slots = await HelperBookingSlot.find({
+      helperId,
+      status: { $in: ['reserved', 'in_progress'] },
+      startTime: { $lte: dayEnd },
+      endTime:   { $gte: dayStart }
+    })
+    .sort({ startTime: 1 })
+    .populate('bookingId', 'serviceType userId');
+
+    // Return each slot with formatted times + buffer end time
+    const formatted = slots.map(s => {
+      const durMs       = new Date(s.endTime) - new Date(s.startTime);
+      const durHours    = durMs / (1000 * 60 * 60);
+      const bufferHours = Math.min(durHours, 4); // max 4 hour buffer
+      const bufferEnd   = new Date(new Date(s.endTime).getTime() + bufferHours * 60 * 60 * 1000);
+      return {
+        _id: s._id,
+        startTime: s.startTime,
+        endTime: s.endTime,
+        bufferEndTime: bufferEnd,   // frontend shows yellow buffer zone up to here
+        bufferHours: bufferHours,
+        status: s.status,
+        serviceType: s.bookingId?.serviceType || 'service',
+        bookingId: s.bookingId?._id || s.bookingId
+      };
+    });
+
+    success(res, { slots: formatted, date });
   } catch (err) {
     error(res, err.message, 500);
   }

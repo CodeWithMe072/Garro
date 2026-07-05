@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Otp from '../models/Otp.js';
+import BlockedIp from '../models/BlockedIp.js';
 
 const signToken = (user) => jwt.sign(
   { id: user._id, role: user.role },
@@ -120,8 +121,35 @@ export const verifyOtp = async (req, res) => {
     const { email, code } = req.body;
     if (!email || !code) return res.status(400).json({ success: false, message: 'Email and code are required' });
 
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
     const record = await Otp.findOne({ email: email.toLowerCase(), code });
-    if (!record) return res.status(400).json({ success: false, message: 'Invalid or expired OTP code' });
+    if (!record) {
+      // Increment wrong attempts for IP
+      const blockRecord = await BlockedIp.findOneAndUpdate(
+        { ip },
+        { $inc: { attempts: 1 } },
+        { upsert: true, new: true }
+      );
+      
+      if (blockRecord.attempts >= 5) {
+        blockRecord.blockedUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        await blockRecord.save();
+        return res.status(403).json({
+          success: false,
+          message: 'Too many wrong OTP attempts. This IP address is blocked for 30 minutes.'
+        });
+      }
+      
+      const remainingAttempts = 5 - blockRecord.attempts;
+      return res.status(400).json({
+        success: false,
+        message: `Invalid or expired OTP code. ${remainingAttempts} attempts remaining before IP lockout.`
+      });
+    }
+
+    // Success, reset IP blocked attempts
+    await BlockedIp.findOneAndUpdate({ ip }, { attempts: 0, blockedUntil: null });
 
     await Otp.deleteOne({ _id: record._id });
 
@@ -150,6 +178,12 @@ export const login = async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(400).json({ success: false, message: 'Invalid credentials' });
 
+    // Lock check
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
+    }
+
     if (user.status !== 'active') return res.status(403).json({ success: false, message: 'Please verify your account first.' });
 
     const token = signToken(user);
@@ -162,4 +196,121 @@ export const login = async (req, res) => {
 // POST /api/auth/logout — stateless, client deletes token
 export const logout = (req, res) => {
   res.json({ success: true, message: 'Logged out' });
+};
+
+// PUT /api/auth/profile
+export const updateProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name) return res.status(400).json({ success: false, message: 'Name is required' });
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Lock check
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
+    }
+
+    user.name = name;
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: { id: user._id, firstName: user.name.split(' ')[0] || user.name, lastName: user.name.split(' ').slice(1).join(' ') || '', email: user.email, phone: user.phone, role: user.role }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/profile/password/request
+export const requestPasswordChange = async (req, res) => {
+  try {
+    const { currentPassword } = req.body;
+    if (!currentPassword) return res.status(400).json({ success: false, message: 'Current password is required' });
+
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Lock check
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
+    }
+
+    const match = await bcrypt.compare(currentPassword, user.password);
+    if (!match) return res.status(400).json({ success: false, message: 'Current password incorrect' });
+
+    // Generate and send OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await Otp.findOneAndUpdate(
+      { email: user.email.toLowerCase() },
+      { code, createdAt: new Date() },
+      { upsert: true, new: true }
+    );
+
+    const sent = await sendEmailOtp(user.email, code);
+
+    res.json({
+      success: true,
+      message: 'OTP sent to your registered email address.',
+      demoCode: process.env.RESEND_API_KEY ? null : code
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/profile/password/verify
+export const verifyPasswordChange = async (req, res) => {
+  try {
+    const { code, newPassword } = req.body;
+    if (!code || !newPassword) return res.status(400).json({ success: false, message: 'OTP code and new password are required' });
+
+    const user = await User.findById(req.user.id).select('+password');
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    // Lock check
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
+    }
+
+    const record = await Otp.findOne({ email: user.email.toLowerCase(), code });
+    if (!record) {
+      // Track wrong attempts on profile
+      user.wrongOtpAttempts = (user.wrongOtpAttempts || 0) + 1;
+      if (user.wrongOtpAttempts >= 5) {
+        user.lockUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+        user.wrongOtpAttempts = 0; // reset for next duration
+        await user.save();
+        return res.status(403).json({
+          success: false,
+          message: 'Too many wrong OTP attempts. Your profile is locked for 30 minutes.'
+        });
+      }
+      await user.save();
+      const remaining = 5 - user.wrongOtpAttempts;
+      return res.status(400).json({
+        success: false,
+        message: `Invalid or expired OTP code. ${remaining} attempts remaining before account lockout.`
+      });
+    }
+
+    // Change password
+    user.password = await bcrypt.hash(newPassword, 12);
+    user.wrongOtpAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+
+    // Delete OTP
+    await Otp.deleteOne({ _id: record._id });
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 };

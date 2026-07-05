@@ -1,5 +1,6 @@
 import Job from '../models/Job.js';
 import Helper from '../models/Helper.js';
+import HelperBookingSlot from '../models/HelperBookingSlot.js';
 import Invoice from '../models/Invoice.js';
 import Quote from '../models/Quote.js';
 import Request from '../models/Request.js';
@@ -103,8 +104,25 @@ export const updateStatus = async (req, res) => {
     }
 
     job.status = status;
-    if (status === 'picked_up') job.startDate = new Date();
-    if (status === 'delivered') job.actualEndDate = new Date();
+    if (status === 'picked_up') {
+      job.startDate = new Date();
+      await HelperBookingSlot.updateMany({ bookingId: job.requestId, status: 'reserved' }, { status: 'in_progress' });
+    }
+    if (status === 'in_garage') {
+      // Helper successfully brought the vehicle to the garage - mark free for next job!
+      if (job.helperId) {
+        await Helper.findByIdAndUpdate(job.helperId, { isAvailable: true, activeJobId: null });
+        await HelperBookingSlot.updateMany({ bookingId: job.requestId, status: { $in: ['reserved', 'in_progress'] } }, { status: 'completed' });
+      }
+    }
+    if (status === 'delivered') {
+      job.actualEndDate = new Date();
+      // Helper successfully delivered the vehicle to customer - mark free!
+      if (job.helperId) {
+        await Helper.findByIdAndUpdate(job.helperId, { isAvailable: true, activeJobId: null });
+        await HelperBookingSlot.updateMany({ bookingId: job.requestId, status: { $in: ['reserved', 'in_progress'] } }, { status: 'completed' });
+      }
+    }
     await job.save();
 
     // Auto-create invoice when job is closed
@@ -118,12 +136,10 @@ export const updateStatus = async (req, res) => {
         status:  'pending',
         dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
       });
-      // Free up helper
+      // Free up helper (fail-safe)
       if (job.helperId) {
-        await Helper.findByIdAndUpdate(job.helperId, {
-          isAvailable: true,
-          activeJobId: null
-        });
+        await Helper.findByIdAndUpdate(job.helperId, { isAvailable: true, activeJobId: null });
+        await HelperBookingSlot.updateMany({ bookingId: job.requestId, status: { $in: ['reserved', 'in_progress'] } }, { status: 'completed' });
       }
     }
 

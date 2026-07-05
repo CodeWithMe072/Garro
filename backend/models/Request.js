@@ -17,6 +17,7 @@ const requestSchema = new mongoose.Schema({
   status: { type: String, enum: STATUS_STEPS, default: 'new' },
   photos: [{ type: String }],
   preferredDate: { type: Date },
+  urgency: { type: String, enum: ['asap', 'today', 'this_week', 'flexible'], default: 'flexible' },
   proposedDate: { type: Date, default: null },
   proposedDateStatus: { type: String, enum: ['none', 'pending', 'accepted', 'rejected'], default: 'none' },
   location: {
@@ -27,6 +28,8 @@ const requestSchema = new mongoose.Schema({
   assignMode: { type: String, enum: ['auto', 'manual'], default: 'manual' },
   garageId: { type: mongoose.Schema.Types.ObjectId, ref: 'Garage', default: null },
   helperId: { type: mongoose.Schema.Types.ObjectId, ref: 'Helper', default: null },
+  scheduledArrivalDate: { type: Date, default: null },
+  estimatedDuration: { type: Number, default: null },
   adminNotes: { type: String }
 }, { timestamps: true });
 

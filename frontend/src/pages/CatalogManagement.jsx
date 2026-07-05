@@ -6,13 +6,12 @@ import { useNotification } from '../context/NotificationContext';
 const CatalogManagement = () => {
   const { user } = useAuth();
   const { toast, confirm } = useNotification();
-  const [activeTab, setActiveTab] = useState('vehicles');
+  const [activeTab, setActiveTab] = useState('brands');
 
   // Loading states
   const [loading, setLoading] = useState(true);
 
   // Data states
-  const [vehicles, setVehicles] = useState([]);
   const [brands, setBrands] = useState([]);
   const [categories, setCategories] = useState([]);
   const [cities, setCities] = useState([]);
@@ -24,27 +23,12 @@ const CatalogManagement = () => {
 
   // Modals state
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'vehicle', 'brand', 'model', 'category', 'subcategory', 'city', 'area'
+  const [modalType, setModalType] = useState(''); // 'brand', 'model', 'category', 'subcategory', 'city', 'area'
   const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({});
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const token = localStorage.getItem('token');
-
-  // Fetch functions
-  const fetchVehicles = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/admin/catalog/vehicles`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setVehicles(data.vehicles || []);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const fetchBrands = async () => {
     try {
@@ -112,8 +96,7 @@ const CatalogManagement = () => {
 
   const loadTabData = async (tab) => {
     setLoading(true);
-    if (tab === 'vehicles') await fetchVehicles();
-    else if (tab === 'brands') await fetchBrands();
+    if (tab === 'brands') await fetchBrands();
     else if (tab === 'services') await fetchCategories();
     else if (tab === 'locations') await fetchCities();
     setLoading(false);
@@ -129,10 +112,7 @@ const CatalogManagement = () => {
     let method = 'PUT';
     let body = {};
 
-    if (type === 'vehicle') {
-      url = `${API_BASE}/api/admin/catalog/vehicles/${item._id}/status`;
-      method = 'PATCH';
-    } else if (type === 'brand') {
+    if (type === 'brand') {
       url = `${API_BASE}/api/admin/catalog/brands/${item._id}`;
       body = { isActive: !item.isActive };
     } else if (type === 'model') {
@@ -159,7 +139,7 @@ const CatalogManagement = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: method === 'PUT' ? JSON.stringify(body) : undefined
+        body: JSON.stringify(body)
       });
       const data = await res.json();
       if (res.ok && data.success) {
@@ -183,8 +163,7 @@ const CatalogManagement = () => {
       isDelete: true,
       onConfirm: async () => {
         let url = '';
-        if (type === 'vehicle') url = `${API_BASE}/api/admin/catalog/vehicles/${id}`;
-        else if (type === 'brand') url = `${API_BASE}/api/admin/catalog/brands/${id}`;
+        if (type === 'brand') url = `${API_BASE}/api/admin/catalog/brands/${id}`;
         else if (type === 'model') url = `${API_BASE}/api/admin/catalog/models/${id}`;
         else if (type === 'category') url = `${API_BASE}/api/admin/catalog/categories/${id}`;
         else if (type === 'subcategory') url = `${API_BASE}/api/admin/catalog/subcategories/${id}`;
@@ -214,9 +193,7 @@ const CatalogManagement = () => {
   const handleOpenAddModal = (type) => {
     setModalType(type);
     setEditId(null);
-    if (type === 'vehicle') {
-      setFormData({ make: '', model: '', year: 2024, registrationNumber: '', VIN: '' });
-    } else if (type === 'brand') {
+    if (type === 'brand') {
       setFormData({ name: '', isActive: true });
     } else if (type === 'model') {
       setFormData({ name: '', isActive: true });
@@ -235,15 +212,7 @@ const CatalogManagement = () => {
   const handleOpenEditModal = (type, item) => {
     setModalType(type);
     setEditId(item._id);
-    if (type === 'vehicle') {
-      setFormData({
-        make: item.make || '',
-        model: item.model || '',
-        year: item.year || 2024,
-        registrationNumber: item.registrationNumber || '',
-        VIN: item.VIN || ''
-      });
-    } else if (type === 'brand' || type === 'city') {
+    if (type === 'brand' || type === 'city') {
       setFormData({ name: item.name, isActive: item.isActive });
     } else if (type === 'model' || type === 'area') {
       setFormData({ name: item.name, isActive: item.isActive });
@@ -262,9 +231,7 @@ const CatalogManagement = () => {
     let method = editId ? 'PUT' : 'POST';
     let body = { ...formData };
 
-    if (modalType === 'vehicle') {
-      url = `${API_BASE}/api/admin/catalog/vehicles/${editId}`;
-    } else if (modalType === 'brand') {
+    if (modalType === 'brand') {
       url = editId ? `${API_BASE}/api/admin/catalog/brands/${editId}` : `${API_BASE}/api/admin/catalog/brands`;
     } else if (modalType === 'model') {
       url = editId ? `${API_BASE}/api/admin/catalog/models/${editId}` : `${API_BASE}/api/admin/catalog/brands/${selectedBrand._id}/models`;
@@ -303,6 +270,60 @@ const CatalogManagement = () => {
   };
 
   const [submitting, setSubmitting] = useState(false);
+
+  const handleCSVExport = async (type) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/catalog/export/${type}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${type}_catalog_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        toast.success('CSV exported successfully.');
+      } else {
+        toast.error('Failed to export CSV.');
+      }
+    } catch (err) {
+      toast.error('An error occurred during export.');
+    }
+  };
+
+  const handleCSVImport = async (type, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const csvText = event.target.result;
+      try {
+        const res = await fetch(`${API_BASE}/api/admin/catalog/import/${type}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ csvText })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.success('Catalog imported successfully!');
+          loadTabData(activeTab);
+        } else {
+          toast.error(data.message || 'Failed to import CSV.');
+        }
+      } catch (err) {
+        toast.error('An error occurred during import.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset file input
+  };
 
   return (
     <div className="dash-wrapper">
@@ -358,19 +379,12 @@ const CatalogManagement = () => {
         <div className="dash-header mb-4">
           <div>
             <div className="dash-title">⚙️ System Catalog Settings</div>
-            <div className="dash-subtitle">Manage metadata catalogs for vehicles, services, and coverage zones</div>
+            <div className="dash-subtitle">Manage metadata catalogs for vehicles brands, services, and coverage zones</div>
           </div>
         </div>
 
         {/* Tab Headers */}
         <div className="d-flex border-bottom mb-4 gap-2" style={{ overflowX: 'auto' }}>
-          <button 
-            className={`btn py-2 px-4 fw-bold ${activeTab === 'vehicles' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
-            style={{ borderRadius: '10px 10px 0 0', minWidth: '150px' }}
-            onClick={() => setActiveTab('vehicles')}
-          >
-            🚗 Customer Vehicles
-          </button>
           <button 
             className={`btn py-2 px-4 fw-bold ${activeTab === 'brands' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
             style={{ borderRadius: '10px 10px 0 0', minWidth: '150px' }}
@@ -402,74 +416,35 @@ const CatalogManagement = () => {
           </div>
         ) : (
           <div>
-            {/* ── TAB 1: CUSTOMER VEHICLES ── */}
-            {activeTab === 'vehicles' && (
-              <div className="card border-0 shadow-sm" style={{ borderRadius: '16px', maxWidth: 'none' }}>
-                <div className="card-body p-0">
-                  <div className="table-responsive">
-                    <table className="table align-middle mb-0">
-                      <thead className="table-light">
-                        <tr>
-                          <th className="ps-4 py-3">Owner Info</th>
-                          <th className="py-3">Vehicle Details</th>
-                          <th className="py-3">Registration & VIN</th>
-                          <th className="py-3">Created</th>
-                          <th className="py-3">Status</th>
-                          <th className="py-3 text-end pe-4">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {vehicles.length === 0 ? (
-                          <tr>
-                            <td colSpan="6" className="text-center py-5 text-muted">No customer vehicles registered.</td>
-                          </tr>
-                        ) : (
-                          vehicles.map(v => (
-                            <tr key={v._id}>
-                              <td className="ps-4">
-                                <div className="fw-bold text-dark">{v.userId?.name || 'Unknown Client'}</div>
-                                <div className="text-muted small">📞 {v.userId?.phone || 'N/A'}</div>
-                              </td>
-                              <td>
-                                <div className="fw-bold text-dark">{v.make} {v.model}</div>
-                                <div className="text-muted small">Year: {v.year}</div>
-                              </td>
-                              <td>
-                                <div className="fw-semibold text-dark">Plate: {v.registrationNumber || 'N/A'}</div>
-                                <div className="text-muted small" style={{ fontFamily: 'monospace' }}>VIN: {v.VIN || 'N/A'}</div>
-                              </td>
-                              <td className="small text-muted">
-                                {new Date(v.createdAt).toLocaleDateString()}
-                              </td>
-                              <td>
-                                <span className={`badge py-2 px-3 ${v.isActive ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
-                                  {v.isActive ? 'ACTIVE' : 'INACTIVE'}
-                                </span>
-                              </td>
-                              <td className="text-end pe-4">
-                                <div className="d-flex justify-content-end gap-2">
-                                  <button onClick={() => handleOpenEditModal('vehicle', v)} className="btn btn-sm btn-outline-secondary">
-                                    ✏️ Edit
-                                  </button>
-                                  <button onClick={() => handleToggleStatus('vehicle', v)} className="btn btn-sm btn-outline-warning">
-                                    🔄 Toggle Active
-                                  </button>
-                                  <button onClick={() => handleDelete('vehicle', v._id, `${v.make} ${v.model}`)} className="btn btn-sm btn-outline-danger">
-                                    🗑️ Delete
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+            {/* Bulk Operations Panel */}
+            <div className="card border-0 shadow-sm mb-4 bg-light" style={{ borderRadius: '12px', maxWidth: 'none' }}>
+              <div className="card-body py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
+                <div>
+                  <div className="fw-bold text-dark">📦 Bulk CSV Operations</div>
+                  <div className="text-muted small">Import or export the active tab directory catalog using a CSV spreadsheet file</div>
+                </div>
+                <div className="d-flex gap-2 align-items-center">
+                  <button 
+                    onClick={() => handleCSVExport(activeTab === 'brands' ? 'brands' : activeTab === 'services' ? 'services' : 'locations')} 
+                    className="btn btn-sm btn-outline-primary px-3 d-flex align-items-center gap-2"
+                  >
+                    <span>📥</span> Download template / CSV data
+                  </button>
+                  
+                  <label className="btn btn-sm btn-outline-success px-3 mb-0 d-flex align-items-center gap-2" style={{ cursor: 'pointer' }}>
+                    <span>📤</span> Upload CSV
+                    <input 
+                      type="file" 
+                      accept=".csv" 
+                      style={{ display: 'none' }} 
+                      onChange={e => handleCSVImport(activeTab === 'brands' ? 'brands' : activeTab === 'services' ? 'services' : 'locations', e)} 
+                    />
+                  </label>
                 </div>
               </div>
-            )}
+            </div>
 
-            {/* ── TAB 2: BRANDS & MODELS ── */}
+            {/* ── TAB 1: BRANDS & MODELS ── */}
             {activeTab === 'brands' && (
               <div className="row g-4">
                 {/* Left: Brands List */}
@@ -590,7 +565,7 @@ const CatalogManagement = () => {
               </div>
             )}
 
-            {/* ── TAB 3: SERVICES CATALOG ── */}
+            {/* ── TAB 2: SERVICES CATALOG ── */}
             {activeTab === 'services' && (
               <div className="row g-4">
                 {/* Left: Categories */}
@@ -713,7 +688,7 @@ const CatalogManagement = () => {
               </div>
             )}
 
-            {/* ── TAB 4: CITIES & AREAS ── */}
+            {/* ── TAB 3: CITIES & AREAS ── */}
             {activeTab === 'locations' && (
               <div className="row g-4">
                 {/* Left: Cities List */}
@@ -873,79 +848,19 @@ const CatalogManagement = () => {
                 </div>
               )}
 
-              {/* Form Fields: Vehicle properties */}
-              {modalType === 'vehicle' && (
-                <>
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold text-light">Make</label>
-                    <input 
-                      type="text" 
-                      className="form-control text-white-50"
-                      style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.05)' }}
-                      value={formData.make || ''}
-                      disabled
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold text-light">Model</label>
-                    <input 
-                      type="text" 
-                      className="form-control text-white-50"
-                      style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.05)' }}
-                      value={formData.model || ''}
-                      disabled
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold text-light">Year</label>
-                    <input 
-                      type="number" 
-                      className="form-control"
-                      style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-                      value={formData.year || ''}
-                      onChange={e => setFormData({ ...formData, year: Number(e.target.value) })}
-                      required
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold text-light">Registration Number / License Plate</label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-                      value={formData.registrationNumber || ''}
-                      onChange={e => setFormData({ ...formData, registrationNumber: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold text-light">VIN (Chassis Number)</label>
-                    <input 
-                      type="text" 
-                      className="form-control"
-                      style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-                      value={formData.VIN || ''}
-                      onChange={e => setFormData({ ...formData, VIN: e.target.value })}
-                    />
-                  </div>
-                </>
-              )}
-
               {/* Form Input: Active state */}
-              {modalType !== 'vehicle' && (
-                <div className="form-check form-switch mt-3 mb-2">
-                  <input 
-                    className="form-check-input" 
-                    type="checkbox"
-                    checked={formData.isActive ?? true}
-                    onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
-                    id="isActiveSwitch"
-                  />
-                  <label className="form-check-label text-light small fw-bold" htmlFor="isActiveSwitch">
-                    Active (visible to customers)
-                  </label>
-                </div>
-              )}
+              <div className="form-check form-switch mt-3 mb-2">
+                <input 
+                  className="form-check-input" 
+                  type="checkbox"
+                  checked={formData.isActive ?? true}
+                  onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
+                  id="isActiveSwitch"
+                />
+                <label className="form-check-label text-light small fw-bold" htmlFor="isActiveSwitch">
+                  Active (visible to customers)
+                </label>
+              </div>
 
               <div className="modal-actions mt-4 d-flex justify-content-end gap-2">
                 <button type="button" className="modal-btn btn-cancel" onClick={() => setModalOpen(false)}>Cancel</button>

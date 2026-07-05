@@ -1,7 +1,17 @@
 import express from 'express';
 const router = express.Router();
-import { register, login, logout, sendOtp, verifyOtp  } from '../controllers/auth.controller.js';
+import { 
+  register, 
+  login, 
+  logout, 
+  sendOtp, 
+  verifyOtp,
+  updateProfile,
+  requestPasswordChange,
+  verifyPasswordChange
+} from '../controllers/auth.controller.js';
 import auth from '../middleware/auth.middleware.js';
+import { checkIpBlock } from '../middleware/ipBlock.middleware.js';
 import { body, validationResult } from 'express-validator';
 
 const validateRegister = [
@@ -16,10 +26,15 @@ const validateRegister = [
   }
 ];
 
-router.post('/register', validateRegister, register);
+router.post('/register',   validateRegister, register);
 router.post('/login',      login);
 router.post('/logout',     auth, logout);
-router.post('/send-otp',   sendOtp);
-router.post('/verify-otp', verifyOtp);
+router.post('/send-otp',   checkIpBlock, sendOtp);
+router.post('/verify-otp', checkIpBlock, verifyOtp);
+
+// Profile and Password endpoints (secured with auth middleware)
+router.put('/profile',                  auth, updateProfile);
+router.post('/profile/password/request', auth, requestPasswordChange);
+router.post('/profile/password/verify',  auth, verifyPasswordChange);
 
 export default router;

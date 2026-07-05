@@ -132,6 +132,11 @@ const Navbar = () => {
                     <div className="email">{user?.email}</div>
                   </div>
 
+                  <Link to="/profile" className="g-dropdown-item" onClick={toggleDropdown}>
+                    <span className="material-icons-round">person</span>My Profile
+                  </Link>
+                  <div className="g-dropdown-divider"></div>
+
                   {user?.role === 'customer' && (
                     <>
                       <Link to="/my-requests" className="g-dropdown-item">

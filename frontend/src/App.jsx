@@ -33,6 +33,7 @@ const StaffManagement = React.lazy(() => import('./pages/StaffManagement'));
 const CreateStaff = React.lazy(() => import('./pages/CreateStaff'));
 const GarageManagement = React.lazy(() => import('./pages/GarageManagement'));
 const CatalogManagement = React.lazy(() => import('./pages/CatalogManagement'));
+const Profile = React.lazy(() => import('./pages/Profile'));
 const About = React.lazy(() => import('./pages/About'));
 const Contact = React.lazy(() => import('./pages/Contact'));
 const Blog = React.lazy(() => import('./pages/Blog'));
@@ -71,6 +72,7 @@ const App = () => {
             <Route path="/request-submitted/:id" element={<ProtectedRoute><PageLayout><RequestSubmitted /></PageLayout></ProtectedRoute>} />
             <Route path="/my-requests" element={<ProtectedRoute><PageLayout><MyRequests /></PageLayout></ProtectedRoute>} />
             <Route path="/track/:id" element={<ProtectedRoute><PageLayout><TrackRequest /></PageLayout></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><PageLayout><Profile /></PageLayout></ProtectedRoute>} />
             
             <Route path="/insurance" element={<ProtectedRoute><PageLayout><Insurance /></PageLayout></ProtectedRoute>} />
             <Route path="/insurance/:slug/quote" element={<ProtectedRoute><PageLayout><InsuranceQuote /></PageLayout></ProtectedRoute>} />

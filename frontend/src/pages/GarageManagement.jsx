@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import CustomMultiSelect from '../components/CustomMultiSelect';
 
 const GarageManagement = () => {
   const { user } = useAuth();
   const { toast, confirm } = useNotification();
   const [garages, setGarages] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  const [serviceOptions, setServiceOptions] = useState([]);
+  const [areaOptions, setAreaOptions] = useState([]);
 
   // Modal control
   const [isOpen, setIsOpen] = useState(false);
@@ -18,13 +22,46 @@ const GarageManagement = () => {
     phone: '',
     email: '',
     commissionPercent: 10,
-    servicesString: '',
-    areasString: '',
+    services: [],
+    areas: [],
     status: 'active',
     lat: 25.2048,
     lng: 55.2708
   });
   const [submitting, setSubmitting] = useState(false);
+
+  const fetchCatalogData = async () => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const [servicesRes, locationsRes] = await Promise.all([
+        fetch(`${API_BASE}/api/vehicles/catalog/services`),
+        fetch(`${API_BASE}/api/vehicles/catalog/locations`)
+      ]);
+      
+      const servicesData = await servicesRes.json();
+      const locationsData = await locationsRes.json();
+
+      if (servicesRes.ok && servicesData.success) {
+        const categories = (servicesData.categories || []).map(cat => ({
+          value: cat.name,
+          label: cat.name
+        }));
+        setServiceOptions(categories);
+      }
+      
+      if (locationsRes.ok && locationsData.success) {
+        const areas = (locationsData.cities || []).flatMap(city =>
+          (city.areas || []).map(area => ({
+            value: area.name,
+            label: area.name
+          }))
+        );
+        setAreaOptions(areas);
+      }
+    } catch (err) {
+      console.error('Failed to fetch catalog services/locations:', err);
+    }
+  };
 
   const fetchGarages = async () => {
     try {
@@ -45,6 +82,7 @@ const GarageManagement = () => {
   };
 
   useEffect(() => {
+    fetchCatalogData();
     fetchGarages();
   }, []);
 
@@ -56,8 +94,8 @@ const GarageManagement = () => {
       phone: '',
       email: '',
       commissionPercent: 10,
-      servicesString: 'Minor Service, Major Service, Brake Repair, Battery Replacement, Diagnostics, General Repair',
-      areasString: 'Dubai Marina, Jumeirah, Downtown Dubai, Silicon Oasis',
+      services: [],
+      areas: [],
       status: 'active',
       lat: 25.2048,
       lng: 55.2708
@@ -73,8 +111,8 @@ const GarageManagement = () => {
       phone: garage.phone || '',
       email: garage.email || '',
       commissionPercent: garage.commissionPercent ?? 10,
-      servicesString: garage.services ? garage.services.join(', ') : '',
-      areasString: garage.areas ? garage.areas.join(', ') : '',
+      services: garage.services || [],
+      areas: garage.areas || [],
       status: garage.status || 'active',
       lat: garage.location?.lat ?? 25.2048,
       lng: garage.location?.lng ?? 55.2708
@@ -100,8 +138,8 @@ const GarageManagement = () => {
         phone: formData.phone,
         email: formData.email,
         commissionPercent: Number(formData.commissionPercent),
-        services: formData.servicesString.split(',').map(s => s.trim()).filter(Boolean),
-        areas: formData.areasString.split(',').map(a => a.trim()).filter(Boolean),
+        services: formData.services,
+        areas: formData.areas,
         status: formData.status,
         location: {
           lat: Number(formData.lat),
@@ -447,23 +485,25 @@ const GarageManagement = () => {
                   </select>
                 </div>
                 <div className="col-12">
-                  <label className="form-label small fw-bold text-light">Services (comma-separated)</label>
-                  <textarea 
-                    className="form-control" 
-                    style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-                    rows="2"
-                    value={formData.servicesString}
-                    onChange={(e) => setFormData({ ...formData, servicesString: e.target.value })}
+                  <label className="form-label small fw-bold text-light">Services Supported</label>
+                  <CustomMultiSelect 
+                    options={serviceOptions}
+                    value={formData.services}
+                    onChange={(val) => setFormData({ ...formData, services: val })}
+                    placeholder="Select services..."
+                    theme="dark"
+                    loading={serviceOptions.length === 0}
                   />
                 </div>
                 <div className="col-12">
-                  <label className="form-label small fw-bold text-light">Areas Covered (comma-separated)</label>
-                  <textarea 
-                    className="form-control" 
-                    style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
-                    rows="2"
-                    value={formData.areasString}
-                    onChange={(e) => setFormData({ ...formData, areasString: e.target.value })}
+                  <label className="form-label small fw-bold text-light">Areas Covered</label>
+                  <CustomMultiSelect 
+                    options={areaOptions}
+                    value={formData.areas}
+                    onChange={(val) => setFormData({ ...formData, areas: val })}
+                    placeholder="Select areas..."
+                    theme="dark"
+                    loading={areaOptions.length === 0}
                   />
                 </div>
                 <div className="col-md-6">
