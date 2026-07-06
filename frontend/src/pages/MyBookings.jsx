@@ -1,15 +1,97 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
 
-const MyBookings = () => {
+  const MyBookings = () => {
   const { user } = useAuth();
   const { toast, confirm } = useNotification();
+  const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [catalogServices, setCatalogServices] = useState([]);
+
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${API_BASE}/api/vehicles/catalog/services`);
+        const data = await res.json();
+        if (data.success && data.categories) {
+          setCatalogServices(data.categories);
+        }
+      } catch (err) {
+        console.error('Failed to load catalog services:', err);
+      }
+    };
+    fetchCatalog();
+  }, []);
+
+  const getMatchingGarages = (req, garages) => {
+    if (!req) return [];
+    
+    const reqSub = req.subCategory?.toLowerCase()?.trim() || req.serviceType?.toLowerCase()?.trim();
+    let parentCatName = '';
+    let parentCatSlug = '';
+    
+    for (const cat of catalogServices) {
+      if (cat.slug?.toLowerCase()?.trim() === reqSub || cat.name?.toLowerCase()?.trim() === reqSub) {
+        parentCatName = cat.name;
+        parentCatSlug = cat.slug;
+        break;
+      }
+      if (cat.subCategories) {
+        const foundSub = cat.subCategories.find(sub => 
+          sub.slug?.toLowerCase()?.trim() === reqSub || sub.name?.toLowerCase()?.trim() === reqSub
+        );
+        if (foundSub) {
+          parentCatName = cat.name;
+          parentCatSlug = cat.slug;
+          break;
+        }
+      }
+    }
+    
+    if (!parentCatName) {
+      const sub = reqSub || '';
+      if (sub.includes('minor') || sub.includes('oil') || sub.includes('mainten')) {
+        parentCatName = 'General Maintenance';
+        parentCatSlug = 'general_maintenance';
+      } else if (sub.includes('ac') || sub.includes('aircond') || sub.includes('elect') || sub.includes('diagn') || sub.includes('inspect') || sub.includes('batter')) {
+        parentCatName = 'Electrical & AC';
+        parentCatSlug = 'electrical_ac';
+      } else if (sub.includes('brake') || sub.includes('mechan')) {
+        parentCatName = 'Mechanical Repair';
+        parentCatSlug = 'mechanical_repair';
+      } else {
+        parentCatName = 'Mechanical Repair';
+        parentCatSlug = 'mechanical_repair';
+      }
+    }
+
+    const cleanParentName = parentCatName.toLowerCase().trim();
+    const cleanParentSlug = parentCatSlug.toLowerCase().trim();
+    const reqAddress = req.location?.address || '';
+    const reqArea = reqAddress.includes(',') 
+      ? reqAddress.split(',')[0].trim().toLowerCase() 
+      : reqAddress.trim().toLowerCase();
+
+    return garages.filter(g => {
+      const supportsService = g.services && g.services.some(srv => {
+        const cleanSrv = srv.toLowerCase().trim();
+        return cleanSrv === cleanParentName || cleanSrv === cleanParentSlug || cleanSrv === reqSub || cleanSrv.includes(cleanParentName) || cleanParentName.includes(cleanSrv);
+      });
+      
+      const coversArea = !reqArea || reqArea === 'self drop at garage' || (g.areas && g.areas.some(area => {
+        const cleanArea = area.toLowerCase().trim();
+        return reqArea.includes(cleanArea) || cleanArea.includes(reqArea);
+      }));
+      
+      return supportsService && coversArea;
+    });
+  };
 
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [garagesList, setGaragesList] = useState([]);
@@ -299,7 +381,7 @@ const MyBookings = () => {
             const dateStr = booking.preferredDate ? new Date(booking.preferredDate).toLocaleDateString() : 'N/A';
             const timeStr = booking.preferredDate ? new Date(booking.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A';
             const pickupStr = booking.location && booking.location.address !== 'Self Drop at Garage' ? 'Free Pickup' : 'Self Drop';
-            const servicesList = [booking.serviceType ? booking.serviceType.replace('_', ' ').toUpperCase() : 'GENERAL SERVICE'];
+            const servicesList = [booking.subCategory ? booking.subCategory.replace(/_/g, ' ').toUpperCase() : (booking.serviceType ? booking.serviceType.replace('_', ' ').toUpperCase() : 'GENERAL SERVICE')];
             const priceVal = booking.estimatedCost || 299;
 
             return (
@@ -378,6 +460,18 @@ const MyBookings = () => {
                           Review Garage
                         </Link>
                       )}
+                      {booking.status === 'approved' && user?.role === 'customer' && (
+                        <div style={{ width: '100%' }}>
+                          <button
+                            onClick={() => navigate(`/payment?quoteId=${booking.quoteId || booking._id}`)}
+                            className="btn btn-sm w-100 py-2 fw-bold"
+                            style={{ background: 'linear-gradient(135deg, #185FA5, #1e7bc2)', color: 'white', border: 'none' }}
+                          >
+                            💳 Pay Now
+                          </button>
+                        </div>
+                      )}
+
                     </div>
                   </div>
                 </div>
@@ -469,34 +563,10 @@ const MyBookings = () => {
                 <CustomDropdown
                   name="garageId"
                   placeholder="Choose Garage..."
-                  options={garagesList
-                    .filter(g => {
-                      if (!selectedRequest) return true;
-                      
-                      // 1. Service check: garage supports requested serviceType (supporting human-readable or key format)
-                      const serviceMapping = {
-                        minor_service: ['Minor Service', 'minor_service'],
-                        major_service: ['Major Service', 'major_service'],
-                        ac_repair: ['AC Repair', 'ac_repair'],
-                        brake_repair: ['Brake Repair', 'brake_repair'],
-                        electrical: ['Electrical Repair', 'electrical'],
-                        diagnostics: ['Diagnostics', 'Diagnostics / Inspection', 'diagnostics'],
-                        battery: ['Battery Replacement', 'battery'],
-                        other: ['General Repair', 'Other Repair / Service', 'other']
-                      };
-                      const possibleServices = serviceMapping[selectedRequest.serviceType] || [selectedRequest.serviceType];
-                      const supportsService = g.services && g.services.some(srv => possibleServices.includes(srv));
-
-                      // 2. Area check: request location address contains any of garage's covered areas
-                      const reqAddress = selectedRequest.location?.address || '';
-                      const coversArea = g.areas && g.areas.some(area => 
-                        reqAddress.toLowerCase().includes(area.toLowerCase())
-                      );
-                      return supportsService && coversArea;
-                    })
+                  options={getMatchingGarages(selectedRequest, garagesList)
                     .map(g => ({
                       value: g._id,
-                      label: `${g.name} (${g.areas ? g.areas.join(', ') : 'Dubai'})`
+                      label: `${g.name} - AED ${selectedRequest ? (selectedRequest.estimatedCost || 299) : 299}`
                     }))}
                   value={assignGarageId}
                   onChange={(val) => {
@@ -505,28 +575,9 @@ const MyBookings = () => {
                   }}
                   required
                 />
-                {selectedRequest && garagesList.filter(g => {
-                  const serviceMapping = {
-                    minor_service: ['Minor Service', 'minor_service'],
-                    major_service: ['Major Service', 'major_service'],
-                    ac_repair: ['AC Repair', 'ac_repair'],
-                    brake_repair: ['Brake Repair', 'brake_repair'],
-                    electrical: ['Electrical Repair', 'electrical'],
-                    diagnostics: ['Diagnostics', 'Diagnostics / Inspection', 'diagnostics'],
-                    battery: ['Battery Replacement', 'battery'],
-                    other: ['General Repair', 'Other Repair / Service', 'other']
-                  };
-                  const possibleServices = serviceMapping[selectedRequest.serviceType] || [selectedRequest.serviceType];
-                  const supportsService = g.services && g.services.some(srv => possibleServices.includes(srv));
-
-                  const reqAddress = selectedRequest.location?.address || '';
-                  const coversArea = g.areas && g.areas.some(area => 
-                    reqAddress.toLowerCase().includes(area.toLowerCase())
-                  );
-                  return supportsService && coversArea;
-                }).length === 0 && (
+                {selectedRequest && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
                   <p className="text-danger small mt-1">
-                    ⚠️ No garages found supporting <strong>{selectedRequest.serviceType?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.address || 'N/A'}"</strong>.
+                    ⚠️ No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.address || 'N/A'}"</strong>.
                   </p>
                 )}
               </div>
@@ -540,7 +591,7 @@ const MyBookings = () => {
                     .filter(h => h.garageId?._id === assignGarageId)
                     .map(h => ({
                       value: h._id,
-                      label: `${h.name} (⭐ ${h.rating || 5}/5) ${h.upcomingSlots && h.upcomingSlots.length > 0 ? `[${h.upcomingSlots.length} booking(s)]` : '[Free]'}`
+                      label: `${h.name} (⭐ ${h.rating || 5}/5) ${!h.isAvailable ? '[⚠️ Shift Conflict]' : (h.upcomingSlots && h.upcomingSlots.length > 0 ? `[${h.upcomingSlots.length} job(s)]` : '[Free]')}`
                     }))
                   }
                   value={assignHelperId}

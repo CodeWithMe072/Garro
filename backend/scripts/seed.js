@@ -3,20 +3,33 @@ import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
 dotenv.config();
 
+// Imports for all models
 import User from '../models/User.js';
 import Garage from '../models/Garage.js';
 import Helper from '../models/Helper.js';
 import Settings from '../models/Settings.js';
 import Request from '../models/Request.js';
 import Vehicle from '../models/Vehicle.js';
-
-// New metadata models
 import Brand from '../models/Brand.js';
 import VehicleModel from '../models/VehicleModel.js';
 import ServiceCategory from '../models/ServiceCategory.js';
 import ServiceSubCategory from '../models/ServiceSubCategory.js';
 import City from '../models/City.js';
 import Area from '../models/Area.js';
+import Job from '../models/Job.js';
+import Quote from '../models/Quote.js';
+import Invoice from '../models/Invoice.js';
+import Payment from '../models/Payment.js';
+import GaragePayout from '../models/GaragePayout.js';
+import HelperBookingSlot from '../models/HelperBookingSlot.js';
+import HelperTracking from '../models/HelperTracking.js';
+import ActivityLog from '../models/ActivityLog.js';
+import BlockedIp from '../models/BlockedIp.js';
+import Notification from '../models/Notification.js';
+import Otp from '../models/Otp.js';
+import Complaint from '../models/Complaint.js';
+import Review from '../models/Review.js';
+import VehicleConditionReport from '../models/VehicleConditionReport.js';
 
 const seedDB = async () => {
   try {
@@ -27,45 +40,37 @@ const seedDB = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('DB connected for seeding');
 
-    // Clean current data
-    await User.deleteMany({ email: { $in: [/test\.com$/, /garro\.ae$/] } });
-    await Garage.deleteMany({
-      name: {
-        $in: [
-          'Al Quoz Auto Workshop',
-          'Deira Motors',
-          'Marina Auto Service',
-          'Al Barsha Garage Pro',
-          'Downtown Car Clinic',
-          'Mirdif Auto Care'
-        ]
-      }
-    });
-    await Helper.deleteMany({
-      name: {
-        $in: [
-          'Ahmed Hassan',
-          'Omar Khalid',
-          'John Doe',
-          'Jane Smith',
-          'Alex Jones',
-          'Michael Scott'
-        ]
-      }
-    });
-    await Settings.deleteMany({ key: 'assignMode' });
-    await Request.deleteMany({});
-    await Vehicle.deleteMany({});
+    // Clean all collections completely to ensure a fresh state
+    await Promise.all([
+      User.deleteMany({}),
+      Garage.deleteMany({}),
+      Helper.deleteMany({}),
+      Settings.deleteMany({}),
+      Request.deleteMany({}),
+      Vehicle.deleteMany({}),
+      Brand.deleteMany({}),
+      VehicleModel.deleteMany({}),
+      ServiceCategory.deleteMany({}),
+      ServiceSubCategory.deleteMany({}),
+      City.deleteMany({}),
+      Area.deleteMany({}),
+      Job.deleteMany({}),
+      Quote.deleteMany({}),
+      Invoice.deleteMany({}),
+      Payment.deleteMany({}),
+      GaragePayout.deleteMany({}),
+      HelperBookingSlot.deleteMany({}),
+      HelperTracking.deleteMany({}),
+      ActivityLog.deleteMany({}),
+      BlockedIp.deleteMany({}),
+      Notification.deleteMany({}),
+      Otp.deleteMany({}),
+      Complaint.deleteMany({}),
+      Review.deleteMany({}),
+      VehicleConditionReport.deleteMany({})
+    ]);
 
-    // Clean new metadata collections
-    await Brand.deleteMany({});
-    await VehicleModel.deleteMany({});
-    await ServiceCategory.deleteMany({});
-    await ServiceSubCategory.deleteMany({});
-    await City.deleteMany({});
-    await Area.deleteMany({});
-
-    console.log('Cleaned old test data and catalog tables.');
+    console.log('Cleaned all existing collection data completely.');
 
     // 1. Seed settings
     await Settings.create({ key: 'assignMode', value: 'manual' });

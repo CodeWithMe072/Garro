@@ -1,42 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { useAuth } from '../context/AuthContext';
 
 const VerifyOtp = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
-  const [demoCode, setDemoCode] = useState(''); // Empty by default
   const [countdown, setCountdown] = useState(60);
   const [loading, setLoading] = useState(false);
   const { toast } = useNotification();
+  const { login } = useAuth();
   const inputRefs = useRef([]);
   const navigate = useNavigate();
   const location = useLocation();
-
+  
   const email = location.state?.email || localStorage.getItem('lastRegisteredEmail') || 'customer@test.com';
-
-  useEffect(() => {
-    // Send OTP automatically on mount
-    const sendOtpOnMount = async () => {
-      if (!email) return;
-      try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
-        });
-        const data = await res.json();
-        if (res.ok && data.success && data.demoCode) {
-          setDemoCode(data.demoCode);
-        }
-      } catch (err) {
-        console.error('Mount OTP send error:', err);
-      }
-    };
-
-    sendOtpOnMount();
-  }, [email]);
+  const [demoCode, setDemoCode] = useState(location.state?.demoCode || '');
 
   useEffect(() => {
     let timer;
@@ -135,8 +114,34 @@ const VerifyOtp = () => {
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'OTP verification failed.');
       }
-      toast.success('Account verified successfully! You can now log in.');
-      navigate('/login');
+
+      // Parse name into firstName and lastName
+      const [firstName, ...rest] = (data.user.name || '').split(' ');
+      const lastName = rest.join(' ') || '';
+
+      // Map backend role to frontend routing role permissions
+      let role = data.user.role;
+      if (role === 'admin') role = 'superadmin';
+      if (role === 'helper') role = 'staff';
+
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        firstName,
+        lastName,
+        role
+      };
+
+      login(userData, data.token);
+      toast.success(`Account verified! Welcome to Garro, ${userData.firstName}!`);
+
+      if (role === 'superadmin' || role === 'manager') {
+        navigate('/admin');
+      } else if (role === 'staff') {
+        navigate('/admin/staff');
+      } else {
+        navigate('/home', { replace: true });
+      }
     } catch (err) {
       setError(err.message || 'Invalid OTP code. Please try again.');
       setLoading(false);

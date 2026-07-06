@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import Otp from '../models/Otp.js';
 import BlockedIp from '../models/BlockedIp.js';
+import { logActivity } from '../utils/audit.js';
 
 const signToken = (user) => jwt.sign(
   { id: user._id, role: user.role },
@@ -68,8 +69,23 @@ export const register = async (req, res) => {
       status: 'inactive'
     });
 
+    // Generate and send OTP immediately upon registration
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const lowercaseEmail = email.toLowerCase();
+    await Otp.findOneAndUpdate(
+      { email: lowercaseEmail },
+      { code, createdAt: new Date() },
+      { upsert: true, new: true }
+    );
+    await sendEmailOtp(email, code);
+
     const token = signToken(user);
-    res.status(201).json({ success: true, token, user: { id: user._id, name, email, role: user.role } });
+    res.status(201).json({
+      success: true,
+      token,
+      user: { id: user._id, name, email, role: user.role },
+      demoCode: process.env.RESEND_API_KEY ? null : code
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -154,9 +170,23 @@ export const verifyOtp = async (req, res) => {
     await Otp.deleteOne({ _id: record._id });
 
     // Set user status to active upon successful OTP match
-    await User.findOneAndUpdate({ email: email.toLowerCase() }, { status: 'active' });
+    const user = await User.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      { status: 'active' },
+      { new: true }
+    );
 
-    res.json({ success: true, message: 'Account verified successfully' });
+    const token = signToken(user);
+
+    // Log Activity
+    await logActivity(user._id, 'verify_otp', 'User', user._id, { email: user.email, phone: user.phone });
+
+    res.json({
+      success: true,
+      message: 'Account verified successfully',
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -187,6 +217,10 @@ export const login = async (req, res) => {
     if (user.status !== 'active') return res.status(403).json({ success: false, message: 'Please verify your account first.' });
 
     const token = signToken(user);
+
+    // Log Activity
+    await logActivity(user._id, 'login', 'User', user._id, { email: user.email });
+
     res.json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

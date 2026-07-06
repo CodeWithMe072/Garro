@@ -95,6 +95,20 @@ export const notifyCustomer = async (customer, eventType, data = {}) => {
 
   console.log(`[Notification Trigger] Dispatching notifications for customer ${customer.name} (${customer.email}) on event: ${eventType}`);
 
+  // Persist to MongoDB
+  try {
+    const Notification = (await import('../models/Notification.js')).default;
+    await Notification.create({
+      userId: customer._id || customer.id,
+      type: eventType,
+      message,
+      read: false
+    });
+    console.log(`Notification persisted to database for user ${customer._id || customer.id}`);
+  } catch (dbErr) {
+    console.error('Failed to persist notification:', dbErr.message);
+  }
+
   // Fire both in parallel — failure of one does not block the other
   const results = await Promise.allSettled([
     sendEmail(customer.email, subject, html),
@@ -105,3 +119,101 @@ export const notifyCustomer = async (customer, eventType, data = {}) => {
   const waResult = results[1].status === 'fulfilled' ? 'Success/Demo' : `Failed: ${results[1].reason}`;
   console.log(`[Notification Results] Email status: ${emailResult} | WhatsApp status: ${waResult}`);
 };
+
+/**
+ * Send payment confirmation to customer — WhatsApp + Email with PDF invoice link
+ */
+export const notifyPayment = async (customer, invoice, pdfUrl) => {
+  const amountStr = Number(invoice.totalAmount).toFixed(2);
+  const vatStr    = Number(invoice.vatAmount).toFixed(2);
+  const dateStr   = new Date().toLocaleDateString('en-AE');
+
+  const waMessage =
+    `✅ Payment Confirmed!\n\n` +
+    `Hi ${customer.name},\n\n` +
+    `Your payment of AED ${amountStr} has been received.\n\n` +
+    `📄 Invoice No: ${invoice.invoiceNumber}\n` +
+    `📅 Date: ${dateStr}\n\n` +
+    `Download your UAE Tax Invoice:\n${pdfUrl}\n\n` +
+    `Thank you for choosing Garro! 🚗\nsupport@garro.ae`;
+
+  const emailHtml = `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;background:#f5f5f5">
+  <div style="background:#185FA5;padding:24px 28px;border-radius:10px 10px 0 0;text-align:center">
+    <h1 style="color:white;margin:0;font-size:28px;font-weight:900;letter-spacing:-1px">GARRO</h1>
+    <p style="color:#a8d4f5;margin:4px 0 0;font-size:13px">UAE Car Service Marketplace</p>
+  </div>
+  <div style="background:#ffffff;padding:28px;border-radius:0 0 10px 10px;border:1px solid #e0e0e0">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="display:inline-block;background:#f0fff4;border:2px solid #27ae60;border-radius:50%;width:60px;height:60px;line-height:60px;font-size:28px">✅</div>
+      <h2 style="color:#27ae60;margin:10px 0 4px;font-size:20px">Payment Confirmed</h2>
+      <p style="color:#888;margin:0;font-size:13px">Your UAE Tax Invoice is ready</p>
+    </div>
+
+    <p style="color:#333;margin:0 0 16px">Hi <strong>${customer.name}</strong>,</p>
+    <p style="color:#555;margin:0 0 20px;font-size:14px">
+      Your payment has been successfully processed and your car service invoice is ready to download.
+    </p>
+
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;border-radius:8px;overflow:hidden">
+      <tr style="background:#f8fafc">
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Invoice Number</td>
+        <td style="padding:10px 14px;font-weight:700;font-size:13px;border-bottom:1px solid #f0f0f0">${invoice.invoiceNumber}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Amount Paid</td>
+        <td style="padding:10px 14px;font-weight:700;font-size:18px;color:#185FA5;border-bottom:1px solid #f0f0f0">AED ${amountStr}</td>
+      </tr>
+      <tr style="background:#f8fafc">
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">VAT (5%)</td>
+        <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #f0f0f0">AED ${vatStr}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;color:#888;font-size:13px">Payment Date</td>
+        <td style="padding:10px 14px;font-size:13px">${dateStr}</td>
+      </tr>
+    </table>
+
+    <div style="text-align:center;margin:24px 0">
+      <a href="${pdfUrl}"
+         style="background:#185FA5;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block">
+        📄 Download Tax Invoice
+      </a>
+    </div>
+
+    <p style="font-size:11px;color:#aaa;text-align:center;margin:16px 0 0">
+      This is a computer-generated UAE Tax Invoice. Valid without physical signature.<br>
+      All prices include 5% VAT as per UAE Federal Decree-Law No. 8 of 2017.
+    </p>
+  </div>
+  <p style="text-align:center;font-size:11px;color:#999;margin-top:12px">
+    Garro UAE | support@garro.ae | www.garro.ae
+  </p>
+</div>`;
+
+  console.log(`[Payment Notification] Sending invoice ${invoice.invoiceNumber} to ${customer.email}`);
+
+  // Persist to MongoDB
+  try {
+    const Notification = (await import('../models/Notification.js')).default;
+    await Notification.create({
+      userId: customer._id || customer.id,
+      type: 'payment_success',
+      message: `Payment Confirmed! Your payment of AED ${amountStr} has been received. Tax Invoice ${invoice.invoiceNumber || ''} is ready.`,
+      read: false
+    });
+    console.log(`Payment notification persisted to database for user ${customer._id || customer.id}`);
+  } catch (dbErr) {
+    console.error('Failed to persist notification:', dbErr.message);
+  }
+
+  await Promise.allSettled([
+    sendEmail(
+      customer.email,
+      `Garro — Invoice ${invoice.invoiceNumber} | AED ${amountStr} — Payment Confirmed`,
+      emailHtml
+    ),
+    sendWhatsApp(customer.phone, waMessage)
+  ]);
+};
+

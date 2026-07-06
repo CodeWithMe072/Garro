@@ -160,6 +160,7 @@ const BookGarage = () => {
         body: JSON.stringify({
           vehicleId,
           serviceType: serviceTypeCode,
+          subCategory: selectedServices[0]?.service?.name || serviceTypeCode,
           description: instructions || `Requesting ${selectedServices.map(s => s.service.name).join(', ')}`,
           preferredDate: preferredDateObj,
           location: {

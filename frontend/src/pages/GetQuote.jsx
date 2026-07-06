@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
 import CustomDropdown from '../components/CustomDropdown';
 
 const GetQuote = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { toast } = useNotification();
+  const { t } = useLanguage();
 
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
@@ -121,14 +123,33 @@ const GetQuote = () => {
 
       // 2. Map service code
       const serviceTypeMap = {
-        oil_change: 'minor_service',
+        // Mechanical Repair
+        engine_repair: 'other',
         brake_repair: 'brake_repair',
-        battery: 'battery',
-        engine: 'other',
-        tyre: 'other',
-        ac: 'ac_repair',
+        suspension_repair: 'other',
+        transmission_service: 'other',
+        steering_repair: 'other',
+
+        // Electrical & AC
+        ac_repair: 'ac_repair',
+        battery_replacement: 'battery',
+        diagnostics: 'diagnostics',
+        electrical_fix: 'electrical',
+
+        // Body & Paint
+        scratch_removal: 'other',
+        dent_repair: 'other',
+        ceramic_coating: 'other',
+        window_tinting: 'other',
         full_detailing: 'other',
-        towing: 'other',
+
+        // General Maintenance
+        minor_service: 'minor_service',
+        major_service: 'major_service',
+        oil_change: 'minor_service',
+        safety_inspection: 'diagnostics',
+        annual_inspection: 'diagnostics',
+
         other: 'other'
       };
       const serviceTypeCode = serviceTypeMap[sub_category] || 'other';
@@ -144,6 +165,18 @@ const GetQuote = () => {
       }
 
       // 4. Submit booking request
+      // Find human-readable subcategory name
+      let subCategoryLabel = '';
+      if (sub_category) {
+        const foundSub = catalogServices
+          .flatMap(c => c.subCategories || [])
+          .find(s => s.slug === sub_category);
+        if (foundSub) {
+          subCategoryLabel = foundSub.name;
+        }
+      }
+
+      // 4. Submit booking request
       const requestRes = await fetch(`${API_BASE}/api/requests`, {
         method: 'POST',
         headers: {
@@ -153,7 +186,8 @@ const GetQuote = () => {
         body: JSON.stringify({
           vehicleId,
           serviceType: serviceTypeCode,
-          description: problem_title || `Requesting quote for ${sub_category || category || 'general service'}`,
+          subCategory: subCategoryLabel || sub_category,
+          description: problem_title || `Requesting quote for ${subCategoryLabel || sub_category || category || 'general service'}`,
           preferredDate: preferredDateObj,
           urgency: urgency || 'flexible',
           location: {
@@ -170,8 +204,8 @@ const GetQuote = () => {
         throw new Error(requestData.message || 'Failed to submit quote request.');
       }
 
-      toast.success('Quote request submitted successfully!');
-      navigate('/my-requests');
+      toast.success('Quote request submitted successfully! Redirecting to payment...');
+      navigate(`/payment?quoteId=${requestData.quoteId}`);
     } catch (err) {
       toast.error(err.message || 'An error occurred during submission.');
     }
@@ -181,17 +215,17 @@ const GetQuote = () => {
     <div style={{ background: '#0f172a', minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', alignItems: 'center', marginBottom: '-80px', paddingBottom: '80px' }}>
       <section className="quote-section" style={{ width: '100%', padding: '60px 0' }}>
         <div className="container position-relative" style={{ zIndex: 2 }}>
-          <h2 className="quote-title">Get Instant Quotes from <span>Top-Rated Garages</span></h2>
-          <p className="quote-sub">Transparent pricing · Verified garages · Instant quotes</p>
+          <h2 className="quote-title">{t('get_quotes_title')}</h2>
+          <p className="quote-sub">{t('quotes_sub')}</p>
 
           <form onSubmit={handleQuoteSubmit}>
             <div className="row g-3">
               {/* Row 1: Category + Sub-category */}
               <div className="col-md-6">
-                <div className="qform-label"><span className="material-icons-round">category</span> Service Category</div>
+                <div className="qform-label"><span className="material-icons-round">category</span> {t('service_category')}</div>
                 <CustomDropdown
                   name="category"
-                  placeholder="Select main category"
+                  placeholder={t('select_category')}
                   options={categoryOptions}
                   value={category}
                   onChange={(val) => {
@@ -202,10 +236,10 @@ const GetQuote = () => {
                 />
               </div>
               <div className="col-md-6">
-                <div className="qform-label"><span className="material-icons-round">list</span> Sub-Category</div>
+                <div className="qform-label"><span className="material-icons-round">list</span> {t('sub_category_label')}</div>
                 <CustomDropdown
                   name="sub_category"
-                  placeholder={category ? "Select sub-category" : "Select main category first"}
+                  placeholder={category ? t('select_subcategory') : t('select_category_first')}
                   options={subCategoryOptions}
                   value={subCategory}
                   onChange={setSubCategory}
@@ -215,10 +249,10 @@ const GetQuote = () => {
 
               {/* Row 2: Brand, Model, Year, City, Area */}
               <div className="col-6 col-md-3">
-                <div className="qform-label"><span className="material-icons-round">directions_car</span> Brand</div>
+                <div className="qform-label"><span className="material-icons-round">directions_car</span> {t('brand')}</div>
                 <CustomDropdown
                   name="car_brand"
-                  placeholder="Brand"
+                  placeholder={t('brand')}
                   options={brandOptions}
                   value={carBrand}
                   onChange={(val) => {
@@ -229,10 +263,10 @@ const GetQuote = () => {
                 />
               </div>
               <div className="col-6 col-md-2">
-                <div className="qform-label"><span className="material-icons-round">tune</span> Model</div>
+                <div className="qform-label"><span className="material-icons-round">tune</span> {t('model')}</div>
                 <CustomDropdown
                   name="car_model"
-                  placeholder={carBrand ? "Model" : "Select Brand first"}
+                  placeholder={carBrand ? t('model') : t('select_brand_first')}
                   options={modelOptions}
                   value={carModel}
                   onChange={setCarModel}
@@ -240,10 +274,10 @@ const GetQuote = () => {
                 />
               </div>
               <div className="col-4 col-md-1">
-                <div className="qform-label"><span className="material-icons-round">calendar_today</span> Year</div>
+                <div className="qform-label"><span className="material-icons-round">calendar_today</span> {t('year')}</div>
                 <CustomDropdown
                   name="car_year"
-                  placeholder="Year"
+                  placeholder={t('year')}
                   options={Array.from({ length: 20 }, (_, i) => String(new Date().getFullYear() - i))}
                   value={carYear}
                   onChange={setCarYear}
@@ -251,10 +285,10 @@ const GetQuote = () => {
                 />
               </div>
               <div className="col-4 col-md-3">
-                <div className="qform-label"><span className="material-icons-round">location_city</span> City</div>
+                <div className="qform-label"><span className="material-icons-round">location_city</span> {t('city')}</div>
                 <CustomDropdown
                   name="city_name"
-                  placeholder="City"
+                  placeholder={t('city')}
                   options={cityOptions}
                   value={cityName}
                   onChange={(val) => {
@@ -265,10 +299,10 @@ const GetQuote = () => {
                 />
               </div>
               <div className="col-4 col-md-3">
-                <div className="qform-label"><span className="material-icons-round">location_on</span> Area</div>
+                <div className="qform-label"><span className="material-icons-round">location_on</span> {t('area_label')}</div>
                 <CustomDropdown
                   name="area"
-                  placeholder={cityName ? "Area" : "Select City first"}
+                  placeholder={cityName ? t('area_label') : t('select_city_first')}
                   options={areaOptions}
                   value={area}
                   onChange={setArea}
@@ -278,23 +312,23 @@ const GetQuote = () => {
 
               {/* Row 3: Issue, Contact, Time, Submit */}
               <div className="col-md-4">
-                <div className="qform-label"><span className="material-icons-round">description</span> Describe Your Issue</div>
-                <input type="text" name="problem_title" className="qform-input" placeholder="Describe the issue" required />
+                <div className="qform-label"><span className="material-icons-round">description</span> {t('describe_issue')}</div>
+                <input type="text" name="problem_title" className="qform-input" placeholder={t('desc_placeholder')} required />
               </div>
               <div className="col-md-3">
-                <div className="qform-label"><span className="material-icons-round">phone</span> Contact Info</div>
-                <input type="tel" name="phone" className="qform-input" placeholder="Enter mobile number" required />
+                <div className="qform-label"><span className="material-icons-round">phone</span> {t('contact_info')}</div>
+                <input type="tel" name="phone" className="qform-input" placeholder={t('phone_placeholder')} required />
               </div>
               <div className="col-md-3">
-                <div className="qform-label"><span className="material-icons-round">access_time</span> Preferred Time</div>
+                <div className="qform-label"><span className="material-icons-round">access_time</span> {t('preferred_time')}</div>
                 <CustomDropdown
                   name="urgency"
-                  placeholder="Select time"
+                  placeholder={t('select_time')}
                   options={[
-                    { value: 'asap', label: 'ASAP — Urgent' },
-                    { value: 'today', label: 'Today' },
-                    { value: 'this_week', label: 'This Week' },
-                    { value: 'flexible', label: 'Flexible' }
+                    { value: 'asap', label: t('time_asap') },
+                    { value: 'today', label: t('time_today') },
+                    { value: 'this_week', label: t('time_week') },
+                    { value: 'flexible', label: t('time_flexible') }
                   ]}
                   value={urgency}
                   onChange={setUrgency}
@@ -302,7 +336,7 @@ const GetQuote = () => {
                 />
               </div>
               <div className="col-md-2 d-flex align-items-end">
-                <button type="submit" className="btn-quote-submit" style={{ width: '100%', height: '44px' }}>Get a Quote</button>
+                <button type="submit" className="btn-quote-submit" style={{ width: '100%', height: '44px' }}>{t('get_a_quote')}</button>
               </div>
             </div>
           </form>

@@ -1428,3 +1428,168 @@ h1,h2,h3,h4,h5,h6{font-family:'Poppins',sans-serif;font-weight:700;letter-spacin
   color: rgba(255, 255, 255, 0.4) !important;
 }
 
+/* RTL Text direction for Arabic/Urdu (no layout mirroring) */
+html[lang="ar"] p, html[lang="ur"] p,
+html[lang="ar"] label, html[lang="ur"] label,
+html[lang="ar"] span, html[lang="ur"] span,
+html[lang="ar"] h1, html[lang="ur"] h1,
+html[lang="ar"] h2, html[lang="ur"] h2,
+html[lang="ar"] h3, html[lang="ur"] h3,
+html[lang="ar"] h4, html[lang="ur"] h4,
+html[lang="ar"] h5, html[lang="ur"] h5,
+html[lang="ar"] h6, html[lang="ur"] h6,
+html[lang="ar"] input, html[lang="ur"] input,
+html[lang="ar"] textarea, html[lang="ur"] textarea,
+html[lang="ar"] li, html[lang="ur"] li,
+html[lang="ar"] td, html[lang="ur"] td,
+html[lang="ar"] th, html[lang="ur"] th,
+html[lang="ar"] option, html[lang="ur"] option,
+html[lang="ar"] strong, html[lang="ur"] strong,
+html[lang="ar"] em, html[lang="ur"] em,
+html[lang="ar"] b, html[lang="ur"] b,
+html[lang="ar"] i, html[lang="ur"] i,
+html[lang="ar"] small, html[lang="ur"] small,
+html[lang="ar"] a, html[lang="ur"] a,
+html[lang="ar"] button, html[lang="ur"] button,
+.rtl-text {
+  direction: rtl;
+}
+
+/* RTL Text alignment for block text elements and inputs only */
+html[lang="ar"] p, html[lang="ur"] p,
+html[lang="ar"] label, html[lang="ur"] label,
+html[lang="ar"] h1, html[lang="ur"] h1,
+html[lang="ar"] h2, html[lang="ur"] h2,
+html[lang="ar"] h3, html[lang="ur"] h3,
+html[lang="ar"] h4, html[lang="ur"] h4,
+html[lang="ar"] h5, html[lang="ur"] h5,
+html[lang="ar"] h6, html[lang="ur"] h6,
+html[lang="ar"] input, html[lang="ur"] input,
+html[lang="ar"] textarea, html[lang="ur"] textarea,
+html[lang="ar"] li, html[lang="ur"] li,
+html[lang="ar"] td, html[lang="ur"] td,
+html[lang="ar"] th, html[lang="ur"] th,
+html[lang="ar"] option, html[lang="ur"] option,
+.rtl-text {
+  text-align: right;
+}
+
+html[lang="ar"] input::placeholder, html[lang="ur"] input::placeholder,
+html[lang="ar"] textarea::placeholder, html[lang="ur"] textarea::placeholder {
+  direction: rtl;
+  text-align: right;
+}
+
+/* Specific text alignment overrides */
+html[lang="ar"] .auth-header.left-align, html[lang="ur"] .auth-header.left-align {
+  text-align: right;
+}
+
+html[lang="ar"] .sd-faq-q, html[lang="ur"] .sd-faq-q {
+  text-align: right;
+}
+
+html[lang="ar"] .qform-label, html[lang="ur"] .qform-label {
+  text-align: right;
+  justify-content: flex-start;
+}
+
+/* Style CustomDropdown inside dark forms/cards to match the dark theme */
+.g-dark-form-card .c-dropdown-trigger {
+  background-color: #0f172a !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 10px !important;
+  color: #ffffff !important;
+  height: 48px !important;
+  padding: 0 14px !important;
+  font-size: 13.5px !important;
+}
+
+.g-dark-form-card .c-dropdown-trigger.is-placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.g-dark-form-card .c-dropdown-trigger:hover {
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.g-dark-form-card .c-dropdown-container.is-open .c-dropdown-trigger {
+  border-color: #ff5c1a !important;
+  background-color: #0f172a !important;
+  box-shadow: 0 0 0 4px rgba(255, 92, 26, 0.15) !important;
+}
+
+.g-dark-form-card .c-dropdown-search-input {
+  color: #ffffff !important;
+}
+
+.g-dark-form-card .c-dropdown-search-input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.g-dark-form-card .c-dropdown-arrow {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.g-dark-form-card .c-dropdown-container.is-open .c-dropdown-arrow {
+  color: #ff5c1a !important;
+}
+
+.g-dark-form-card .c-dropdown-menu {
+  background-color: #1e293b !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.g-dark-form-card .c-dropdown-item {
+  color: #ffffff !important;
+}
+
+.g-dark-form-card .c-dropdown-item:hover {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.g-dark-form-card .c-dropdown-item.is-selected {
+  background-color: #ff5c1a !important;
+  color: #ffffff !important;
+}
+
+.g-dark-form-card .c-dropdown-no-results {
+  color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* Navbar overrides for white background compatibility */
+.g-lang-toggle:hover {
+  background-color: #fff4ef !important;
+  color: var(--brand) !important;
+  border-color: rgba(255, 92, 26, 0.2) !important;
+}
+.g-nav-icon-btn:hover {
+  color: var(--brand) !important;
+}
+
+/* Hover-activated Language Dropdown styles */
+.g-lang-dropdown-menu {
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all 0.2s ease-in-out;
+}
+.g-lang-dropdown:hover .g-lang-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.g-lang-dropdown-menu button:hover {
+  background-color: #fff4ef !important;
+  color: #ff5c1a !important;
+}
+
+/* Layout isolation: Language dropdown menu should never mirror or flip layouts */
+.g-lang-dropdown,
+.g-lang-dropdown-menu,
+.g-lang-dropdown-menu button {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+

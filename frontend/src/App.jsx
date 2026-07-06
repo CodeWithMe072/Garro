@@ -1,7 +1,8 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -20,6 +21,7 @@ const Insurance = React.lazy(() => import('./pages/Insurance'));
 const InsuranceQuote = React.lazy(() => import('./pages/InsuranceQuote'));
 const Roadside = React.lazy(() => import('./pages/Roadside'));
 const EndOfLife = React.lazy(() => import('./pages/EndOfLife'));
+const EmergencyPickup = React.lazy(() => import('./pages/EmergencyPickup'));
 const Search = React.lazy(() => import('./pages/GarageList'));
 const GarageDetail = React.lazy(() => import('./pages/GarageDetail'));
 const BookGarage = React.lazy(() => import('./pages/BookGarage'));
@@ -39,6 +41,15 @@ const Contact = React.lazy(() => import('./pages/Contact'));
 const Blog = React.lazy(() => import('./pages/Blog'));
 const AdminSignup = React.lazy(() => import('./pages/AdminSignup'));
 const StaffJoin = React.lazy(() => import('./pages/StaffJoin'));
+const PaymentPage = React.lazy(() => import('./pages/PaymentPage'));
+const GarageLogin = React.lazy(() => import('./pages/GarageLogin'));
+const GarageDashboard = React.lazy(() => import('./pages/GarageDashboard'));
+const GarageJobs = React.lazy(() => import('./pages/GarageJobs'));
+const GarageEarnings = React.lazy(() => import('./pages/GarageEarnings'));
+const MyVehicles = React.lazy(() => import('./pages/MyVehicles'));
+const AdminQuoteBuilder = React.lazy(() => import('./pages/AdminQuoteBuilder'));
+const AdminCustomers = React.lazy(() => import('./pages/AdminCustomers'));
+const AdminComplaints = React.lazy(() => import('./pages/AdminComplaints'));
 
 // Wrapper for pages with Navbar and Footer
 const PageLayout = ({ children }) => (
@@ -49,10 +60,22 @@ const PageLayout = ({ children }) => (
   </>
 );
 
+// Role-based redirect for "/dashboard" links/notifications
+const DashboardRedirect = () => {
+  const { user } = useAuth();
+  if (user?.role === 'manager' || user?.role === 'superadmin') {
+    return <Navigate to="/admin" replace />;
+  } else if (user?.role === 'staff') {
+    return <Navigate to="/admin/staff" replace />;
+  }
+  return <Navigate to="/home" replace />;
+};
+
 const App = () => {
   return (
-    <NotificationProvider>
-      <AuthProvider>
+    <LanguageProvider>
+      <NotificationProvider>
+        <AuthProvider>
         <Router>
         <Suspense fallback={<div className="container mt-5"><h4>Loading...</h4></div>}>
           <Routes>
@@ -65,18 +88,22 @@ const App = () => {
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/admin-signup" element={<AdminSignup />} />
             <Route path="/staff-join" element={<StaffJoin />} />
+            <Route path="/garage-login" element={<GarageLogin />} />
 
             {/* Authenticated Routes with Layout */}
             <Route path="/home" element={<ProtectedRoute><PageLayout><Home /></PageLayout></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
             <Route path="/get-quote" element={<ProtectedRoute><PageLayout><GetQuote /></PageLayout></ProtectedRoute>} />
             <Route path="/request-submitted/:id" element={<ProtectedRoute><PageLayout><RequestSubmitted /></PageLayout></ProtectedRoute>} />
             <Route path="/my-requests" element={<ProtectedRoute><PageLayout><MyRequests /></PageLayout></ProtectedRoute>} />
             <Route path="/track/:id" element={<ProtectedRoute><PageLayout><TrackRequest /></PageLayout></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><PageLayout><Profile /></PageLayout></ProtectedRoute>} />
+            <Route path="/my-vehicles" element={<ProtectedRoute><PageLayout><MyVehicles /></PageLayout></ProtectedRoute>} />
             
             <Route path="/insurance" element={<ProtectedRoute><PageLayout><Insurance /></PageLayout></ProtectedRoute>} />
             <Route path="/insurance/:slug/quote" element={<ProtectedRoute><PageLayout><InsuranceQuote /></PageLayout></ProtectedRoute>} />
             <Route path="/roadside" element={<ProtectedRoute><PageLayout><Roadside /></PageLayout></ProtectedRoute>} />
+            <Route path="/emergency-pickup" element={<ProtectedRoute><PageLayout><EmergencyPickup /></PageLayout></ProtectedRoute>} />
             <Route path="/end-of-life" element={<ProtectedRoute><PageLayout><EndOfLife /></PageLayout></ProtectedRoute>} />
             
             <Route path="/search" element={<ProtectedRoute><PageLayout><Search /></PageLayout></ProtectedRoute>} />
@@ -87,6 +114,7 @@ const App = () => {
             
             <Route path="/my-bookings" element={<ProtectedRoute><PageLayout><MyBookings /></PageLayout></ProtectedRoute>} />
             <Route path="/booking/confirm/:id" element={<ProtectedRoute><PageLayout><BookingConfirm /></PageLayout></ProtectedRoute>} />
+            <Route path="/payment" element={<ProtectedRoute><PageLayout><PaymentPage /></PageLayout></ProtectedRoute>} />
             
             <Route path="/about" element={<PageLayout><About /></PageLayout>} />
             <Route path="/contact" element={<PageLayout><Contact /></PageLayout>} />
@@ -118,9 +146,39 @@ const App = () => {
                 <PageLayout><CatalogManagement /></PageLayout>
               </ProtectedRoute>
             } />
+            <Route path="/admin/customers" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <AdminCustomers />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/complaints" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <AdminComplaints />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/quote-builder" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <AdminQuoteBuilder />
+              </ProtectedRoute>
+            } />
             <Route path="/admin/create-staff" element={
               <ProtectedRoute roles={['manager', 'superadmin']}>
                 <PageLayout><CreateStaff /></PageLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/garage-portal" element={
+              <ProtectedRoute roles={['garage']}>
+                <GarageDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/garage-portal/jobs" element={
+              <ProtectedRoute roles={['garage']}>
+                <GarageJobs />
+              </ProtectedRoute>
+            } />
+            <Route path="/garage-portal/earnings" element={
+              <ProtectedRoute roles={['garage']}>
+                <GarageEarnings />
               </ProtectedRoute>
             } />
           </Routes>
@@ -128,6 +186,7 @@ const App = () => {
         </Router>
       </AuthProvider>
     </NotificationProvider>
+    </LanguageProvider>
   );
 };
 

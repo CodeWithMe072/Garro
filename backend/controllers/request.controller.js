@@ -1,6 +1,9 @@
 import Request from '../models/Request.js';
 import Helper from '../models/Helper.js';
 import Job from '../models/Job.js';
+import Quote from '../models/Quote.js';
+import Invoice from '../models/Invoice.js';
+import GaragePayout from '../models/GaragePayout.js';
 import HelperBookingSlot from '../models/HelperBookingSlot.js';
 import { checkHelperAvailability, SERVICE_DURATION_MAP } from './helper.controller.js';
 import { uploadToR2  } from '../utils/upload.js';
@@ -24,7 +27,7 @@ export const createRequest = async (req, res) => {
       userId: req.user.id,
       photos: photoUrls,
       assignMode: 'manual',
-      status: 'new'
+      status: 'pending_payment'
     };
 
     // Parse location if sent as JSON string
@@ -34,12 +37,29 @@ export const createRequest = async (req, res) => {
 
     const request = await Request.create(requestData);
 
-    const io = req.app.get('io');
-    if (io) {
-      io.emit('request:new', request);
-    }
+    // Determine estimated cost based on serviceType
+    const serviceTypeCosts = {
+      minor_service: 299,
+      brake_repair: 399,
+      battery: 499,
+      ac_repair: 249,
+      other: 199
+    };
+    const estimatedCost = serviceTypeCosts[request.serviceType] || 199;
 
-    success(res, { request, autoAssigned: false }, 201);
+    // Create a temporary Quote for upfront payment (pre-approved)
+    const quote = await Quote.create({
+      requestId: request._id,
+      partsCost: 0,
+      laborCost: estimatedCost,
+      status: 'approved'
+    });
+
+    // Link quoteId back to the request
+    request.quoteId = quote._id;
+    await request.save();
+
+    success(res, { request, quoteId: quote._id, autoAssigned: false }, 201);
   } catch (err) {
     error(res, err.message, 500);
   }
@@ -58,7 +78,12 @@ export const getRequests = async (req, res) => {
       filter.helperId = helper ? helper._id : null;
     }
 
-    if (status)      filter.status      = status;
+    if (status) {
+      filter.status = status;
+    } else if (req.user.role !== 'customer') {
+      filter.status = { $ne: 'pending_payment' };
+    }
+    
     if (serviceType) filter.serviceType = serviceType;
     if (assignMode)  filter.assignMode  = assignMode;
 
@@ -108,7 +133,7 @@ export const manualAssign = async (req, res) => {
     // Calculate requested window
     let startTime;
     if (scheduledDate && scheduledTime) {
-      startTime = new Date(`${scheduledDate}T${scheduledTime}:00`);
+      startTime = new Date(`${scheduledDate}T${scheduledTime}:00+04:00`);
     } else {
       startTime = request.preferredDate || new Date();
     }
@@ -117,7 +142,7 @@ export const manualAssign = async (req, res) => {
     const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000);
 
     // Validate availability (avoid race conditions)
-    const isAvailable = await checkHelperAvailability(helper, startTime, endTime);
+    const isAvailable = await checkHelperAvailability(helper, startTime, endTime, request._id);
     if (!isAvailable) {
       return error(res, 'Helper is not available for this time slot (outside working hours or overlapping job exists)', 400);
     }
@@ -143,6 +168,40 @@ export const manualAssign = async (req, res) => {
     request.scheduledArrivalDate = startTime;
     request.estimatedDuration = durationHours;
     await request.save();
+
+    // Handle paid upfront request assignment (Quote already paid)
+    const paidQuote = await Quote.findOne({ requestId: request._id, status: 'paid' });
+    if (paidQuote) {
+      paidQuote.garageId = garageId;
+      await paidQuote.save();
+
+      const job = await Job.create({
+        quoteId:          paidQuote._id,
+        requestId:        request._id,
+        garageId:         garageId,
+        helperId:         helperId,
+        status:           'pickup_scheduled',
+        estimatedArrival: new Date(Date.now() + 4 * 60 * 60 * 1000)
+      });
+
+      const invoice = await Invoice.findOne({ quoteId: paidQuote._id });
+      if (invoice) {
+        invoice.garageId = garageId;
+        invoice.jobId = job._id;
+        await invoice.save();
+
+        const subtotal = Number(paidQuote.subtotal);
+        const garagePayoutAmount = parseFloat((subtotal * 0.90).toFixed(2));
+
+        await GaragePayout.create({
+          garageId:  garageId,
+          invoiceId: invoice._id,
+          jobId:     job._id,
+          amount:    garagePayoutAmount,
+          status:    'pending'
+        });
+      }
+    }
 
     const populatedRequest = await Request.findById(request._id)
       .populate('garageId', 'name')

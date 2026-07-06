@@ -5,6 +5,7 @@ import Helper from '../models/Helper.js';
 import { success, error  } from '../utils/response.js';
 import { notifyCustomer  } from '../utils/notify.js';
 import { generatePDF, quoteTemplate } from '../utils/pdf.js';
+import { logActivity } from '../utils/audit.js';
 
 // POST /api/quotes — admin creates quote for an assigned request
 export const createQuote = async (req, res) => {
@@ -13,8 +14,8 @@ export const createQuote = async (req, res) => {
 
     const request = await Request.findById(requestId);
     if (!request) return error(res, 'Request not found', 404);
-    if (!['assigned', 'new'].includes(request.status)) {
-      return error(res, 'Request must be assigned before creating a quote', 400);
+    if (!['assigned', 'new', 'quote_pending'].includes(request.status)) {
+      return error(res, 'Request must be assigned, new, or quote_pending before creating a quote', 400);
     }
 
     // Quote pre-save hook auto-calculates serviceFee + VAT + customerTotal
@@ -41,6 +42,9 @@ export const createQuote = async (req, res) => {
     } catch (notifyErr) {
       console.error('Notification failed:', notifyErr.message);
     }
+
+    // Log Activity
+    await logActivity(req.user.id, 'create_quote', 'Quote', quote._id, { requestId, customerTotal: quote.customerTotal });
 
     success(res, { quote }, 201);
   } catch (err) {
@@ -112,6 +116,9 @@ export const approveQuote = async (req, res) => {
     // Update request status
     await Request.findByIdAndUpdate(quote.requestId._id, { status: 'quote_approved' });
 
+    // Log Activity
+    await logActivity(req.user.id, 'approve_quote', 'Quote', quote._id, { jobId: job._id });
+
     success(res, { quote, job, message: 'Quote approved. Job created and helper dispatched.' });
   } catch (err) {
     error(res, err.message, 500);
@@ -121,14 +128,17 @@ export const approveQuote = async (req, res) => {
 // PUT /api/quotes/:id/reject — customer rejects
 export const rejectQuote = async (req, res) => {
   try {
-    const quote = await Quote.findByIdAndUpdate(
-      req.params.id,
-      { status: 'rejected' },
-      { new: true }
-    );
+    const quote = await Quote.findById(req.params.id);
     if (!quote) return error(res, 'Quote not found', 404);
-    await Request.findByIdAndUpdate(quote.requestId, { status: 'new' });
-    success(res, { quote, message: 'Quote rejected' });
+
+    // Log Activity
+    await logActivity(req.user.id, 'reject_quote', 'Quote', quote._id, { requestId: quote.requestId });
+
+    // Delete request and quote
+    await Request.findByIdAndDelete(quote.requestId);
+    await Quote.findByIdAndDelete(quote._id);
+
+    success(res, { message: 'Quote rejected. Request deleted.' });
   } catch (err) {
     error(res, err.message, 500);
   }

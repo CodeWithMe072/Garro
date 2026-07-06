@@ -56,6 +56,8 @@ const Login = () => {
         navigate('/admin');
       } else if (role === 'staff') {
         navigate('/admin/staff');
+      } else if (role === 'garage') {
+        navigate('/garage-portal');
       } else {
         const from = location.state?.from?.pathname || '/home';
         navigate(from, { replace: true });

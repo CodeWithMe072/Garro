@@ -1,6 +1,7 @@
 import Settings from '../models/Settings.js';
 import Helper from '../models/Helper.js';
 import Request from '../models/Request.js';
+import User from '../models/User.js';
 import Job from '../models/Job.js';
 import Invoice from '../models/Invoice.js';
 import Complaint from '../models/Complaint.js';
@@ -28,23 +29,22 @@ export const getAvailableHelpers = async (req, res) => {
     const availableHelpers = [];
 
     for (const helper of helpers) {
-      const isAvailable = await checkHelperAvailability(helper, start, end);
-      if (isAvailable) {
-        // Fetch next 3 upcoming slots for admin visual scheduling context
-        const upcomingSlots = await HelperBookingSlot.find({
-          helperId: helper._id,
-          status: { $in: ['reserved', 'in_progress'] },
-          startTime: { $gte: new Date() }
-        })
-        .sort({ startTime: 1 })
-        .limit(3)
-        .populate('bookingId', 'serviceType');
+      const isAvailable = await checkHelperAvailability(helper, start, end, requestId);
+      // Fetch next 3 upcoming slots for admin visual scheduling context
+      const upcomingSlots = await HelperBookingSlot.find({
+        helperId: helper._id,
+        status: { $in: ['reserved', 'in_progress'] },
+        startTime: { $gte: new Date() }
+      })
+      .sort({ startTime: 1 })
+      .limit(3)
+      .populate('bookingId', 'serviceType');
 
-        availableHelpers.push({
-          ...helper.toObject(),
-          upcomingSlots
-        });
-      }
+      availableHelpers.push({
+        ...helper.toObject(),
+        isAvailable,
+        upcomingSlots
+      });
     }
 
     // Sort by rating desc
@@ -208,6 +208,29 @@ export const getGarageReport = async (req, res) => {
     ]);
 
     success(res, { report });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/admin/users
+export const getUsers = async (req, res) => {
+  try {
+    const { role, search } = req.query;
+    let filter = {};
+    if (role) {
+      filter.role = role;
+    }
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const users = await User.find(filter).select('-password').sort({ createdAt: -1 });
+    success(res, { users });
   } catch (err) {
     error(res, err.message, 500);
   }

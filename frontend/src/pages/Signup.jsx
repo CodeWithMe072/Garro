@@ -30,6 +30,17 @@ const Signup = () => {
       return;
     }
 
+    if (!formData.phone) {
+      setError('Phone number is required');
+      return;
+    }
+
+    const cleanPhone = formData.phone.trim();
+    if (!/^\+\d{8,15}$/.test(cleanPhone)) {
+      setError('Phone number must start with country code (e.g. +971501234567)');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -40,7 +51,7 @@ const Signup = () => {
         body: JSON.stringify({
           name: `${formData.firstName} ${formData.lastName}`.trim(),
           email: formData.email,
-          phone: formData.phone || '+971501111111',
+          phone: cleanPhone,
           password: formData.password
         })
       });
@@ -52,7 +63,7 @@ const Signup = () => {
 
       localStorage.setItem('lastRegisteredEmail', formData.email);
       toast.success('Account created! Please verify with the OTP code sent to your email.');
-      navigate('/verify-otp', { state: { email: formData.email } });
+      navigate('/verify-otp', { state: { email: formData.email, demoCode: data.demoCode } });
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -166,10 +177,17 @@ const Signup = () => {
           </div>
 
           <div style={{ marginBottom: '16px' }}>
-            <label className="auth-label">Phone Number</label>
+            <label className="auth-label">Phone Number *</label>
             <div className="auth-iw" style={{ marginBottom: 0 }}>
               <span className="material-icons-round ic">phone</span>
-              <input type="text" name="phone" value={formData.phone} onChange={handleChange} />
+              <input 
+                type="text" 
+                name="phone" 
+                value={formData.phone} 
+                onChange={handleChange} 
+                required 
+                placeholder="+971501234567" 
+              />
             </div>
           </div>
 

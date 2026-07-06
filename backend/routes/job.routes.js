@@ -7,6 +7,7 @@ import { upload  } from '../utils/upload.js';
 
 router.use(auth);
 router.get('/',                                                     ctrl.getJobs);
+router.get('/request/:requestId',                                   ctrl.getJobByRequestId);
 router.get('/:id',                                                  ctrl.getJob);
 router.put('/:id/status',                                           ctrl.updateStatus);
 router.post('/:id/photos',    upload.array('photos', 10),           ctrl.uploadPhotos);

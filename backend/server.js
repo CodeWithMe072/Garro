@@ -28,6 +28,8 @@ import role from './middleware/role.middleware.js';
 import { manualAssign } from './controllers/request.controller.js';
 import paymentRoutes from './routes/payment.routes.js';
 import catalogRoutes from './routes/catalog.routes.js';
+import reviewRoutes from './routes/review.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -36,16 +38,11 @@ const io = new Server(server, { cors: { origin: '*' } });
 // Database Connection
 connectDB();
 
-// 1. Stripe payment routes (webhook requires raw body, must be before express.json)
-app.use('/api/payments', paymentRoutes);
-
-// 2. CORS configuration supporting localhost & production frontend url
+// CORS configuration supporting localhost & production frontend url
 app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://127.0.0.1:5173',
-    'http://localhost:5174',
-    'http://127.0.0.1:5174',
     'http://localhost:3000',
     'https://your-frontend.vercel.app',
     process.env.FRONTEND_URL
@@ -53,16 +50,19 @@ app.use(cors({
   credentials: true
 }));
 
+// Stripe payment routes (webhook requires raw body, must be before express.json)
+app.use('/api/payments', paymentRoutes);
+
 // 3. JSON parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 4. Rate limiter
-app.use('/api/', rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  message: { success: false, message: 'Too many requests, please try again later' }
-}));
+// app.use('/api/', rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100,
+//   message: { success: false, message: 'Too many requests, please try again later' }
+// }));
 
 // Make io accessible in controllers
 app.set('io', io);
@@ -83,6 +83,8 @@ app.use('/api/tracking', trackingRoutes);
 app.use('/api/invoices', invoiceRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/admin/catalog', catalogRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Time-slot based booking assignment
 app.post('/api/bookings/:bookingId/assign', auth, role('admin'), (req, res, next) => {
@@ -146,3 +148,4 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Trigger nodemon reload for schema updates

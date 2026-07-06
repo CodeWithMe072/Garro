@@ -26,7 +26,7 @@ const getSlotBuffer = (slot) => {
 };
 
 // Helper function to verify availability of a helper for a given window
-export const checkHelperAvailability = async (helper, startTime, endTime) => {
+export const checkHelperAvailability = async (helper, startTime, endTime, excludeBookingId = null) => {
   // 1. Working hours check
   const timezone = helper.workingHours?.timezone || 'Asia/Dubai';
   const schedule = helper.workingHours?.schedule?.length ? helper.workingHours.schedule : [
@@ -86,10 +86,14 @@ export const checkHelperAvailability = async (helper, startTime, endTime) => {
   // 2. Overlap check with existing booking slots
   // A new slot is invalid if it starts before an existing slot's endTime + buffer,
   // OR ends after an existing slot's startTime.
-  const activeSlots = await HelperBookingSlot.find({
+  const query = {
     helperId: helper._id,
     status: { $in: ['reserved', 'in_progress'] }
-  });
+  };
+  if (excludeBookingId) {
+    query.bookingId = { $ne: excludeBookingId };
+  }
+  const activeSlots = await HelperBookingSlot.find(query);
 
   for (const slot of activeSlots) {
     const slotBuffer = getSlotBuffer(slot);
@@ -122,8 +126,11 @@ export const getAvailableHelpers = async (req, res) => {
       const durationHours = SERVICE_DURATION_MAP[request.serviceType] || 2;
       end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
     } else if (date && startTime && endTime) {
-      start = new Date(`${date}T${startTime}`);
-      end = new Date(`${date}T${endTime}`);
+      // Dubai is UTC+4. Parse the local date-time strings in Dubai timezone (UTC+4)
+      const cleanStartStr = startTime.includes('+') || startTime.includes('Z') ? startTime : `${startTime}+04:00`;
+      const cleanEndStr = endTime.includes('+') || endTime.includes('Z') ? endTime : `${endTime}+04:00`;
+      start = new Date(`${date}T${cleanStartStr}`);
+      end = new Date(`${date}T${cleanEndStr}`);
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         return error(res, 'Invalid date or time formats. Must be YYYY-MM-DD and HH:MM', 400);
       }
@@ -137,7 +144,7 @@ export const getAvailableHelpers = async (req, res) => {
     const availableHelpers = [];
 
     for (const helper of helpers) {
-      const isAvailable = await checkHelperAvailability(helper, start, end);
+      const isAvailable = await checkHelperAvailability(helper, start, end, requestId);
       if (isAvailable) {
         // Fetch upcoming 3 slots for admin context
         const upcomingSlots = await HelperBookingSlot.find({

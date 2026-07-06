@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
 import CustomDropdown from '../components/CustomDropdown';
 
 const Home = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const { toast } = useNotification();
+  const { t } = useLanguage();
 
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
@@ -143,6 +145,19 @@ const Home = () => {
         preferredDateObj.setDate(preferredDateObj.getDate() + 1); // tomorrow
       }
 
+      const subCategoryLabels = {
+        oil_change: 'Oil Change',
+        brake_repair: 'Brake Repair',
+        battery: 'Battery Service',
+        engine: 'Engine Repair',
+        tyre: 'Tyre Service',
+        ac: 'AC Gas & Repair',
+        full_detailing: 'Full Detailing',
+        towing: 'Towing Service',
+        other: 'Other General Service'
+      };
+      const subCategoryLabel = subCategoryLabels[sub_category] || sub_category;
+
       // 4. Submit booking request (with garageId: null for general unassigned quote request)
       const requestRes = await fetch(`${API_BASE}/api/requests`, {
         method: 'POST',
@@ -153,7 +168,8 @@ const Home = () => {
         body: JSON.stringify({
           vehicleId,
           serviceType: serviceTypeCode,
-          description: problem_title || `Requesting quote for ${sub_category || category || 'general service'}`,
+          subCategory: subCategoryLabel || sub_category,
+          description: problem_title || `Requesting quote for ${subCategoryLabel || sub_category || category || 'general service'}`,
           preferredDate: preferredDateObj,
           urgency: urgency || 'flexible',
           location: {
@@ -170,8 +186,8 @@ const Home = () => {
         throw new Error(requestData.message || 'Failed to submit quote request.');
       }
 
-      toast.success('Quote request submitted successfully!');
-      navigate('/my-requests');
+      toast.success('Quote request submitted successfully! Redirecting to payment...');
+      navigate(`/payment?quoteId=${requestData.quoteId}`);
     } catch (err) {
       toast.error(err.message || 'An error occurred during submission.');
     }
@@ -183,24 +199,23 @@ const Home = () => {
       <section className="hm-hero">
         <div className="container hm-hero-inner">
           <div className="hm-hero-left">
-            <div className="hm-tag"><span className="hm-tag-dot"></span> UAE's Trusted Car Service Platform</div>
+            <div className="hm-tag"><span className="hm-tag-dot"></span> {t('trusted_platform')}</div>
             <h1 className="hm-h1">
-              Get Instant Help<br/>From Verified<br/>
-              <span>UAE Garages</span>
+              {t('get_help')}
             </h1>
-            <p className="hm-sub">Emergency or regular service, we connect you with top-rated garages near you.</p>
+            <p className="hm-sub">{t('hero_sub')}</p>
             <div className="hm-stats">
               <div className="hm-stat">
                 <span className="material-icons-round">shield</span>
-                <div><div className="hm-stat-num">500+</div><div className="hm-stat-lbl">Verified Garages</div></div>
+                <div><div className="hm-stat-num">500+</div><div className="hm-stat-lbl">{t('verified_garages')}</div></div>
               </div>
               <div className="hm-stat">
                 <span className="material-icons-round">schedule</span>
-                <div><div className="hm-stat-num">24/7</div><div className="hm-stat-lbl">Support</div></div>
+                <div><div className="hm-stat-num">24/7</div><div className="hm-stat-lbl">{t('support')}</div></div>
               </div>
               <div className="hm-stat">
                 <span className="material-icons-round">verified</span>
-                <div><div className="hm-stat-num">100%</div><div className="hm-stat-lbl">Transparent</div></div>
+                <div><div className="hm-stat-num">100%</div><div className="hm-stat-lbl">{t('transparent')}</div></div>
               </div>
             </div>
           </div>
@@ -215,17 +230,17 @@ const Home = () => {
       {/* ══ QUOTE FORM ══ */}
       <section className="quote-section">
         <div className="container position-relative" style={{ zIndex: 2 }}>
-          <h2 className="quote-title">Get Instant Quotes from <span>Top-Rated Garages</span></h2>
-          <p className="quote-sub">Transparent pricing · Verified garages · Instant quotes</p>
+          <h2 className="quote-title">{t('get_quotes_title')}</h2>
+          <p className="quote-sub">{t('quotes_sub')}</p>
 
           <form onSubmit={handleQuoteSubmit}>
             <div className="row g-3">
               {/* Row 1: Category + Sub-category */}
               <div className="col-md-6">
-                <div className="qform-label"><span className="material-icons-round">category</span> Service Category</div>
+                <div className="qform-label"><span className="material-icons-round">category</span> {t('service_category')}</div>
                 <CustomDropdown
                   name="category"
-                  placeholder="Select main category"
+                  placeholder={t('select_category')}
                   options={categoryOptions}
                   value={category}
                   onChange={(val) => {
@@ -236,10 +251,10 @@ const Home = () => {
                 />
               </div>
               <div className="col-md-6">
-                <div className="qform-label"><span className="material-icons-round">list</span> Sub-Category</div>
+                <div className="qform-label"><span className="material-icons-round">list</span> {t('sub_category_label')}</div>
                 <CustomDropdown
                   name="sub_category"
-                  placeholder={category ? "Select sub-category" : "Select main category first"}
+                  placeholder={category ? t('select_subcategory') : t('select_category_first')}
                   options={subCategoryOptions}
                   value={subCategory}
                   onChange={setSubCategory}
@@ -249,10 +264,10 @@ const Home = () => {
 
               {/* Row 2: Brand, Model, Year, City, Area */}
               <div className="col-6 col-md-3">
-                <div className="qform-label"><span className="material-icons-round">directions_car</span> Brand</div>
+                <div className="qform-label"><span className="material-icons-round">directions_car</span> {t('brand')}</div>
                 <CustomDropdown
                   name="car_brand"
-                  placeholder="Brand"
+                  placeholder={t('brand')}
                   options={brandOptions}
                   value={carBrand}
                   onChange={(val) => {
@@ -263,10 +278,10 @@ const Home = () => {
                 />
               </div>
               <div className="col-6 col-md-2">
-                <div className="qform-label"><span className="material-icons-round">tune</span> Model</div>
+                <div className="qform-label"><span className="material-icons-round">tune</span> {t('model')}</div>
                 <CustomDropdown
                   name="car_model"
-                  placeholder={carBrand ? "Model" : "Select Brand first"}
+                  placeholder={carBrand ? t('model') : t('select_brand_first')}
                   options={modelOptions}
                   value={carModel}
                   onChange={setCarModel}
@@ -274,10 +289,10 @@ const Home = () => {
                 />
               </div>
               <div className="col-4 col-md-1">
-                <div className="qform-label"><span className="material-icons-round">calendar_today</span> Year</div>
+                <div className="qform-label"><span className="material-icons-round">calendar_today</span> {t('year')}</div>
                 <CustomDropdown
                   name="car_year"
-                  placeholder="Year"
+                  placeholder={t('year')}
                   options={Array.from({ length: 20 }, (_, i) => String(new Date().getFullYear() - i))}
                   value={carYear}
                   onChange={setCarYear}
@@ -285,10 +300,10 @@ const Home = () => {
                 />
               </div>
               <div className="col-4 col-md-3">
-                <div className="qform-label"><span className="material-icons-round">location_city</span> City</div>
+                <div className="qform-label"><span className="material-icons-round">location_city</span> {t('city')}</div>
                 <CustomDropdown
                   name="city_name"
-                  placeholder="City"
+                  placeholder={t('city')}
                   options={cityOptions}
                   value={cityName}
                   onChange={(val) => {
@@ -299,10 +314,10 @@ const Home = () => {
                 />
               </div>
               <div className="col-4 col-md-3">
-                <div className="qform-label"><span className="material-icons-round">location_on</span> Area</div>
+                <div className="qform-label"><span className="material-icons-round">location_on</span> {t('area_label')}</div>
                 <CustomDropdown
                   name="area"
-                  placeholder={cityName ? "Area" : "Select City first"}
+                  placeholder={cityName ? t('area_label') : t('select_city_first')}
                   options={areaOptions}
                   value={area}
                   onChange={setArea}
@@ -312,23 +327,23 @@ const Home = () => {
 
               {/* Row 3: Issue, Contact, Time, Submit */}
               <div className="col-md-4">
-                <div className="qform-label"><span className="material-icons-round">description</span> Describe Your Issue</div>
-                <input type="text" name="problem_title" className="qform-input" placeholder="Describe the issue" />
+                <div className="qform-label"><span className="material-icons-round">description</span> {t('describe_issue')}</div>
+                <input type="text" name="problem_title" className="qform-input" placeholder={t('desc_placeholder')} />
               </div>
               <div className="col-md-3">
-                <div className="qform-label"><span className="material-icons-round">phone</span> Contact Info</div>
-                <input type="tel" name="phone" className="qform-input" placeholder="Enter mobile number" />
+                <div className="qform-label"><span className="material-icons-round">phone</span> {t('contact_info')}</div>
+                <input type="tel" name="phone" className="qform-input" placeholder={t('phone_placeholder')} />
               </div>
               <div className="col-md-3">
-                <div className="qform-label"><span className="material-icons-round">access_time</span> Preferred Time</div>
+                <div className="qform-label"><span className="material-icons-round">access_time</span> {t('preferred_time')}</div>
                 <CustomDropdown
                   name="urgency"
-                  placeholder="Select time"
+                  placeholder={t('select_time')}
                   options={[
-                    { value: 'asap', label: 'ASAP — Urgent' },
-                    { value: 'today', label: 'Today' },
-                    { value: 'this_week', label: 'This Week' },
-                    { value: 'flexible', label: 'Flexible' }
+                    { value: 'asap', label: t('time_asap') },
+                    { value: 'today', label: t('time_today') },
+                    { value: 'this_week', label: t('time_week') },
+                    { value: 'flexible', label: t('time_flexible') }
                   ]}
                   value={urgency}
                   onChange={setUrgency}
@@ -336,7 +351,7 @@ const Home = () => {
                 />
               </div>
               <div className="col-md-2 d-flex align-items-end">
-                <button type="submit" className="btn-quote-submit">Get a Quote</button>
+                <button type="submit" className="btn-quote-submit">{t('get_a_quote')}</button>
               </div>
             </div>
           </form>
@@ -347,8 +362,8 @@ const Home = () => {
       <section className="py-5 bg-white">
         <div className="container">
           <div style={{ marginBottom: '36px' }}>
-            <h2 style={{ fontFamily: "'Poppins',sans-serif", fontWeight: '900', color: '#0f172a', fontSize: '1.8rem', marginBottom: '6px' }}>How Garro Works</h2>
-            <p style={{ color: '#64748b', fontSize: '14px', fontFamily: "'Poppins',sans-serif" }}>Simple steps to get your car back on track with trusted service.</p>
+            <h2 style={{ fontFamily: "'Poppins',sans-serif", fontWeight: '900', color: '#0f172a', fontSize: '1.8rem', marginBottom: '6px' }}>{t('how_it_works')}</h2>
+            <p style={{ color: '#64748b', fontSize: '14px', fontFamily: "'Poppins',sans-serif" }}>{t('how_sub')}</p>
           </div>
           <div className="row g-0 align-items-start">
             <div className="col">
@@ -357,8 +372,8 @@ const Home = () => {
                 <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)' }}>
                   <span className="material-icons-round">assignment</span>
                 </div>
-                <div className="hiw-name">Select Issue</div>
-                <div className="hiw-desc">Tell us what your car needs.</div>
+                <div className="hiw-name">{t('step1_title')}</div>
+                <div className="hiw-desc">{t('step1_desc')}</div>
               </div>
             </div>
             <div className="col-auto hiw-connector"><span className="material-icons-round">arrow_forward</span></div>
@@ -368,8 +383,8 @@ const Home = () => {
                 <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}>
                   <span className="material-icons-round">search</span>
                 </div>
-                <div className="hiw-name">We Search</div>
-                <div className="hiw-desc">We find the best local garages.</div>
+                <div className="hiw-name">{t('step2_title')}</div>
+                <div className="hiw-desc">{t('step2_desc')}</div>
               </div>
             </div>
             <div className="col-auto hiw-connector"><span className="material-icons-round">arrow_forward</span></div>
@@ -379,8 +394,8 @@ const Home = () => {
                 <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
                   <span className="material-icons-round">verified_user</span>
                 </div>
-                <div className="hiw-name">Compare &amp; Choose</div>
-                <div className="hiw-desc">Compare prices &amp; services.</div>
+                <div className="hiw-name">{t('step3_title')}</div>
+                <div className="hiw-desc">{t('step3_desc')}</div>
               </div>
             </div>
             <div className="col-auto hiw-connector"><span className="material-icons-round">arrow_forward</span></div>
@@ -390,8 +405,8 @@ const Home = () => {
                 <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#8b5cf6,#6d28d9)' }}>
                   <span className="material-icons-round">local_shipping</span>
                 </div>
-                <div className="hiw-name">Pick Up / Drop</div>
-                <div className="hiw-desc">Book a slot &amp; get your car serviced.</div>
+                <div className="hiw-name">{t('step4_title')}</div>
+                <div className="hiw-desc">{t('step4_desc')}</div>
               </div>
             </div>
             <div className="col-auto hiw-connector"><span className="material-icons-round">arrow_forward</span></div>
@@ -401,15 +416,15 @@ const Home = () => {
                 <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
                   <span className="material-icons-round">location_on</span>
                 </div>
-                <div className="hiw-name">Track &amp; Relax</div>
-                <div className="hiw-desc">Live updates till your car is done.</div>
+                <div className="hiw-name">{t('step5_title')}</div>
+                <div className="hiw-desc">{t('step5_desc')}</div>
               </div>
             </div>
           </div>
 
           <div style={{ textAlign: 'center', marginTop: '40px' }}>
             <Link to="/services" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', color: '#fff', borderRadius: '50px', padding: '14px 36px', fontWeight: '800', fontSize: '15px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", boxShadow: '0 6px 22px rgba(255,92,26,.38)' }}>
-              Get a Quote Now <span className="material-icons-round">arrow_forward</span>
+              {t('get_quote_now')} <span className="material-icons-round">arrow_forward</span>
             </Link>
           </div>
         </div>
@@ -421,27 +436,27 @@ const Home = () => {
           <div className="row g-0 text-center align-items-center">
             <div className="col">
               <div className="dstat-num">500+</div>
-              <div className="dstat-lbl">Verified Garages<br/>Across UAE</div>
+              <div className="dstat-lbl">{t('stat_verified_uae')}</div>
             </div>
             <div className="col-auto dstat-divider d-none d-md-block">&nbsp;</div>
             <div className="col">
               <div className="dstat-num">50K+</div>
-              <div className="dstat-lbl">Happy Customers<br/>Served</div>
+              <div className="dstat-lbl">{t('stat_happy_served')}</div>
             </div>
             <div className="col-auto dstat-divider d-none d-md-block">&nbsp;</div>
             <div className="col">
               <div className="dstat-num">12 Min</div>
-              <div className="dstat-lbl">Average Response<br/>Time</div>
+              <div className="dstat-lbl">{t('stat_avg_response')}</div>
             </div>
             <div className="col-auto dstat-divider d-none d-md-block">&nbsp;</div>
             <div className="col">
               <div className="dstat-num">98%</div>
-              <div className="dstat-lbl">Customer Satisfaction<br/>Rate</div>
+              <div className="dstat-lbl">{t('stat_satisfaction')}</div>
             </div>
             <div className="col-auto dstat-divider d-none d-md-block">&nbsp;</div>
             <div className="col">
               <div className="dstat-num">24/7</div>
-              <div className="dstat-lbl">Emergency<br/>Support</div>
+              <div className="dstat-lbl">{t('stat_emergency_support')}</div>
             </div>
           </div>
         </div>

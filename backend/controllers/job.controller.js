@@ -8,6 +8,7 @@ import VCR from '../models/VehicleConditionReport.js';
 import { success, error } from '../utils/response.js';
 import { notifyCustomer } from '../utils/notify.js';
 import { uploadToR2 } from '../utils/upload.js';
+import { logActivity } from '../utils/audit.js';
 
 const STATUS_FLOW = {
   pickup_scheduled:   ['picked_up'],
@@ -23,11 +24,11 @@ const STATUS_FLOW = {
 const STATUS_ROLES = {
   pickup_scheduled:   ['admin', 'helper'],
   picked_up:          ['helper'],
-  in_garage:          ['admin', 'helper'],
-  inspection_done:    ['admin'],
-  repair_in_progress: ['admin'],
-  work_complete:      ['admin'],
-  ready_for_delivery: ['admin', 'helper'],
+  in_garage:          ['admin', 'helper', 'garage'],
+  inspection_done:    ['admin', 'garage'],
+  repair_in_progress: ['admin', 'garage'],
+  work_complete:      ['admin', 'garage'],
+  ready_for_delivery: ['admin', 'helper', 'garage'],
   delivered:          ['helper'],
   closed:             ['admin']
 };
@@ -123,7 +124,11 @@ export const updateStatus = async (req, res) => {
         await HelperBookingSlot.updateMany({ bookingId: job.requestId, status: { $in: ['reserved', 'in_progress'] } }, { status: 'completed' });
       }
     }
+    const oldStatus = job.status;
     await job.save();
+
+    // Log Activity
+    await logActivity(req.user.id, 'job_status_change', 'Job', job._id, { oldStatus, newStatus: status });
 
     // Auto-create invoice when job is closed
     if (status === 'closed') {
@@ -143,10 +148,14 @@ export const updateStatus = async (req, res) => {
       }
     }
 
-    // Notify customer
+    // Sync request status & Notify customer
     try {
       const request = await Request.findById(job.requestId).populate('userId');
-      const customer = request.userId;
+      if (request) {
+        request.status = status;
+        await request.save();
+      }
+      const customer = request?.userId;
       const notifyData = { jobId: job._id };
 
       if (status === 'closed') {
@@ -154,7 +163,9 @@ export const updateStatus = async (req, res) => {
         notifyData.total = invoice ? invoice.total : 0;
       }
 
-      await notifyCustomer(customer, status, notifyData);
+      if (customer) {
+        await notifyCustomer(customer, status, notifyData);
+      }
     } catch (notifyErr) {
       console.error('Notification failed:', notifyErr.message);
     }
@@ -213,6 +224,21 @@ export const submitConditionReport = async (req, res) => {
 
     await Job.findByIdAndUpdate(req.params.id, { conditionReportId: report._id });
     success(res, { report }, 201);
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/jobs/request/:requestId
+export const getJobByRequestId = async (req, res) => {
+  try {
+    const job = await Job.findOne({ requestId: req.params.requestId })
+      .populate('quoteId')
+      .populate('requestId')
+      .populate('garageId', 'name rating phone')
+      .populate('helperId', 'name rating phone');
+    if (!job) return error(res, 'Job not found for this request', 404);
+    success(res, { job });
   } catch (err) {
     error(res, err.message, 500);
   }

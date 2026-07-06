@@ -6,6 +6,7 @@ const jobSchema = new mongoose.Schema({
   garageId:          { type: mongoose.Schema.Types.ObjectId, ref: 'Garage', required: true },
   helperId:          { type: mongoose.Schema.Types.ObjectId, ref: 'Helper', default: null },
   status:            { type: String, default: 'pickup_scheduled' },
+  acceptedByGarage:  { type: String, enum: ['pending', 'accepted', 'declined'], default: 'pending' },
   startDate:         { type: Date },
   estimatedEndDate:  { type: Date },
   actualEndDate:     { type: Date },

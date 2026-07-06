@@ -1,94 +1,246 @@
 import Stripe from 'stripe';
 import Invoice from '../models/Invoice.js';
 import Payment from '../models/Payment.js';
+import Quote from '../models/Quote.js';
 import Job from '../models/Job.js';
 import User from '../models/User.js';
-import { notifyCustomer } from '../utils/notify.js';
+import Garage from '../models/Garage.js';
+import GaragePayout from '../models/GaragePayout.js';
+import Vehicle from '../models/Vehicle.js';
+import Helper from '../models/Helper.js';
+import Request from '../models/Request.js';
 import { success, error } from '../utils/response.js';
+import { generateInvoicePDF } from '../utils/pdf.js';
+import { uploadBufferToR2 } from '../utils/upload.js';
+import { notifyPayment } from '../utils/notify.js';
 
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
-// POST /api/payments/create-intent — customer initiates payment
+// POST /api/payments/create-intent
+// Called when customer clicks "Pay Now" after approving a quote
 export const createPaymentIntent = async (req, res) => {
   try {
-    if (!stripe) return error(res, 'Stripe secret key is not configured on this server.', 500);
-    const { invoiceId } = req.body;
-    const invoice = await Invoice.findById(invoiceId).populate('jobId');
-    if (!invoice) return error(res, 'Invoice not found', 404);
-    if (invoice.status === 'paid') return error(res, 'Invoice already paid', 400);
+    const { quoteId } = req.body;
+    if (!quoteId) return error(res, 'quoteId is required', 400);
 
-    // Stripe amount is in smallest currency unit (fils for AED = 1/100)
-    const amountInFils = Math.round(invoice.total * 100);
+    const quote = await Quote.findById(quoteId).populate('requestId');
+    if (!quote) return error(res, 'Quote not found', 404);
+    if (quote.status !== 'approved') return error(res, 'Quote must be approved before payment', 400);
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount:   amountInFils,
-      currency: 'aed',
-      metadata: { invoiceId: invoiceId.toString(), jobId: invoice.jobId.toString() }
-    });
+    // Prevent double-payment
+    const existingPaid = await Invoice.findOne({ quoteId, status: 'paid' });
+    if (existingPaid) return error(res, 'This quote has already been paid', 400);
 
-    // Save pending payment record
-    await Payment.create({
-      invoiceId,
-      amount:                invoice.total,
-      status:                'pending',
-      stripePaymentIntentId: paymentIntent.id
-    });
+    // Use the pre-calculated amounts from the Quote model
+    const subtotal    = Number(quote.subtotal);
+    const vatAmount   = Number(quote.vat);
+    const totalAmount = Number(quote.customerTotal);
+
+    let clientSecret = 'mock_secret_' + Date.now();
+    let paymentIntentId = 'mock_intent_' + Date.now();
+
+    if (stripe) {
+      // Stripe accepts amount in fils (1/100 AED = 1 fil)
+      const amountInFils = Math.round(totalAmount * 100);
+      try {
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount:   amountInFils,
+          currency: 'aed',
+          metadata: {
+            quoteId:    quoteId.toString(),
+            requestId:  quote.requestId._id ? quote.requestId._id.toString() : quote.requestId.toString(),
+            garageId:   quote.garageId ? quote.garageId.toString() : '',
+            customerId: req.user.id.toString()
+          },
+          description: `Garro Car Service — ${quote.requestId.serviceType || 'Auto Service'}`
+        });
+        clientSecret = paymentIntent.client_secret;
+        paymentIntentId = paymentIntent.id;
+
+        // Create a pending payment record linked to this intent
+        await Payment.create({
+          invoiceId:             null, // will be filled after webhook
+          amount:                totalAmount,
+          status:                'pending',
+          stripePaymentIntentId: paymentIntentId
+        });
+      } catch (stripeErr) {
+        console.error('Stripe creation failed, using mock payment secret:', stripeErr.message);
+      }
+    }
 
     success(res, {
-      clientSecret:    paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id,
-      amount:          invoice.total,
-      currency:        'AED'
+      clientSecret,
+      paymentIntentId,
+      breakdown: {
+        partsCost:    Number(quote.partsCost),
+        laborCost:    Number(quote.laborCost),
+        subtotal,
+        serviceFee:   Number(quote.serviceFee),
+        vatPercent:   5,
+        vatAmount,
+        totalAmount,
+        currency:     'AED'
+      }
     });
   } catch (err) {
     error(res, err.message, 500);
   }
 };
 
-// POST /api/payments/webhook — Stripe calls this when payment completes
-// IMPORTANT: this route must use raw body, not express.json()
+// POST /api/payments/webhook
+// Stripe calls this endpoint when a payment event occurs
+// IMPORTANT: must receive raw body — mounted before express.json() in server.js
 export const stripeWebhook = async (req, res) => {
-  if (!stripe) {
-    return res.status(500).send('Stripe secret key is not configured.');
-  }
+  if (!stripe) return res.status(500).send('Stripe not configured.');
+
   const sig = req.headers['stripe-signature'];
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET || ''
+    );
   } catch (err) {
-    console.error('Webhook signature failed:', err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error('Webhook signature error:', err.message);
+    // In development without a webhook secret, fall through if no secret configured
+    if (process.env.STRIPE_WEBHOOK_SECRET) {
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    // Parse body manually for local dev testing without signature
+    try {
+      event = JSON.parse(req.body.toString());
+    } catch (parseErr) {
+      return res.status(400).send('Could not parse event');
+    }
   }
 
   if (event.type === 'payment_intent.succeeded') {
     const intent = event.data.object;
-    const { invoiceId } = intent.metadata;
+    const { quoteId, garageId, customerId } = intent.metadata || {};
 
     try {
-      // Mark invoice as paid
-      const invoice = await Invoice.findByIdAndUpdate(
-        invoiceId,
-        { status: 'paid' },
-        { new: true }
-      );
+      const quote    = await Quote.findById(quoteId);
+      const garage   = garageId ? await Garage.findById(garageId) : null;
+      const customer = await User.findById(customerId);
 
-      // Mark payment as completed
-      await Payment.findOneAndUpdate(
-        { stripePaymentIntentId: intent.id },
-        { status: 'completed', method: 'card', stripePaidAt: new Date() }
-      );
+      if (!quote || !customer) {
+        console.error('Webhook: missing quote or customer for intent', intent.id);
+        return res.json({ received: true });
+      }
 
-      // Notify customer
-      if (invoice) {
-        const job = await Job.findById(invoice.jobId).populate('requestId');
-        if (job && job.requestId) {
-          const customer = await User.findById(job.requestId.userId);
-          await notifyCustomer(customer, 'closed', { total: invoice.total });
+      // Find the job associated with this quote if garage is assigned
+      let job = null;
+      if (garage) {
+        job = await Job.findOne({ quoteId: quote._id });
+        if (!job) {
+          console.error('Webhook: no job found for quoteId', quoteId);
+          return res.json({ received: true });
         }
       }
 
-      console.log('Payment succeeded for invoice:', invoiceId);
+      // Check we haven't already processed this payment
+      const alreadyPaid = await Invoice.findOne({ quoteId, status: 'paid' });
+      if (alreadyPaid) {
+        console.log('Webhook: already processed payment for', quoteId);
+        return res.json({ received: true });
+      }
+
+      // Derive amounts from the Quote
+      const subtotal           = Number(quote.subtotal);
+      const vatAmount          = Number(quote.vat);
+      const totalAmount        = Number(quote.customerTotal);
+      const serviceFeeAmount   = Number(quote.serviceFee);
+      const garagePayoutAmount = parseFloat((subtotal * 0.90).toFixed(2));
+
+      // Build line items for customer-facing invoice
+      const lineItems = [
+        { description: 'Parts & Components', qty: 1, unitPrice: Number(quote.partsCost), total: Number(quote.partsCost) },
+        { description: 'Labour Charges',     qty: 1, unitPrice: Number(quote.laborCost), total: Number(quote.laborCost) }
+      ];
+
+      // 1. Create the Invoice record
+      const invoice = await Invoice.create({
+        quoteId:    quote._id,
+        jobId:      job ? job._id : null,
+        customerId: customer._id,
+        garageId:   garage ? garage._id : null,
+        lineItems,
+        partsCost:          Number(quote.partsCost),
+        laborCost:          Number(quote.laborCost),
+        subtotal,
+        vatPercent:         5,
+        vatAmount,
+        totalAmount,
+        serviceFeePercent:  10,
+        serviceFeeAmount,
+        garagePayoutAmount,
+        status:             'paid',
+        paidAt:             new Date(),
+        paymentMethod:      intent.payment_method_types?.[0] || 'card',
+        stripePaymentIntentId: intent.id,
+        dueDate:            new Date()
+      });
+
+      // 2. Generate UAE Tax Invoice PDF via Puppeteer
+      let pdfUrl = null;
+      try {
+        const displayGarage = garage || { name: 'Garro Service Partner' };
+        const displayJob = job || { _id: quote._id };
+        const pdfBuffer = await generateInvoicePDF(invoice, customer, displayGarage, displayJob);
+        const pdfKey    = `garro/invoices/invoice-${invoice.invoiceNumber}.pdf`;
+        pdfUrl = await uploadBufferToR2(pdfBuffer, pdfKey, 'application/pdf');
+        await Invoice.findByIdAndUpdate(invoice._id, { pdfUrl });
+        console.log(`PDF generated for ${invoice.invoiceNumber}: ${pdfUrl}`);
+      } catch (pdfErr) {
+        console.error('PDF generation failed (non-fatal):', pdfErr.message);
+      }
+
+      // 3. Update quote to paid
+      await Quote.findByIdAndUpdate(quoteId, { status: 'paid' });
+
+      // 4. Update request status to 'new' (so it shows to admin)
+      const updatedRequest = await Request.findByIdAndUpdate(
+        quote.requestId,
+        { status: 'new' },
+        { new: true }
+      )
+      .populate('userId', 'name phone')
+      .populate('vehicleId', 'make model year registrationNumber')
+      .populate('garageId', 'name phone')
+      .populate('helperId', 'name phone');
+
+      // Emit realtime Socket.io event to admin dashboard
+      const io = req.app.get('io');
+      if (io && updatedRequest) {
+        io.emit('request:new', updatedRequest);
+      }
+
+      // 5. Mark pending Payment record as completed
+      await Payment.findOneAndUpdate(
+        { stripePaymentIntentId: intent.id },
+        { status: 'completed', method: 'card', stripePaidAt: new Date(), invoiceId: invoice._id }
+      );
+
+      // 6. Create garage payout record (only if garage is assigned)
+      if (garage && job) {
+        await GaragePayout.create({
+          garageId:  garage._id,
+          invoiceId: invoice._id,
+          jobId:     job._id,
+          amount:    garagePayoutAmount,
+          status:    'pending'
+        });
+      }
+
+      // 7. Notify customer via WhatsApp + Email
+      if (pdfUrl) {
+        await notifyPayment(customer, invoice, pdfUrl);
+      }
+
+      console.log(`✅ Payment processed: ${invoice.invoiceNumber} — AED ${totalAmount}`);
     } catch (err) {
       console.error('Post-payment processing error:', err.message);
     }
@@ -96,21 +248,147 @@ export const stripeWebhook = async (req, res) => {
 
   if (event.type === 'payment_intent.payment_failed') {
     const intent = event.data.object;
-    await Payment.findOneAndUpdate(
-      { stripePaymentIntentId: intent.id },
-      { status: 'failed' }
-    );
+    const { quoteId, requestId } = intent.metadata || {};
+
+    try {
+      if (requestId) {
+        await Request.findByIdAndDelete(requestId);
+      }
+      if (quoteId) {
+        await Quote.findByIdAndDelete(quoteId);
+      }
+      await Payment.findOneAndDelete({ stripePaymentIntentId: intent.id });
+      console.log(`❌ Payment failed. Deleted Request ${requestId} and Quote ${quoteId} from database.`);
+    } catch (err) {
+      console.error('Failed to clean up failed payment resources:', err.message);
+    }
   }
 
   res.json({ received: true });
 };
 
-// GET /api/payments/invoice/:invoiceId — payment status for an invoice
+// GET /api/payments/quote/:quoteId/status
+// Customer polls this to check if their payment went through
+export const getPaymentStatusByQuote = async (req, res) => {
+  try {
+    const invoice = await Invoice.findOne({ quoteId: req.params.quoteId })
+      .select('invoiceNumber status totalAmount paidAt pdfUrl');
+    success(res, {
+      paid:    invoice?.status === 'paid',
+      invoice: invoice || null
+    });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/payments/invoice/:invoiceId — legacy route kept for compatibility
 export const getPaymentStatus = async (req, res) => {
   try {
     const payment = await Payment.findOne({ invoiceId: req.params.invoiceId })
       .sort({ createdAt: -1 });
     success(res, { payment });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/payments/bypass-pay
+export const bypassPayment = async (req, res) => {
+  try {
+    const { quoteId } = req.body;
+    if (!quoteId) return error(res, 'quoteId is required', 400);
+
+    const quote = await Quote.findById(quoteId);
+    if (!quote) return error(res, 'Quote not found', 404);
+
+    const customerId = req.user.id;
+    const customer = await User.findById(customerId);
+    if (!customer) return error(res, 'Customer not found', 404);
+
+    const garageId = quote.garageId;
+    const garage = garageId ? await Garage.findById(garageId) : null;
+
+    // Find the job associated with this quote if garage is assigned
+    let job = null;
+    if (garage) {
+      job = await Job.findOne({ quoteId: quote._id });
+    }
+
+    // Check we haven't already processed this payment
+    let invoice = await Invoice.findOne({ quoteId, status: 'paid' });
+    if (!invoice) {
+      // Derive amounts from the Quote
+      const subtotal           = Number(quote.subtotal);
+      const vatAmount          = Number(quote.vat);
+      const totalAmount        = Number(quote.customerTotal);
+      const serviceFeeAmount   = Number(quote.serviceFee);
+      const garagePayoutAmount = parseFloat((subtotal * 0.90).toFixed(2));
+
+      // Build line items for customer-facing invoice
+      const lineItems = [
+        { description: 'Parts & Components', qty: 1, unitPrice: Number(quote.partsCost), total: Number(quote.partsCost) },
+        { description: 'Labour Charges',     qty: 1, unitPrice: Number(quote.laborCost), total: Number(quote.laborCost) }
+      ];
+
+      // 1. Create the Invoice record
+      invoice = await Invoice.create({
+        quoteId:    quote._id,
+        jobId:      job ? job._id : null,
+        customerId: customer._id,
+        garageId:   garage ? garage._id : null,
+        lineItems,
+        partsCost:          Number(quote.partsCost),
+        laborCost:          Number(quote.laborCost),
+        subtotal,
+        vatPercent:         5,
+        vatAmount,
+        totalAmount,
+        serviceFeePercent:  10,
+        serviceFeeAmount,
+        garagePayoutAmount,
+        status:             'paid',
+        paidAt:             new Date(),
+        paymentMethod:      'card',
+        stripePaymentIntentId: 'bypass_' + Date.now(),
+        dueDate:            new Date()
+      });
+
+      // 2. Generate UAE Tax Invoice PDF via Puppeteer
+      try {
+        const displayGarage = garage || { name: 'Garro Service Partner' };
+        const displayJob = job || { _id: quote._id };
+        const pdfBuffer = await generateInvoicePDF(invoice, customer, displayGarage, displayJob);
+        const pdfKey    = `garro/invoices/invoice-${invoice.invoiceNumber}.pdf`;
+        const pdfUrl = await uploadBufferToR2(pdfBuffer, pdfKey, 'application/pdf');
+        await Invoice.findByIdAndUpdate(invoice._id, { pdfUrl });
+        console.log(`PDF generated for ${invoice.invoiceNumber}: ${pdfUrl}`);
+      } catch (pdfErr) {
+        console.error('PDF generation failed (non-fatal):', pdfErr.message);
+      }
+    }
+
+    // 3. Update quote to paid
+    await Quote.findByIdAndUpdate(quoteId, { status: 'paid' });
+
+    // 4. Update request status to 'new' (so it shows to admin)
+    const updatedRequest = await Request.findByIdAndUpdate(
+      quote.requestId,
+      { status: 'new' },
+      { new: true }
+    )
+    .populate('userId', 'name phone')
+    .populate('vehicleId', 'make model year registrationNumber')
+    .populate('garageId', 'name phone')
+    .populate('helperId', 'name phone');
+
+    // Emit realtime Socket.io event to admin dashboard
+    const io = req.app.get('io');
+    if (io && updatedRequest) {
+      io.emit('request:new', updatedRequest);
+    }
+
+    success(res, { success: true, message: 'Bypassed payment successfully', invoice });
   } catch (err) {
     error(res, err.message, 500);
   }

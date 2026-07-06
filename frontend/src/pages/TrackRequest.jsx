@@ -14,6 +14,88 @@ const TrackRequest = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
+
+  const [catalogServices, setCatalogServices] = useState([]);
+
+  useEffect(() => {
+    const fetchCatalog = async () => {
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${API_BASE}/api/vehicles/catalog/services`);
+        const data = await res.json();
+        if (data.success && data.categories) {
+          setCatalogServices(data.categories);
+        }
+      } catch (err) {
+        console.error('Failed to load catalog services:', err);
+      }
+    };
+    fetchCatalog();
+  }, []);
+
+  const getMatchingGarages = (req, garages) => {
+    if (!req) return [];
+    
+    const reqSub = req.subCategory?.toLowerCase()?.trim() || req.serviceType?.toLowerCase()?.trim();
+    let parentCatName = '';
+    let parentCatSlug = '';
+    
+    for (const cat of catalogServices) {
+      if (cat.slug?.toLowerCase()?.trim() === reqSub || cat.name?.toLowerCase()?.trim() === reqSub) {
+        parentCatName = cat.name;
+        parentCatSlug = cat.slug;
+        break;
+      }
+      if (cat.subCategories) {
+        const foundSub = cat.subCategories.find(sub => 
+          sub.slug?.toLowerCase()?.trim() === reqSub || sub.name?.toLowerCase()?.trim() === reqSub
+        );
+        if (foundSub) {
+          parentCatName = cat.name;
+          parentCatSlug = cat.slug;
+          break;
+        }
+      }
+    }
+    
+    if (!parentCatName) {
+      const sub = reqSub || '';
+      if (sub.includes('minor') || sub.includes('oil') || sub.includes('mainten')) {
+        parentCatName = 'General Maintenance';
+        parentCatSlug = 'general_maintenance';
+      } else if (sub.includes('ac') || sub.includes('aircond') || sub.includes('elect') || sub.includes('diagn') || sub.includes('inspect') || sub.includes('batter')) {
+        parentCatName = 'Electrical & AC';
+        parentCatSlug = 'electrical_ac';
+      } else if (sub.includes('brake') || sub.includes('mechan')) {
+        parentCatName = 'Mechanical Repair';
+        parentCatSlug = 'mechanical_repair';
+      } else {
+        parentCatName = 'Mechanical Repair';
+        parentCatSlug = 'mechanical_repair';
+      }
+    }
+
+    const cleanParentName = parentCatName.toLowerCase().trim();
+    const cleanParentSlug = parentCatSlug.toLowerCase().trim();
+    const reqAddress = req.location?.address || '';
+    const reqArea = reqAddress.includes(',') 
+      ? reqAddress.split(',')[0].trim().toLowerCase() 
+      : reqAddress.trim().toLowerCase();
+
+    return garages.filter(g => {
+      const supportsService = g.services && g.services.some(srv => {
+        const cleanSrv = srv.toLowerCase().trim();
+        return cleanSrv === cleanParentName || cleanSrv === cleanParentSlug || cleanSrv === reqSub || cleanSrv.includes(cleanParentName) || cleanParentName.includes(cleanSrv);
+      });
+      
+      const coversArea = !reqArea || reqArea === 'self drop at garage' || (g.areas && g.areas.some(area => {
+        const cleanArea = area.toLowerCase().trim();
+        return reqArea.includes(cleanArea) || cleanArea.includes(reqArea);
+      }));
+      
+      return supportsService && coversArea;
+    });
+  };
   const [newSchedule, setNewSchedule] = useState('');
 
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -29,6 +111,14 @@ const TrackRequest = () => {
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [hasConflict, setHasConflict] = useState(false);
   const [conflictReason, setConflictReason] = useState('');
+
+  // Reviews States
+  const [associatedJob, setAssociatedJob] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
 
   const WORK_START = 9 * 60;  // 9:00 in minutes
   const WORK_END   = 21 * 60; // 21:00 in minutes
@@ -81,6 +171,74 @@ const TrackRequest = () => {
     });
 
   }, [id]);
+
+  // Fetch associated job and check review status
+  useEffect(() => {
+    if (!request || !['completed', 'closed'].includes(request.status)) return;
+
+    const fetchJobAndReviewStatus = async () => {
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const token = localStorage.getItem('token');
+        
+        // 1. Fetch job details
+        const jobRes = await fetch(`${API_BASE}/api/jobs/request/${request._id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const jobData = await jobRes.json();
+        if (jobRes.ok && jobData.success) {
+          setAssociatedJob(jobData.job);
+          
+          // 2. Fetch user's reviews to see if already reviewed
+          const revRes = await fetch(`${API_BASE}/api/reviews/my`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const revData = await revRes.json();
+          if (revRes.ok && revData.success) {
+            const found = revData.reviews.some(r => r.jobId?._id === jobData.job._id || r.jobId === jobData.job._id);
+            setAlreadyReviewed(found);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching job/review info:', err);
+      }
+    };
+    fetchJobAndReviewStatus();
+  }, [request]);
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!associatedJob) return;
+    setSubmittingReview(true);
+
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          jobId: associatedJob._id,
+          rating: reviewRating,
+          comment: reviewComment
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to submit review.');
+      }
+      toast.success('Thank you for your rating & feedback!');
+      setReviewSubmitted(true);
+      setAlreadyReviewed(true);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   // Fetch helper's schedule whenever helper, date, time, or duration changes
   useEffect(() => {
@@ -485,6 +643,68 @@ const TrackRequest = () => {
         </div>
       )}
 
+      {/* Review Submission Section */}
+      {['completed', 'closed'].includes(request.status) && (
+        <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '16px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="card-body p-4 text-white">
+            <h5 className="fw-bold mb-3 d-flex align-items-center gap-2">
+              ⭐ Rate Your Service &amp; Garage Experience
+            </h5>
+            {alreadyReviewed ? (
+              <div className="text-success fw-semibold d-flex align-items-center gap-2 mt-2">
+                <span className="material-icons-round" style={{ fontSize: '20px' }}>check_circle</span>
+                Thank you! Your feedback has been received and aggregate ratings have been updated.
+              </div>
+            ) : (
+              <form onSubmit={handleReviewSubmit}>
+                <p className="text-white-50 small mb-3">
+                  Your feedback helps us maintain high standards. Please rate your experience:
+                </p>
+                <div className="d-flex gap-2 mb-4">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: star <= reviewRating ? '#fbbf24' : '#64748b',
+                        fontSize: '28px',
+                        cursor: 'pointer',
+                        padding: 0,
+                        transition: 'transform 0.1s'
+                      }}
+                    >
+                      ★
+                    </button>
+                  ))}
+                </div>
+                <div className="mb-3">
+                  <label className="form-label text-white-50 small">Leave a comment (optional)</label>
+                  <textarea
+                    className="form-control"
+                    rows="3"
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                    placeholder="Describe how the repair went, service quality, pricing correctness..."
+                    style={{ background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', color: 'white', borderRadius: '10px' }}
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="btn btn-warning fw-bold px-4 py-2"
+                  style={{ borderRadius: '10px', background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)', border: 'none', color: 'white' }}
+                >
+                  {submittingReview ? 'Submitting Review...' : 'Submit Feedback'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Detail Sections */}
       <div className="row g-4">
         {/* Left Side: Service Details & Description */}
@@ -497,7 +717,7 @@ const TrackRequest = () => {
                 <div className="col-md-6">
                   <div className="text-muted small">Service Type</div>
                   <span className="badge bg-light text-dark py-2 px-3 fw-semibold mt-1" style={{ fontSize: '13px' }}>
-                    {request.serviceType ? request.serviceType.replace('_', ' ').toUpperCase() : 'GENERAL SERVICE'}
+                    {request.subCategory ? request.subCategory.toUpperCase() : (request.serviceType ? request.serviceType.replace('_', ' ').toUpperCase() : 'GENERAL SERVICE')}
                   </span>
                 </div>
                 <div className="col-md-6">
@@ -791,34 +1011,10 @@ const TrackRequest = () => {
                 <CustomDropdown
                   name="garageId"
                   placeholder="Choose Garage..."
-                  options={garagesList
-                    .filter(g => {
-                      if (!request) return true;
-                      
-                      // 1. Service check: garage supports requested serviceType (supporting human-readable or key format)
-                      const serviceMapping = {
-                        minor_service: ['Minor Service', 'minor_service'],
-                        major_service: ['Major Service', 'major_service'],
-                        ac_repair: ['AC Repair', 'ac_repair'],
-                        brake_repair: ['Brake Repair', 'brake_repair'],
-                        electrical: ['Electrical Repair', 'electrical'],
-                        diagnostics: ['Diagnostics', 'Diagnostics / Inspection', 'diagnostics'],
-                        battery: ['Battery Replacement', 'battery'],
-                        other: ['General Repair', 'Other Repair / Service', 'other']
-                      };
-                      const possibleServices = serviceMapping[request.serviceType] || [request.serviceType];
-                      const supportsService = g.services && g.services.some(srv => possibleServices.includes(srv));
-
-                      // 2. Area check: request location address contains any of garage's covered areas
-                      const reqAddress = request.location?.address || '';
-                      const coversArea = g.areas && g.areas.some(area => 
-                        reqAddress.toLowerCase().includes(area.toLowerCase())
-                      );
-                      return supportsService && coversArea;
-                    })
+                  options={getMatchingGarages(request, garagesList)
                     .map(g => ({
                       value: g._id,
-                      label: `${g.name} (${g.areas ? g.areas.join(', ') : 'Dubai'})`
+                      label: `${g.name} - AED ${request ? (request.estimatedCost || 299) : 299}`
                     }))}
                   value={assignGarageId}
                   onChange={(val) => {
@@ -827,28 +1023,9 @@ const TrackRequest = () => {
                   }}
                   required
                 />
-                {request && garagesList.filter(g => {
-                  const serviceMapping = {
-                    minor_service: ['Minor Service', 'minor_service'],
-                    major_service: ['Major Service', 'major_service'],
-                    ac_repair: ['AC Repair', 'ac_repair'],
-                    brake_repair: ['Brake Repair', 'brake_repair'],
-                    electrical: ['Electrical Repair', 'electrical'],
-                    diagnostics: ['Diagnostics', 'Diagnostics / Inspection', 'diagnostics'],
-                    battery: ['Battery Replacement', 'battery'],
-                    other: ['General Repair', 'Other Repair / Service', 'other']
-                  };
-                  const possibleServices = serviceMapping[request.serviceType] || [request.serviceType];
-                  const supportsService = g.services && g.services.some(srv => possibleServices.includes(srv));
-
-                  const reqAddress = request.location?.address || '';
-                  const coversArea = g.areas && g.areas.some(area => 
-                    reqAddress.toLowerCase().includes(area.toLowerCase())
-                  );
-                  return supportsService && coversArea;
-                }).length === 0 && (
+                {request && getMatchingGarages(request, garagesList).length === 0 && (
                   <p className="text-danger small mt-1">
-                    ⚠️ No garages found supporting <strong>{request.serviceType?.replace('_',' ')}</strong> in area <strong>"{request.location?.address || 'N/A'}"</strong>.
+                    ⚠️ No garages found supporting <strong>{(request.subCategory || request.serviceType)?.replace('_',' ')}</strong> in area <strong>"{request.location?.address || 'N/A'}"</strong>.
                   </p>
                 )}
               </div>
@@ -862,7 +1039,7 @@ const TrackRequest = () => {
                     .filter(h => h.garageId?._id === assignGarageId)
                     .map(h => ({
                       value: h._id,
-                      label: `${h.name} (⭐ ${h.rating || 5}/5) ${h.upcomingSlots && h.upcomingSlots.length > 0 ? `[${h.upcomingSlots.length} booking(s)]` : '[Free]'}`
+                      label: `${h.name} (⭐ ${h.rating || 5}/5) ${!h.isAvailable ? '[⚠️ Shift Conflict]' : (h.upcomingSlots && h.upcomingSlots.length > 0 ? `[${h.upcomingSlots.length} job(s)]` : '[Free]')}`
                     }))
                   }
                   value={assignHelperId}
