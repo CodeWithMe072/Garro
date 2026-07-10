@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Rocket, FileText, X } from 'lucide-react';
 
 const ComingSoonOverlay = ({ onClose }) => {
   return (
@@ -13,7 +14,7 @@ const ComingSoonOverlay = ({ onClose }) => {
       >
         <div className="coming-soon-stripe"></div>
         <div style={{ width: '80px', height: '80px', background: 'linear-gradient(135deg, #ff5c1a, #ff8c42)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 8px 24px rgba(255,92,26,0.3)' }}>
-          <span className="material-icons-round" style={{ fontSize: '40px', color: '#fff' }}>rocket_launch</span>
+          <Rocket size={36} color="#fff" />
         </div>
         <p style={{ fontFamily: "'Poppins', sans-serif", fontSize: '15px', color: 'rgba(255,255,255,.75)', lineHeight: 1.7, marginBottom: '6px' }}>
           We're working hard to bring you the best<br/>
@@ -34,13 +35,13 @@ const ComingSoonOverlay = ({ onClose }) => {
             to="/garages" 
             style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', color: '#fff', borderRadius: '50px', padding: '12px 28px', fontWeight: 700, fontSize: '14px', textDecoration: 'none', fontFamily: "'Poppins', sans-serif", boxShadow: '0 6px 20px rgba(255,92,26,.4)' }}
           >
-            <span className="material-icons-round" style={{ fontSize: '16px' }}>request_quote</span> Get a Quote
+            <FileText size={16} /> Get a Quote
           </Link>
           <button 
             onClick={onClose}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '7px', background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.8)', border: '1.5px solid rgba(255,255,255,.2)', borderRadius: '50px', padding: '12px 28px', fontWeight: 700, fontSize: '14px', cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}
           >
-            <span className="material-icons-round" style={{ fontSize: '16px' }}>close</span> Close
+            <X size={16} /> Close
           </button>
         </div>
       </div>
