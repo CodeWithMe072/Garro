@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import AdminSidebar from '../components/AdminSidebar';
 
 const StaffManagement = () => {
   const [helpers, setHelpers] = useState([]);
@@ -142,15 +143,16 @@ const StaffManagement = () => {
   }
 
   return (
-    <div className="pw" style={{ minHeight: '100vh', background: '#f1f5f9' }}>
-      <div className="ph">
+    <div className="dash-wrapper">
+      <AdminSidebar />
+      <main className="dash-main w-100" style={{ padding: '2rem' }}>
+        <div className="ph" style={{ marginBottom: '24px' }}>
         <div>
           <h1>👔 Staff Management</h1>
           <p>{staffList.length} staff members · Manage accounts and scheduling</p>
         </div>
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <Link to="/admin/create-staff" className="btn-primary">+ Create Account Directly</Link>
-          <Link to="/admin" className="btn-outline">← Dashboard</Link>
+          <Link to="/admin/create-staff" className="btn-primary-garro py-2 px-3 fw-bold text-white shadow-sm" style={{ textDecoration: 'none', borderRadius: '10px' }}>+ Create Account Directly</Link>
         </div>
       </div>
 
@@ -165,7 +167,7 @@ const StaffManagement = () => {
             {staffList.map(s => (
               <div key={s.id} className={`sc ${!s.is_active ? 'inactive' : ''}`}>
                 <div className="sc-top">
-                  <div className="sc-av" style={{ background: s.is_active ? '#3b82f6' : '#94a3b8' }}>
+                  <div className="sc-av" style={{ background: s.is_active ? '#ff5c1a' : '#94a3b8' }}>
                     {s.first_name[0]}{s.last_name[0]}
                     <div className={`sc-status ${s.is_active ? 'active' : 'inactive'}`}></div>
                   </div>
@@ -221,7 +223,7 @@ const StaffManagement = () => {
                   <label>Department</label>
                   <input type="text" name="department" className="inp" placeholder="e.g. Operations, Service" />
                 </div>
-                <button type="submit" className="btn-send">📨 Generate &amp; Copy Invite Link</button>
+                <button type="submit" className="btn-primary-garro w-100 py-2.5 fw-bold text-white shadow-sm" style={{ border: 'none', borderRadius: '10px' }}>📨 Generate &amp; Copy Invite Link</button>
               </form>
               <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '10px', textAlign: 'center' }}>Link expires in 3 days · Only one active invite per email</p>
             </div>
@@ -253,6 +255,7 @@ const StaffManagement = () => {
           </div>
         </div>
       </div>
+    </main>
 
       {/* ── Helper Schedule / Working Hours Modal ── */}
       {scheduleModalOpen && selectedHelper && (

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import CustomMultiSelect from '../components/CustomMultiSelect';
+import AdminSidebar from '../components/AdminSidebar';
 
 const GarageManagement = () => {
   const { user } = useAuth();
@@ -240,62 +241,19 @@ const GarageManagement = () => {
 
   return (
     <div className="dash-wrapper">
-      {/* ── SIDEBAR ── */}
-      <aside className="dash-sidebar">
-        <span className="sidebar-label">Overview</span>
-        <div className="sidebar-section">
-          <Link to="/admin" className="sidebar-link">
-            <span className="icon">📊</span>Dashboard
-          </Link>
-        </div>
-
-        <span className="sidebar-label">Operations</span>
-        <div className="sidebar-section">
-          <Link to="/admin/manage-garages" className="sidebar-link active">
-            <span className="icon">🏪</span>Manage Garages
-          </Link>
-          <Link to="/search" className="sidebar-link">
-            <span className="icon">🔍</span>Find Garages
-          </Link>
-          <Link to="/admin/catalog" className="sidebar-link">
-            <span className="icon">⚙️</span>System Catalog
-          </Link>
-          <Link to="/my-bookings" className="sidebar-link">
-            <span className="icon">📋</span>Bookings
-          </Link>
-        </div>
-
-        <div className="sidebar-divider"></div>
-        <span className="sidebar-label">People</span>
-        <div className="sidebar-section">
-          <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👤</span>All Users
-          </Link>
-          <Link to="/admin/staff" className="sidebar-link">
-            <span className="icon">👔</span>Staff View
-          </Link>
-          <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👥</span>Manage Staff
-          </Link>
-        </div>
-
-        <div className="sidebar-divider"></div>
-        <div className="sidebar-section">
-          <Link to="/home" className="sidebar-link">
-            <span className="icon">🌐</span>Back to Site
-          </Link>
-        </div>
-      </aside>
-
-      {/* ── MAIN CONTENT ── */}
-      <main className="dash-main">
-        <div className="dash-header">
+      <AdminSidebar />
+      <main className="dash-main w-100" style={{ padding: '2rem' }}>
+        <div className="d-flex justify-content-between align-items-center mb-4">
           <div>
-            <div className="dash-title">🏪 Manage Partner Garages</div>
-            <div className="dash-subtitle">Register and configure service partner workshops</div>
+            <h2 className="fw-bold text-dark mb-1" style={{ fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Partner Garages</h2>
+            <p className="text-muted mb-0">Manage registered service centers, ratings, and commissions.</p>
           </div>
-          <button onClick={handleOpenAddModal} className="btn-primary-garro py-2 px-4 fw-bold shadow-sm" style={{ borderRadius: '10px' }}>
-            + Add New Garage
+          <button 
+            onClick={handleOpenAddModal}
+            className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2"
+            style={{ borderRadius: '12px', fontWeight: 600, background: 'linear-gradient(135deg,#ff5c1a,#f97316)', border: 'none', boxShadow: '0 4px 12px rgba(255,92,26,0.3)' }}
+          >
+            <span style={{ fontSize: '1.2rem' }}>+</span> Register Garage
           </button>
         </div>
 

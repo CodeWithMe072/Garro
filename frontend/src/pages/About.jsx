@@ -1,7 +1,9 @@
 import React from 'react';
 import { BadgeCheck, Truck, Shield } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const About = () => {
+  const { t } = useLanguage();
   return (
     <>
       {/* Hero */}
@@ -9,18 +11,18 @@ const About = () => {
         <div className="container">
           <div className="row align-items-center g-5">
             <div className="col-lg-7">
-              <span className="section-tag">Our Story</span>
+              <span className="section-tag" dir="auto">{t('about_story')}</span>
               <h1 className="fw-bold mt-2 mb-4" style={{ fontFamily: "'Poppins', sans-serif", fontSize: 'clamp(1.8rem,4vw,2.8rem)', color: 'white', lineHeight: 1.2, letterSpacing: '-.02em' }}>
-                The Digital Standard for<br/>
-                <span style={{ background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                  Trusted Automotive Service.
+                <span dir="auto">{t('about_hero_title1')}</span><br/>
+                <span dir="auto" style={{ background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                  {t('about_hero_title2')}
                 </span>
               </h1>
-              <p style={{ color: 'rgba(255,255,255,.6)', fontSize: '15px', lineHeight: 1.8, fontFamily: "'Poppins', sans-serif", maxWidth: '580px' }}>
-                Garro began with a singular mission: to simplify vehicle care. We operate as the premium marketplace connecting car owners with transparent, upfront pricing, frictionless logistics including doorstep pickup, and comprehensive real-time updates.
+              <p dir="auto" style={{ color: 'rgba(255,255,255,.6)', fontSize: '15px', lineHeight: 1.8, fontFamily: "'Poppins', sans-serif", maxWidth: '580px' }}>
+                {t('about_hero_desc1')}
               </p>
-              <p style={{ color: 'rgba(255,255,255,.5)', fontSize: '14px', lineHeight: 1.8, fontFamily: "'Poppins', sans-serif", maxWidth: '580px', marginTop: '12px' }}>
-                Our platform currently serves Dubai and is expanding across the UAE. Whether you need diagnostics, major repairs, aesthetics, or roadside assistance — Garro has got you covered.
+              <p dir="auto" style={{ color: 'rgba(255,255,255,.5)', fontSize: '14px', lineHeight: 1.8, fontFamily: "'Poppins', sans-serif", maxWidth: '580px', marginTop: '12px' }}>
+                {t('about_hero_desc2')}
               </p>
             </div>
             <div className="col-lg-5 text-center d-none d-lg-block">
@@ -65,40 +67,40 @@ const About = () => {
       <section className="py-5 bg-white">
         <div className="container">
           <div className="text-center mb-5">
-            <span className="section-tag">What We Stand For</span>
-            <h2 className="fw-bold mt-2" style={{ fontFamily: "'Poppins', sans-serif" }}>Our Values</h2>
+            <span className="section-tag" dir="auto">{t('about_values_tag')}</span>
+            <h2 className="fw-bold mt-2" style={{ fontFamily: "'Poppins', sans-serif" }} dir="auto">{t('about_values_title')}</h2>
           </div>
           <div className="row g-4">
             <div className="col-md-4">
               <div className="values-card">
                 <div className="values-icon"><BadgeCheck size={28} /></div>
-                <h5 className="fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }}>Upfront, Verified Trust &amp; Transparency</h5>
+                <h5 className="fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }} dir="auto">{t('about_val1_title')}</h5>
                 <ul className="text-muted mt-3" style={{ fontSize: '13.5px', lineHeight: 1.9, fontFamily: "'Poppins', sans-serif", paddingLeft: '18px' }}>
-                  <li>Detailed quote provided for services, no surprises on pricing.</li>
-                  <li>Receive a final, transparent digital inspection report after every service.</li>
-                  <li>View and select garages based on certified ratings and customer reviews.</li>
+                  <li dir="auto">{t('about_val1_1')}</li>
+                  <li dir="auto">{t('about_val1_2')}</li>
+                  <li dir="auto">{t('about_val1_3')}</li>
                 </ul>
               </div>
             </div>
             <div className="col-md-4">
               <div className="values-card">
                 <div className="values-icon"><Truck size={28} /></div>
-                <h5 className="fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }}>Frictionless Dispatch &amp; Live Logistics</h5>
+                <h5 className="fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }} dir="auto">{t('about_val2_title')}</h5>
                 <ul className="text-muted mt-3" style={{ fontSize: '13.5px', lineHeight: 1.9, fontFamily: "'Poppins', sans-serif", paddingLeft: '18px' }}>
-                  <li>Seamless scheduling of service times and dispatch, supported 09:00 AM – 06:00 PM (Mon–Sat).</li>
-                  <li>Choose from Free Doorstep Pickup or Self-Drop options.</li>
-                  <li>Track your vehicle's journey and service status through your digital portal.</li>
+                  <li dir="auto">{t('about_val2_1')}</li>
+                  <li dir="auto">{t('about_val2_2')}</li>
+                  <li dir="auto">{t('about_val2_3')}</li>
                 </ul>
               </div>
             </div>
             <div className="col-md-4">
               <div className="values-card">
                 <div className="values-icon"><Shield size={28} /></div>
-                <h5 className="fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }}>100% Certified Garages &amp; Handpicked Experts</h5>
+                <h5 className="fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }} dir="auto">{t('about_val3_title')}</h5>
                 <ul className="text-muted mt-3" style={{ fontSize: '13.5px', lineHeight: 1.9, fontFamily: "'Poppins', sans-serif", paddingLeft: '18px' }}>
-                  <li>Garro partners exclusively with Dubai's trusted car service marketplaces for unparalleled quality.</li>
-                  <li>Every vehicle undergoes a comprehensive Digitally Scanned Inspection.</li>
-                  <li>Trust verified, handpicked technicians with proven track records for your specific vehicle brand.</li>
+                  <li dir="auto">{t('about_val3_1')}</li>
+                  <li dir="auto">{t('about_val3_2')}</li>
+                  <li dir="auto">{t('about_val3_3')}</li>
                 </ul>
               </div>
             </div>

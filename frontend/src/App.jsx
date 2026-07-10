@@ -154,17 +154,17 @@ const App = () => {
             } />
             <Route path="/admin/customers" element={
               <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <AdminCustomers />
+                <PageLayout><AdminCustomers /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/complaints" element={
               <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <AdminComplaints />
+                <PageLayout><AdminComplaints /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/quote-builder" element={
               <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <AdminQuoteBuilder />
+                <PageLayout><AdminQuoteBuilder /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/create-staff" element={

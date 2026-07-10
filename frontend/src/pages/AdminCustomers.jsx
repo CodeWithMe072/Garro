@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import AdminSidebar from '../components/AdminSidebar';
 
 const AdminCustomers = () => {
   const [users, setUsers] = useState([]);
@@ -75,29 +76,14 @@ const AdminCustomers = () => {
   };
 
   return (
-    <div style={{
-      background: '#0f172a',
-      minHeight: '100vh',
-      color: '#f8fafc',
-      padding: '40px 20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
-        {/* Navigation */}
-        <div style={{ marginBottom: '24px' }}>
-          <button onClick={() => navigate('/admin')} style={{
-            background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline'
-          }}>
-            ← Return to Admin Dashboard
-          </button>
-        </div>
-
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px', letterSpacing: '-0.025em' }}>
+    <div className="dash-wrapper">
+      <AdminSidebar />
+      <main className="dash-main w-100" style={{ padding: '2rem' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px', letterSpacing: '-0.025em', color: '#0f172a' }}>
           👥 Customer Directory &amp; History
         </h1>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '450px 1fr', gap: '30px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '30px' }}>
           
           {/* Left Column: Search & Customers list */}
           <div>
@@ -108,19 +94,19 @@ const AdminCustomers = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{
-                  width: '100%', padding: '12px 16px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: 'white', fontSize: '14px', outline: 'none'
+                  width: '100%', padding: '12px 16px', background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', fontSize: '14px', outline: 'none'
                 }}
               />
             </div>
 
-            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', color: '#94a3b8' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', color: '#64748b' }}>
               Registered Customers ({users.length})
             </h3>
 
             {loading ? (
               <p style={{ color: '#64748b' }}>Searching users...</p>
             ) : users.length === 0 ? (
-              <div style={{ background: '#1e293b', borderRadius: '16px', padding: '32px', textAlign: 'center', color: '#64748b' }}>
+              <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '32px', textAlign: 'center', color: '#64748b' }}>
                 No customer records found.
               </div>
             ) : (
@@ -130,17 +116,18 @@ const AdminCustomers = () => {
                     key={u._id}
                     onClick={() => handleSelectUser(u)}
                     style={{
-                      background: selectedUser?._id === u._id ? 'rgba(249, 115, 22, 0.08)' : '#1e293b',
-                      border: selectedUser?._id === u._id ? '1.5px solid #f97316' : '1.5px solid rgba(255,255,255,0.04)',
+                      background: selectedUser?._id === u._id ? 'rgba(249, 115, 22, 0.08)' : '#ffffff',
+                      border: selectedUser?._id === u._id ? '1.5px solid #f97316' : '1.5px solid #e2e8f0',
                       borderRadius: '14px',
                       padding: '16px',
                       cursor: 'pointer',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
                     }}
                   >
-                    <h4 style={{ fontSize: '15px', fontWeight: '700', margin: '0 0 4px' }}>{u.name}</h4>
-                    <p style={{ color: '#94a3b8', fontSize: '12.5px', margin: '0 0 4px' }}>📧 {u.email}</p>
-                    <p style={{ color: '#94a3b8', fontSize: '12.5px', margin: 0 }}>📞 {u.phone}</p>
+                    <h4 style={{ fontSize: '15px', fontWeight: '700', margin: '0 0 4px', color: '#0f172a' }}>{u.name}</h4>
+                    <p style={{ color: '#64748b', fontSize: '12.5px', margin: '0 0 4px' }}>📧 {u.email}</p>
+                    <p style={{ color: '#64748b', fontSize: '12.5px', margin: 0 }}>📞 {u.phone}</p>
                   </div>
                 ))}
               </div>
@@ -149,18 +136,20 @@ const AdminCustomers = () => {
 
           {/* Right Column: Customer Dossier */}
           <div style={{
-            background: '#1e293b',
+            background: '#ffffff',
             borderRadius: '20px',
             padding: '32px',
-            border: '1px solid rgba(255,255,255,0.04)',
-            alignSelf: 'start'
+            border: '1.5px solid #e2e8f0',
+            alignSelf: 'start',
+            color: '#0f172a',
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
           }}>
             {selectedUser ? (
               <div>
                 <h2 style={{ fontSize: '24px', fontWeight: '800', marginBottom: '8px' }}>
                   {selectedUser.name}
                 </h2>
-                <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '16px' }}>
+                <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
                   Customer ID: #{selectedUser._id} &nbsp;|&nbsp; Joined: {new Date(selectedUser.createdAt).toLocaleDateString()}
                 </p>
 
@@ -178,9 +167,9 @@ const AdminCustomers = () => {
                       ) : (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                           {userVehicles.map(v => (
-                            <div key={v._id} style={{ background: '#0f172a', padding: '16px', borderRadius: '12px' }}>
-                              <strong style={{ fontSize: '14px' }}>{v.make} {v.model}</strong>
-                              <div style={{ fontSize: '12.5px', color: '#94a3b8', marginTop: '4px' }}>
+                            <div key={v._id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                              <strong style={{ fontSize: '14px', color: '#0f172a' }}>{v.make} {v.model}</strong>
+                              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '4px' }}>
                                 Year: {v.year} <br />
                                 Plate: {v.registrationNumber}
                               </div>
@@ -200,11 +189,11 @@ const AdminCustomers = () => {
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                           {userRequests.map(r => (
-                            <div key={r._id} style={{ background: '#0f172a', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div key={r._id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0' }}>
                               <div>
-                                <span style={{ fontSize: '11px', color: '#94a3b8' }}>#{r._id.slice(-6).toUpperCase()} — {new Date(r.createdAt).toLocaleDateString()}</span>
-                                <strong style={{ display: 'block', fontSize: '14px', marginTop: '2px' }}>{(r.subCategory || r.serviceType)?.replace(/_/g, ' ').toUpperCase()}</strong>
-                                <span style={{ fontSize: '13px', color: '#cbd5e1' }}>{r.description}</span>
+                                <span style={{ fontSize: '11px', color: '#64748b' }}>#{r._id.slice(-6).toUpperCase()} — {new Date(r.createdAt).toLocaleDateString()}</span>
+                                <strong style={{ display: 'block', fontSize: '14px', marginTop: '2px', color: '#0f172a' }}>{(r.subCategory || r.serviceType)?.replace(/_/g, ' ').toUpperCase()}</strong>
+                                <span style={{ fontSize: '13px', color: '#475569' }}>{r.description}</span>
                               </div>
                               <span style={{
                                 background: r.status === 'completed' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(249,115,22,0.1)',
@@ -230,8 +219,7 @@ const AdminCustomers = () => {
           </div>
 
         </div>
-
-      </div>
+      </main>
     </div>
   );
 };

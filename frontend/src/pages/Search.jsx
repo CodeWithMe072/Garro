@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Search as SearchIcon, ArrowRight, Star, MapPin, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import AdminSidebar from '../components/AdminSidebar';
 
 const mockGarages = [
   { id: 1, name: 'SuperTech Auto Garage', area: 'Al Quoz, Dubai', rating: 4.8, reviews: 124, verified: true },
@@ -9,6 +11,7 @@ const mockGarages = [
 ];
 
 const Search = () => {
+  const { user } = useAuth();
   const [query, setQuery] = useState('');
 
   const filtered = mockGarages.filter(g => 
@@ -16,8 +19,10 @@ const Search = () => {
     g.area.toLowerCase().includes(query.toLowerCase())
   );
 
-  return (
-    <div style={{ background: '#f8fafc', minHeight: 'calc(100vh - var(--nav-h))' }}>
+  const isAdmin = ['manager', 'superadmin', 'admin'].includes(user?.role);
+
+  const renderContent = () => (
+    <div style={{ background: '#f8fafc', minHeight: 'calc(100vh - var(--nav-h))', width: '100%' }}>
       {/* Search Header */}
       <div style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '40px 0 32px' }}>
         <div className="container text-center">
@@ -103,8 +108,20 @@ const Search = () => {
           </div>
         )}
       </div>
-    </div>
   );
+
+  if (isAdmin) {
+    return (
+      <div className="dash-wrapper">
+        <AdminSidebar />
+        <main className="dash-main w-100" style={{ padding: '0 2rem' }}>
+          {renderContent()}
+        </main>
+      </div>
+    );
+  }
+
+  return renderContent();
 };
 
 export default Search;

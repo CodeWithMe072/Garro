@@ -2,13 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
 import Chart from 'chart.js/auto';
 import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
+import AdminSidebar from '../components/AdminSidebar';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { toast } = useNotification();
+  const { t } = useLanguage();
   const revenueChartRef = useRef(null);
   const statusChartRef = useRef(null);
 
@@ -429,68 +432,14 @@ const AdminDashboard = () => {
   return (
     <div className="dash-wrapper">
       {/* ── SIDEBAR ── */}
-      <aside className="dash-sidebar">
-        <span className="sidebar-label">Overview</span>
-        <div className="sidebar-section">
-          <Link to="/admin" className="sidebar-link active">
-            <span className="icon">📊</span>Dashboard
-          </Link>
-        </div>
-
-        <span className="sidebar-label">Operations</span>
-        <div className="sidebar-section">
-          <Link to="/admin/manage-garages" className="sidebar-link">
-            <span className="icon">🏪</span>Manage Garages
-          </Link>
-          <Link to="/search" className="sidebar-link">
-            <span className="icon">🔍</span>Find Garages
-          </Link>
-          <Link to="/admin/catalog" className="sidebar-link">
-            <span className="icon">⚙️</span>System Catalog
-          </Link>
-          <Link to="/admin/quote-builder" className="sidebar-link">
-            <span className="icon">💰</span>Quote Builder
-          </Link>
-          <Link to="/admin/customers" className="sidebar-link">
-            <span className="icon">👥</span>Customer Search
-          </Link>
-          <Link to="/admin/complaints" className="sidebar-link">
-            <span className="icon">⚠️</span>Complaints
-          </Link>
-          <Link to="/my-bookings" className="sidebar-link">
-            <span className="icon">📋</span>Bookings
-            {stats.pending_bookings > 0 && <span className="sidebar-badge">{stats.pending_bookings}</span>}
-          </Link>
-        </div>
-
-        <div className="sidebar-divider"></div>
-        <span className="sidebar-label">People</span>
-        <div className="sidebar-section">
-          <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👤</span>All Users
-          </Link>
-          <Link to="/admin/staff" className="sidebar-link">
-            <span className="icon">👔</span>Staff View
-          </Link>
-          <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👥</span>Manage Staff
-          </Link>
-        </div>
-
-        <div className="sidebar-divider"></div>
-        <div className="sidebar-section">
-          <Link to="/home" className="sidebar-link">
-            <span className="icon">🌐</span>Back to Site
-          </Link>
-        </div>
-      </aside>
+      <AdminSidebar pendingBookings={stats.pending_bookings} />
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">
         <div className="dash-header">
           <div>
-            <div className="dash-title">Good Morning, {user?.firstName || 'Admin'} 👋</div>
-            <div className="dash-subtitle">Here's what's happening at Garro today</div>
+            <div className="dash-title"><span dir="auto">{t('good_morning')}</span>, {user?.firstName || 'Admin'} 👋</div>
+            <div className="dash-subtitle" dir="auto">{t('happening_today')}</div>
           </div>
         </div>
 
@@ -499,61 +448,61 @@ const AdminDashboard = () => {
           <div className="stat-card orange">
             <div className="stat-icon">🏪</div>
             <div className="stat-value">{stats.total_garages}</div>
-            <div className="stat-label">Active Garages</div>
+            <div className="stat-label">{t('active_garages')}</div>
           </div>
           <div className="stat-card blue">
             <div className="stat-icon">📅</div>
             <div className="stat-value">{stats.today_bookings}</div>
-            <div className="stat-label">Today's Bookings</div>
-            <div className="stat-sub">{stats.completed_today} completed</div>
+            <div className="stat-label">{t('todays_bookings')}</div>
+            <div className="stat-sub">{stats.completed_today} {t('completed')}</div>
           </div>
           <div className="stat-card yellow">
             <div className="stat-icon">⏳</div>
             <div className="stat-value" style={{ color: '#f59e0b' }}>{stats.pending_bookings}</div>
-            <div className="stat-label">Pending</div>
+            <div className="stat-label">{t('pending')}</div>
           </div>
           <div className="stat-card green">
             <div className="stat-icon">💰</div>
             <div className="stat-value" style={{ fontSize: '20px' }}>AED {stats.month_revenue}</div>
-            <div className="stat-label">Month Revenue</div>
-            <div className="stat-sub">AED {stats.week_revenue} this week</div>
+            <div className="stat-label">{t('month_revenue')}</div>
+            <div className="stat-sub">AED {stats.week_revenue} {t('this_week')}</div>
           </div>
           <div className="stat-card purple">
             <div className="stat-icon">👤</div>
             <div className="stat-value">{stats.total_users}</div>
-            <div className="stat-label">Customers</div>
-            <div className="stat-sub">{stats.total_staff} staff</div>
+            <div className="stat-label">{t('customers')}</div>
+            <div className="stat-sub">{stats.total_staff} {t('staff')}</div>
           </div>
           <div className="stat-card pink">
             <div className="stat-icon">⭐</div>
             <div className="stat-value">{stats.avg_rating}</div>
-            <div className="stat-label">Avg Rating</div>
-            <div className="stat-sub">{stats.new_reviews} new this week</div>
+            <div className="stat-label">{t('avg_rating')}</div>
+            <div className="stat-sub">{stats.new_reviews} {t('new_reviews')}</div>
           </div>
           <div className="stat-card red">
             <div className="stat-icon">💬</div>
             <div className="stat-value" style={{ color: '#ef4444' }}>{stats.unread_messages}</div>
-            <div className="stat-label">Unread Messages</div>
+            <div className="stat-label">{t('unread_messages')}</div>
           </div>
           <div className="stat-card teal">
             <div className="stat-icon">📋</div>
             <div className="stat-value">{stats.total_bookings}</div>
-            <div className="stat-label">Total Bookings</div>
+            <div className="stat-label">{t('total_bookings')}</div>
           </div>
         </div>
 
         {/* ── CHARTS ── */}
         <div className="charts-row">
           <div className="chart-card">
-            <h4>Revenue & Bookings — Last 6 Months</h4>
-            <div className="chart-sub">Completed bookings revenue trend</div>
+            <h4>{t('revenue_bookings')}</h4>
+            <div className="chart-sub">{t('revenue_trend')}</div>
             <div style={{ height: '200px' }}>
               <canvas ref={revenueChartRef}></canvas>
             </div>
           </div>
           <div className="chart-card">
-            <h4>Booking Status</h4>
-            <div className="chart-sub">Current distribution</div>
+            <h4>{t('booking_status')}</h4>
+            <div className="chart-sub">{t('current_distribution')}</div>
             <div style={{ height: '200px' }}>
               <canvas ref={statusChartRef}></canvas>
             </div>
@@ -564,8 +513,8 @@ const AdminDashboard = () => {
         <div className="data-row">
           <div className="data-card">
             <div className="data-head">
-              <h4>🕐 Recent Bookings</h4>
-              <a href="#">View all →</a>
+              <h4>🕐 {t('recent_bookings')}</h4>
+              <a href="#">{t('view_all')} →</a>
             </div>
             <table className="g-table">
               <tbody>

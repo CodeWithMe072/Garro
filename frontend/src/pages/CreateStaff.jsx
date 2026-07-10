@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import AdminSidebar from '../components/AdminSidebar';
 
 const CreateStaff = () => {
   const navigate = useNavigate();
@@ -60,16 +61,14 @@ const CreateStaff = () => {
   };
 
   return (
-    <div className="page-wrap">
-      <div className="card">
-        <div className="card-head">
-          <Link to="/admin/manage-staff" className="back">
-            <span className="material-icons-round" style={{ fontSize: '16px' }}>arrow_back</span> 
-            Back to Staff Management
-          </Link>
-          <h1>👔 Create Staff Account</h1>
-          <p>Create a new staff member account with immediate access.</p>
-        </div>
+    <div className="dash-wrapper">
+      <AdminSidebar />
+      <main className="dash-main w-100" style={{ padding: '2rem' }}>
+        <div className="card">
+          <div className="card-head">
+            <h1>👔 Create Staff Account</h1>
+            <p>Create a new staff member account with immediate access.</p>
+          </div>
 
         <div className="card-body">
           <div className="info-box">
@@ -173,7 +172,8 @@ const CreateStaff = () => {
           </form>
         </div>
       </div>
-    </div>
+    </main>
+  </div>
   );
 };
 

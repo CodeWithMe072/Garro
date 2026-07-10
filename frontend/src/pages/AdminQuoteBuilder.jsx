@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import AdminSidebar from '../components/AdminSidebar';
 
 const AdminQuoteBuilder = () => {
   const [requests, setRequests] = useState([]);
@@ -99,40 +100,25 @@ const AdminQuoteBuilder = () => {
   const total = parseFloat((subtotal + serviceFee + vat).toFixed(2));
 
   return (
-    <div style={{
-      background: '#0f172a',
-      minHeight: '100vh',
-      color: '#f8fafc',
-      padding: '40px 20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
-        {/* Navigation */}
-        <div style={{ marginBottom: '24px' }}>
-          <button onClick={() => navigate('/admin')} style={{
-            background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline'
-          }}>
-            ← Return to Admin Dashboard
-          </button>
-        </div>
-
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px', letterSpacing: '-0.025em' }}>
-          🛠️ Admin Quote Builder
+    <div className="dash-wrapper">
+      <AdminSidebar />
+      <main className="dash-main w-100" style={{ padding: '2rem' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px', letterSpacing: '-0.025em', color: '#0f172a' }}>
+          🛠_ Admin Quote Builder
         </h1>
 
         <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '30px' }}>
           
           {/* Left: Pending Requests */}
           <div>
-            <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px', color: '#0f172a' }}>
               Pending Quote Actions
             </h3>
 
             {loading ? (
               <p style={{ color: '#64748b' }}>Loading requests...</p>
             ) : requests.length === 0 ? (
-              <div style={{ background: '#1e293b', borderRadius: '16px', padding: '40px', textAlign: 'center', color: '#64748b' }}>
+              <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '40px', textAlign: 'center', color: '#64748b' }}>
                 No requests currently require quotes.
               </div>
             ) : (
@@ -145,16 +131,17 @@ const AdminQuoteBuilder = () => {
                       setSelectedGarageId(r.garageId?._id || r.garageId || '');
                     }}
                     style={{
-                      background: selectedReq?._id === r._id ? 'rgba(249, 115, 22, 0.08)' : '#1e293b',
-                      border: selectedReq?._id === r._id ? '1.5px solid #f97316' : '1.5px solid rgba(255,255,255,0.04)',
+                      background: selectedReq?._id === r._id ? 'rgba(249, 115, 22, 0.08)' : '#ffffff',
+                      border: selectedReq?._id === r._id ? '1.5px solid #f97316' : '1.5px solid #e2e8f0',
                       borderRadius: '16px',
                       padding: '20px',
                       cursor: 'pointer',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontWeight: '700', fontSize: '14px' }}>
+                      <span style={{ fontWeight: '700', fontSize: '14px', color: '#0f172a' }}>
                         #{r._id.slice(-6).toUpperCase()}
                       </span>
                       <span style={{
@@ -164,11 +151,11 @@ const AdminQuoteBuilder = () => {
                       </span>
                     </div>
 
-                    <p style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: '600', color: '#cbd5e1' }}>
+                    <p style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: '600', color: '#475569' }}>
                       {r.vehicleId ? `${r.vehicleId.make} ${r.vehicleId.model}` : 'Unknown Vehicle'}
                     </p>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b' }}>
                       <span>Client: {r.userId?.name || 'Customer'}</span>
                       <span>{new Date(r.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -178,31 +165,33 @@ const AdminQuoteBuilder = () => {
             )}
           </div>
 
-          {/* Right: Builder Console */}
+          {/* Right: Build Form */}
           <div style={{
-            background: '#1e293b',
+            background: '#ffffff',
             borderRadius: '20px',
             padding: '32px',
-            border: '1px solid rgba(255,255,255,0.04)',
-            alignSelf: 'start'
+            border: '1.5px solid #e2e8f0',
+            alignSelf: 'start',
+            color: '#0f172a',
+            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
           }}>
             {selectedReq ? (
               <div>
-                <h3 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '24px', color: '#0f172a' }}>
                   Generate Quote for Request #{selectedReq._id.slice(-6).toUpperCase()}
                 </h3>
 
                 {/* Details grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '32px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '32px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '20px' }}>
                   <div>
-                    <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>Vehicle</h5>
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>
+                    <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Vehicle</h5>
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>
                       {selectedReq.vehicleId ? `${selectedReq.vehicleId.make} ${selectedReq.vehicleId.model} (${selectedReq.vehicleId.year})` : 'N/A'}
                     </p>
                   </div>
                   <div>
-                    <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '6px' }}>Customer</h5>
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>
+                    <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Customer</h5>
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>
                       {selectedReq.userId?.name || 'N/A'} ({selectedReq.userId?.phone || 'N/A'})
                     </p>
                   </div>
@@ -211,15 +200,16 @@ const AdminQuoteBuilder = () => {
                 {/* Form */}
                 <form onSubmit={handleBuildQuote}>
                   <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>
+                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: '#475569' }}>
                       Assign Partner Garage
                     </label>
                     <select
                       value={selectedGarageId}
                       onChange={(e) => setSelectedGarageId(e.target.value)}
-                      required
                       style={{
-                        width: '100%', padding: '12px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white'
+                        width: '100%', padding: '12px 16px', borderRadius: '10px',
+                        background: '#ffffff', border: '1.5px solid #e2e8f0', color: '#0f172a',
+                        fontSize: '14px', outline: 'none'
                       }}
                     >
                       <option value="">-- Choose Partner Garage --</option>
@@ -231,8 +221,8 @@ const AdminQuoteBuilder = () => {
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>
-                        Estimated Parts Cost (AED)
+                      <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px', fontWeight: '600' }}>
+                        Spare Parts Cost (AED)
                       </label>
                       <input
                         type="number"
@@ -241,13 +231,13 @@ const AdminQuoteBuilder = () => {
                         required
                         placeholder="0.00"
                         style={{
-                          width: '100%', padding: '12px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white'
+                          width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '10px', color: '#0f172a'
                         }}
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '13px', color: '#94a3b8', marginBottom: '8px' }}>
-                        Estimated Labor Cost (AED)
+                      <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px', fontWeight: '600' }}>
+                        Labor / Repair Fee (AED)
                       </label>
                       <input
                         type="number"
@@ -256,30 +246,30 @@ const AdminQuoteBuilder = () => {
                         required
                         placeholder="0.00"
                         style={{
-                          width: '100%', padding: '12px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px', color: 'white'
+                          width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '10px', color: '#0f172a'
                         }}
                       />
                     </div>
                   </div>
 
                   {/* Pricing Sheet Preview */}
-                  <div style={{ background: '#0f172a', borderRadius: '16px', padding: '24px', marginBottom: '30px' }}>
-                    <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#94a3b8', marginBottom: '14px' }}>
+                  <div style={{ background: '#f8fafc', borderRadius: '16px', padding: '24px', border: '1.5px solid #e2e8f0' }}>
+                    <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#64748b', marginBottom: '14px' }}>
                       Tax Invoice breakdown preview
                     </h4>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '14px', color: '#cbd5e1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '14px', color: '#64748b' }}>
                       <span>Subtotal Parts + Labor</span>
                       <span>AED {subtotal.toFixed(2)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '14px', color: '#cbd5e1' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '14px', color: '#64748b' }}>
                       <span>Platform Service Fee (10%)</span>
                       <span>AED {serviceFee.toFixed(2)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '14px', color: '#cbd5e1', borderBottom: '1px dashed rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '14px', color: '#64748b', borderBottom: '1px dashed #cbd5e1', paddingBottom: '10px' }}>
                       <span>VAT (5%)</span>
                       <span>AED {vat.toFixed(2)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 0', fontSize: '18px', fontWeight: '800' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 0', fontSize: '18px', fontWeight: '800', color: '#0f172a' }}>
                       <span>Total Customer Due</span>
                       <span style={{ color: '#10b981' }}>AED {total.toFixed(2)}</span>
                     </div>
@@ -289,6 +279,7 @@ const AdminQuoteBuilder = () => {
                     type="submit"
                     disabled={submitting}
                     style={{
+                      marginTop: '20px',
                       width: '100%',
                       padding: '14px',
                       background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
@@ -314,8 +305,7 @@ const AdminQuoteBuilder = () => {
           </div>
 
         </div>
-
-      </div>
+      </main>
     </div>
   );
 };

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import AdminSidebar from '../components/AdminSidebar';
 
 const CatalogManagement = () => {
   const { user } = useAuth();
@@ -327,52 +328,7 @@ const CatalogManagement = () => {
 
   return (
     <div className="dash-wrapper">
-      {/* ── SIDEBAR ── */}
-      <aside className="dash-sidebar">
-        <span className="sidebar-label">Overview</span>
-        <div className="sidebar-section">
-          <Link to="/admin" className="sidebar-link">
-            <span className="icon">📊</span>Dashboard
-          </Link>
-        </div>
-
-        <span className="sidebar-label">Operations</span>
-        <div className="sidebar-section">
-          <Link to="/admin/manage-garages" className="sidebar-link">
-            <span className="icon">🏪</span>Manage Garages
-          </Link>
-          <Link to="/search" className="sidebar-link">
-            <span className="icon">🔍</span>Find Garages
-          </Link>
-          <Link to="/admin/catalog" className="sidebar-link active">
-            <span className="icon">⚙️</span>System Catalog
-          </Link>
-          <Link to="/my-bookings" className="sidebar-link">
-            <span className="icon">📋</span>Bookings
-          </Link>
-        </div>
-
-        <div className="sidebar-divider"></div>
-        <span className="sidebar-label">People</span>
-        <div className="sidebar-section">
-          <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👤</span>All Users
-          </Link>
-          <Link to="/admin/staff" className="sidebar-link">
-            <span className="icon">👔</span>Staff View
-          </Link>
-          <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👥</span>Manage Staff
-          </Link>
-        </div>
-
-        <div className="sidebar-divider"></div>
-        <div className="sidebar-section">
-          <Link to="/home" className="sidebar-link">
-            <span className="icon">🌐</span>Back to Site
-          </Link>
-        </div>
-      </aside>
+      <AdminSidebar />
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">

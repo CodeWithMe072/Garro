@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
+import AdminSidebar from '../components/AdminSidebar';
 
   const MyBookings = () => {
   const { user } = useAuth();
@@ -371,8 +372,10 @@ import CustomDropdown from '../components/CustomDropdown';
     );
   }
 
-  return (
-    <div className="container py-5" style={{ minHeight: 'calc(100vh - 80px)' }}>
+  const isAdmin = ['manager', 'superadmin', 'admin'].includes(user?.role);
+
+  const renderContent = () => (
+    <div className="container py-5" style={{ minHeight: 'calc(100vh - 80px)', width: '100%' }}>
       <h3 className="fw-bold mb-4">My Bookings</h3>
 
       {bookings.length > 0 ? (
@@ -787,6 +790,19 @@ import CustomDropdown from '../components/CustomDropdown';
       )}
     </div>
   );
+
+  if (isAdmin) {
+    return (
+      <div className="dash-wrapper">
+        <AdminSidebar pendingBookings={bookings.filter(b => b.status === 'new').length} />
+        <main className="dash-main w-100" style={{ padding: '0 2rem' }}>
+          {renderContent()}
+        </main>
+      </div>
+    );
+  }
+
+  return renderContent();
 };
 
 export default MyBookings;

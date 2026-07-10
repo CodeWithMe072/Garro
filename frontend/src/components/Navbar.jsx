@@ -100,44 +100,47 @@ const Navbar = () => {
 
         {/* Nav Links */}
         <ul className={`g-nav-links ${isMobileMenuOpen ? 'open' : ''}`} id="navLinks">
-          {isAuthenticated ? (
+          {/* Public Links Always Visible */}
+          <li>
+            <Link to={isAuthenticated ? "/home" : "/"} className={isActive(isAuthenticated ? '/home' : '/')}>
+              {t('home')}
+            </Link>
+          </li>
+          <li>
+            <Link to="/services" className={isActive('/services')}>
+              <span dir="auto">{t('our_services')}</span>
+            </Link>
+          </li>
+
+          <li>
+            <Link to="/about" className={isActive('/about')}>
+              <span dir="auto">{t('nav_about') || 'About'}</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/contact" className={isActive('/contact')}>
+              <span dir="auto">{t('contact_us')}</span>
+            </Link>
+          </li>
+
+          {/* Authenticated Links */}
+          {isAuthenticated && (
             <>
-              <li>
-                <Link to="/home" className={isActive('/home')}>
-                  <Home size={15} /> Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/insurance" className={isActive('/insurance')}>
-                  <Shield size={15} /> {t('insurance')}
-                </Link>
-              </li>
               {user?.role === 'customer' && (
-                <>
-                  <li>
-                    <Link to="/roadside" className={isActive('/roadside')}>
-                      <Truck size={15} /> {t('roadside')}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/end-of-life" className={isActive('/end-of-life')}>
-                      <Recycle size={15} /> {t('scrap')}
-                    </Link>
-                  </li>
-                </>
+                <li>
+                  <Link to="/roadside" className={isActive('/roadside')}>
+                    <span dir="auto">{t('roadside')}</span>
+                  </Link>
+                </li>
               )}
               {['staff', 'manager', 'superadmin'].includes(user?.role) && (
                 <li>
                   <Link to={user?.role === 'staff' ? '/admin/staff' : '/admin'} className={location.pathname.includes('admin') ? 'active' : ''}>
-                    <Zap size={15} /> {t('dashboard')}
+                    <Zap size={15} /> <span dir="auto">{t('dashboard')}</span>
                   </Link>
                 </li>
               )}
             </>
-          ) : (
-            <li>
-              <Link to="/"><Home size={15} /> {t('home')}</Link>
-            </li>
           )}
         </ul>
 

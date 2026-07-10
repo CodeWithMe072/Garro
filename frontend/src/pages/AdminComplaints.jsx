@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import AdminSidebar from '../components/AdminSidebar';
 
 const AdminComplaints = () => {
   const [complaints, setComplaints] = useState([]);
@@ -60,35 +61,20 @@ const AdminComplaints = () => {
   };
 
   return (
-    <div style={{
-      background: '#0f172a',
-      minHeight: '100vh',
-      color: '#f8fafc',
-      padding: '40px 20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        
-        {/* Navigation */}
-        <div style={{ marginBottom: '24px' }}>
-          <button onClick={() => navigate('/admin')} style={{
-            background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline'
-          }}>
-            ← Return to Admin Dashboard
-          </button>
-        </div>
-
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.025em' }}>
+    <div className="dash-wrapper">
+      <AdminSidebar />
+      <main className="dash-main w-100" style={{ padding: '2rem' }}>
+        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.025em', color: '#0f172a' }}>
           ⚠️ Customer Complaints Ledger
         </h1>
-        <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '32px' }}>
+        <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
           Track and resolve complaints raised by customers regarding jobs or helpers.
         </p>
 
         {loading ? (
           <p style={{ color: '#64748b' }}>Retrieving complaints...</p>
         ) : complaints.length === 0 ? (
-          <div style={{ background: '#1e293b', borderRadius: '16px', padding: '50px 20px', textAlign: 'center', color: '#64748b' }}>
+          <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '50px 20px', textAlign: 'center', color: '#64748b' }}>
             <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🎉</span>
             No customer complaints registered! High-quality operations.
           </div>
@@ -96,37 +82,38 @@ const AdminComplaints = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {complaints.map(c => (
               <div key={c._id} style={{
-                background: '#1e293b',
-                border: '1.5px solid rgba(255, 255, 255, 0.04)',
+                background: '#ffffff',
+                border: '1.5px solid #e2e8f0',
                 borderRadius: '16px',
                 padding: '24px',
                 display: 'flex',
                 justifyContent: 'space-between',
-                alignItems: 'start'
+                alignItems: 'start',
+                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
               }}>
                 <div style={{ flex: 1, marginRight: '24px' }}>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px' }}>
                     <span style={{
                       background: c.status === 'resolved' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                      color: c.status === 'resolved' ? '#10b981' : '#f87171',
+                      color: c.status === 'resolved' ? '#10b981' : '#ef4444',
                       borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase'
                     }}>
                       {c.status}
                     </span>
-                    <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
+                    <span style={{ fontSize: '12.5px', color: '#64748b' }}>
                       Submitted: {new Date(c.createdAt).toLocaleDateString()}
                     </span>
                   </div>
 
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 10px' }}>
+                  <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 10px', color: '#0f172a' }}>
                     {c.title}
                   </h3>
                   
-                  <p style={{ color: '#cbd5e1', fontSize: '14px', lineHeight: '1.5', margin: '0 0 16px' }}>
+                  <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.5', margin: '0 0 16px' }}>
                     {c.description}
                   </p>
 
-                  <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#94a3b8' }}>
+                  <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#64748b' }}>
                     <span>Client: <strong>{c.customerId?.name || 'Customer'}</strong> ({c.customerId?.email})</span>
                     {c.jobId && (
                       <span>Job Card: <strong>#{c.jobId.slice(-6).toUpperCase()}</strong></span>
@@ -158,8 +145,7 @@ const AdminComplaints = () => {
             ))}
           </div>
         )}
-
-      </div>
+      </main>
     </div>
   );
 };

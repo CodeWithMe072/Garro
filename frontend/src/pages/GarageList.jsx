@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CustomDropdown from '../components/CustomDropdown';
+import { useAuth } from '../context/AuthContext';
+import AdminSidebar from '../components/AdminSidebar';
 
 const cityOptions = [
   { label: 'All Cities', value: '' },
@@ -32,6 +34,7 @@ const sortOptions = [
 ];
 
 const GarageList = () => {
+  const { user } = useAuth();
   const [filter, setFilter] = useState({ city: '', service: '', pickup: '' });
   const [sort, setSort] = useState('rating');
   const [garages, setGarages] = useState([]);
@@ -104,8 +107,9 @@ const GarageList = () => {
     return 0;
   });
 
+  const isAdmin = ['manager', 'superadmin', 'admin'].includes(user?.role);
 
-  return (
+  const renderContent = () => (
     <div className="container-fluid px-0">
       <div className="row g-0">
         {/* Sidebar Filters */}
@@ -246,6 +250,19 @@ const GarageList = () => {
       </div>
     </div>
   );
+
+  if (isAdmin) {
+    return (
+      <div className="dash-wrapper">
+        <AdminSidebar />
+        <main className="dash-main w-100" style={{ padding: '0 2rem' }}>
+          {renderContent()}
+        </main>
+      </div>
+    );
+  }
+
+  return renderContent();
 };
 
 export default GarageList;
