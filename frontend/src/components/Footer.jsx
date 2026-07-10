@@ -2,6 +2,10 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import {
+  Facebook, Instagram, Linkedin, Twitter, MessageCircle,
+  ChevronRight, Phone, Mail, Clock, MapPin, Send
+} from 'lucide-react';
 
 const Footer = () => {
   const { isAuthenticated } = useAuth();
@@ -18,6 +22,46 @@ const Footer = () => {
     }
   };
 
+  const socials = [
+    { icon: Facebook, href: 'https://facebook.com', title: 'Facebook' },
+    { icon: Instagram, href: 'https://instagram.com', title: 'Instagram' },
+    { icon: Linkedin, href: 'https://linkedin.com', title: 'LinkedIn' },
+    { icon: MessageCircle, href: 'https://wa.me/97180042776', title: 'WhatsApp' },
+    { icon: Twitter, href: 'https://twitter.com', title: 'Twitter/X' },
+  ];
+
+  const quickLinks = [
+    { to: '/home', label: t('home') },
+    { to: '/insurance', label: t('insurance') },
+    { to: '/roadside', label: t('roadside') },
+    { to: '/end-of-life', label: t('scrap') },
+    { to: '/get-quote', label: t('get_quote') },
+    { to: '/my-requests', label: t('requests') },
+  ];
+
+  const serviceLinks = [
+    { to: '/get-quote', label: 'Car Service' },
+    { to: '/get-quote', label: 'Oil Change' },
+    { to: '/get-quote', label: 'Tyres & Batteries' },
+    { to: '/get-quote', label: 'Diagnostics' },
+    { to: '/roadside', label: 'Roadside Help' },
+    { to: '/get-quote', label: 'Car Detailing' },
+  ];
+
+  const supportLinks = [
+    { href: '#', label: 'Help Centre' },
+    { href: '#', label: 'How It Works' },
+    { href: '#', label: 'Terms of Service' },
+    { href: '#', label: 'Privacy Policy' },
+  ];
+
+  const contactItems = [
+    { icon: Phone, label: t('emergency_pickup'), value: '+971 50 123 4567', href: 'tel:+971501234567' },
+    { icon: Mail, label: null, value: 'hello@garro.ae', href: 'mailto:hello@garro.ae' },
+    { icon: Clock, label: null, value: '09:00 AM – 06:00 PM (Mon–Sat)', href: null },
+    { icon: MapPin, label: null, value: '1604, City Bay, Business Bay, Dubai, UAE', href: null },
+  ];
+
   return (
     <footer className="g-footer">
       <div className="container">
@@ -30,11 +74,11 @@ const Footer = () => {
               {t('footer_desc')}
             </p>
             <div className="g-social">
-              <a href="https://facebook.com" target="_blank" rel="noreferrer" title="Facebook"><span className="material-icons-round" style={{ fontSize: '18px' }}>facebook</span></a>
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" title="Instagram"><span className="material-icons-round" style={{ fontSize: '18px' }}>photo_camera</span></a>
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" title="LinkedIn"><span className="material-icons-round" style={{ fontSize: '18px' }}>work</span></a>
-              <a href="https://wa.me/97180042776" target="_blank" rel="noreferrer" title="WhatsApp"><span className="material-icons-round" style={{ fontSize: '18px' }}>chat</span></a>
-              <a href="https://twitter.com" target="_blank" rel="noreferrer" title="Twitter/X"><span className="material-icons-round" style={{ fontSize: '18px' }}>flutter_dash</span></a>
+              {socials.map(({ icon: Icon, href, title }) => (
+                <a key={title} href={href} target="_blank" rel="noreferrer" title={title}>
+                  <Icon size={18} />
+                </a>
+              ))}
             </div>
           </div>
 
@@ -42,12 +86,13 @@ const Footer = () => {
           <div className="col-lg-2 col-6">
             <h6>{t('quick_links')}</h6>
             <ul className="g-footer-links">
-              <li><Link to="/home"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>{t('home')}</Link></li>
-              <li><Link to="/insurance"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>{t('insurance')}</Link></li>
-              <li><Link to="/roadside"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>{t('roadside')}</Link></li>
-              <li><Link to="/end-of-life"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>{t('scrap')}</Link></li>
-              <li><Link to="/get-quote"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>{t('get_quote')}</Link></li>
-              <li><Link to="/my-requests"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>{t('requests')}</Link></li>
+              {quickLinks.map(({ to, label }) => (
+                <li key={label}>
+                  <Link to={to}>
+                    <ChevronRight size={14} />{label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -55,12 +100,13 @@ const Footer = () => {
           <div className="col-lg-2 col-6">
             <h6>{t('our_services')}</h6>
             <ul className="g-footer-links">
-              <li><Link to="/get-quote"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>Car Service</Link></li>
-              <li><Link to="/get-quote"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>Oil Change</Link></li>
-              <li><Link to="/get-quote"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>Tyres &amp; Batteries</Link></li>
-              <li><Link to="/get-quote"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>Diagnostics</Link></li>
-              <li><Link to="/roadside"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>Roadside Help</Link></li>
-              <li><Link to="/get-quote"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>Car Detailing</Link></li>
+              {serviceLinks.map(({ to, label }) => (
+                <li key={label}>
+                  <Link to={to}>
+                    <ChevronRight size={14} />{label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -68,12 +114,19 @@ const Footer = () => {
           <div className="col-lg-2 col-6">
             <h6>{t('support_title')}</h6>
             <ul className="g-footer-links">
-              <li><a href="#"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>Help Centre</a></li>
-              <li><a href="#"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>How It Works</a></li>
-              <li><a href="#"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>Terms of Service</a></li>
-              <li><a href="#"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>Privacy Policy</a></li>
+              {supportLinks.map(({ href, label }) => (
+                <li key={label}>
+                  <a href={href}>
+                    <ChevronRight size={14} />{label}
+                  </a>
+                </li>
+              ))}
               {isAuthenticated && (
-                <li><Link to="/my-requests"><span className="material-icons-round" style={{ fontSize: '15px' }}>chevron_right</span>{t('requests')}</Link></li>
+                <li>
+                  <Link to="/my-requests">
+                    <ChevronRight size={14} />{t('requests')}
+                  </Link>
+                </li>
               )}
             </ul>
           </div>
@@ -81,38 +134,41 @@ const Footer = () => {
           {/* Contact */}
           <div className="col-lg-3 col-6">
             <h6>{t('contact_us')}</h6>
-            <div className="g-footer-contact-item">
-              <span className="material-icons-round">phone</span>
-              <div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Poppins',sans-serif" }}>{t('emergency_pickup')}</div>
-                <a href="tel:+971501234567" style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '14px', fontWeight: '600', fontFamily: "'Poppins',sans-serif" }}>+971 50 123 4567</a>
+            {contactItems.map(({ icon: Icon, label, value, href }) => (
+              <div key={value} className="g-footer-contact-item">
+                <Icon size={16} />
+                <div>
+                  {label && (
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Poppins',sans-serif" }}>
+                      {label}
+                    </div>
+                  )}
+                  {href ? (
+                    <a href={href} style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '13.5px', fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                      {value}
+                    </a>
+                  ) : (
+                    <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: '13.5px' }}>{value}</span>
+                  )}
+                </div>
               </div>
-            </div>
-            <div className="g-footer-contact-item">
-              <span className="material-icons-round">email</span>
-              <a href="mailto:hello@garro.com" style={{ color: 'rgba(255,255,255,.55)', textDecoration: 'none', fontFamily: "'Poppins',sans-serif" }}>hello@garro.com</a>
-            </div>
-            <div className="g-footer-contact-item">
-              <span className="material-icons-round">schedule</span>
-              <span style={{ fontFamily: "'Poppins',sans-serif" }}>09:00 AM – 06:00 PM (Mon–Sat)</span>
-            </div>
-            <div className="g-footer-contact-item">
-              <span className="material-icons-round">location_on</span>
-              <span style={{ fontFamily: "'Poppins',sans-serif" }}>1604, City Bay, Business Bay<br/>Dubai, UAE</span>
-            </div>
+            ))}
+
             {/* Newsletter */}
             <div style={{ marginTop: '20px' }}>
-              <div style={{ fontSize: '12px', fontWeight: '700', color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px', fontFamily: "'Poppins',sans-serif" }}>{t('get_offers')}</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px', fontFamily: "'Poppins',sans-serif" }}>
+                {t('get_offers')}
+              </div>
               <form style={{ display: 'flex', gap: '8px' }} onSubmit={handleSubscribe}>
-                <input 
-                  type="email" 
-                  placeholder={t('your_email')} 
+                <input
+                  type="email"
+                  placeholder={t('your_email')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ flex: '1', background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '9px', padding: '9px 12px', color: 'white', fontSize: '13px', fontFamily: "'Poppins',sans-serif", outline: 'none' }} 
+                  style={{ flex: 1, background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '9px', padding: '9px 12px', color: 'white', fontSize: '13px', fontFamily: "'Poppins',sans-serif", outline: 'none' }}
                 />
-                <button type="submit" style={{ background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', border: 'none', borderRadius: '9px', padding: '9px 14px', cursor: 'pointer', transition: 'all .2s' }}>
-                  <span className="material-icons-round" style={{ fontSize: '18px', color: 'white' }}>send</span>
+                <button type="submit" style={{ background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', border: 'none', borderRadius: '9px', padding: '9px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}>
+                  <Send size={16} color="white" />
                 </button>
               </form>
               {showSuccess && (

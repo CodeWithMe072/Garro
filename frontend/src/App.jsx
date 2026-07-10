@@ -47,6 +47,9 @@ const GarageDashboard = React.lazy(() => import('./pages/GarageDashboard'));
 const GarageJobs = React.lazy(() => import('./pages/GarageJobs'));
 const GarageEarnings = React.lazy(() => import('./pages/GarageEarnings'));
 const MyVehicles = React.lazy(() => import('./pages/MyVehicles'));
+const MyInvoices = React.lazy(() => import('./pages/MyInvoices'));
+const MyQuotes = React.lazy(() => import('./pages/MyQuotes'));
+const BookingDetails = React.lazy(() => import('./pages/BookingDetails'));
 const AdminQuoteBuilder = React.lazy(() => import('./pages/AdminQuoteBuilder'));
 const AdminCustomers = React.lazy(() => import('./pages/AdminCustomers'));
 const AdminComplaints = React.lazy(() => import('./pages/AdminComplaints'));
@@ -100,6 +103,9 @@ const App = () => {
             <Route path="/track/:id" element={<ProtectedRoute><PageLayout><TrackRequest /></PageLayout></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><PageLayout><Profile /></PageLayout></ProtectedRoute>} />
             <Route path="/my-vehicles" element={<ProtectedRoute><PageLayout><MyVehicles /></PageLayout></ProtectedRoute>} />
+            <Route path="/my-invoices" element={<ProtectedRoute><PageLayout><MyInvoices /></PageLayout></ProtectedRoute>} />
+            <Route path="/my-quotes" element={<ProtectedRoute><PageLayout><MyQuotes /></PageLayout></ProtectedRoute>} />
+            <Route path="/booking/:id" element={<ProtectedRoute><PageLayout><BookingDetails /></PageLayout></ProtectedRoute>} />
             
             <Route path="/insurance" element={<ProtectedRoute><PageLayout><Insurance /></PageLayout></ProtectedRoute>} />
             <Route path="/insurance/:slug/quote" element={<ProtectedRoute><PageLayout><InsuranceQuote /></PageLayout></ProtectedRoute>} />
