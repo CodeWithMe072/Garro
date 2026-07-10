@@ -50,6 +50,7 @@ const MyVehicles = React.lazy(() => import('./pages/MyVehicles'));
 const AdminQuoteBuilder = React.lazy(() => import('./pages/AdminQuoteBuilder'));
 const AdminCustomers = React.lazy(() => import('./pages/AdminCustomers'));
 const AdminComplaints = React.lazy(() => import('./pages/AdminComplaints'));
+const AdminSettings = React.lazy(() => import('./pages/AdminSettings'));
 
 // Wrapper for pages with Navbar and Footer
 const PageLayout = ({ children }) => (
@@ -154,6 +155,11 @@ const App = () => {
             <Route path="/admin/complaints" element={
               <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
                 <AdminComplaints />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/settings" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <AdminSettings />
               </ProtectedRoute>
             } />
             <Route path="/admin/quote-builder" element={

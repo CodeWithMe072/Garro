@@ -5,8 +5,13 @@ const complaintSchema = new mongoose.Schema({
   customerId:     { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   description:    { type: String, required: true },
   status:         { type: String, enum: ['open','under_review','resolved','closed'], default: 'open' },
-  resolutionType: { type: String, enum: ['fix_at_garage','partial_refund','full_refund','compensation'] },
-  resolution:     { type: String }
+  resolution:     {
+    type:       { type: String, enum: ["refund", "compensation", "fix_at_garage", "replacement", "no_action"] },
+    amount:     { type: Number },
+    notes:      { type: String },
+    resolvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    resolvedAt: { type: Date }
+  }
 }, { timestamps: true });
 
 export default mongoose.model('Complaint', complaintSchema);

@@ -10,6 +10,7 @@ import rateLimit from 'express-rate-limit';
 import connectDB from './config/db.js';
 import Helper from './models/Helper.js';
 import HelperTracking from './models/HelperTracking.js';
+import { loadSettings } from './utils/settings.js';
 
 // Import Routes
 import authRoutes from './routes/auth.routes.js';
@@ -36,7 +37,9 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 // Database Connection
-connectDB();
+connectDB().then(() => {
+  loadSettings();
+});
 
 // CORS configuration supporting localhost & production frontend url
 app.use(cors({

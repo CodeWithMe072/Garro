@@ -213,6 +213,31 @@ const AdminDashboard = () => {
     }
   };
 
+  const downloadReport = async (reportType, format) => {
+    try {
+      const token = localStorage.getItem('token');
+      const endpoint = reportType === 'revenue' 
+        ? `${API_BASE}/api/admin/reports/revenue/export?format=${format}&months=6`
+        : `${API_BASE}/api/admin/reports/garages/export?format=${format}`;
+
+      const res = await fetch(endpoint, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to generate report export');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${reportType}_report.${format === 'xlsx' ? 'xlsx' : 'pdf'}`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+    } catch (err) {
+      console.error('Report export failed:', err);
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -457,6 +482,9 @@ const AdminDashboard = () => {
           <Link to="/admin/complaints" className="sidebar-link">
             <span className="icon">⚠️</span>Complaints
           </Link>
+          <Link to="/admin/settings" className="sidebar-link">
+            <span className="icon">⚙️</span>System Settings
+          </Link>
           <Link to="/my-bookings" className="sidebar-link">
             <span className="icon">📋</span>Bookings
             {stats.pending_bookings > 0 && <span className="sidebar-badge">{stats.pending_bookings}</span>}
@@ -545,16 +573,32 @@ const AdminDashboard = () => {
         {/* ── CHARTS ── */}
         <div className="charts-row">
           <div className="chart-card">
-            <h4>Revenue & Bookings — Last 6 Months</h4>
-            <div className="chart-sub">Completed bookings revenue trend</div>
-            <div style={{ height: '200px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+              <div>
+                <h4>Revenue & Bookings — Last 6 Months</h4>
+                <div className="chart-sub">Completed bookings revenue trend</div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => downloadReport('revenue', 'xlsx')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>Excel 📊</button>
+                <button onClick={() => downloadReport('revenue', 'pdf')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>PDF 📄</button>
+              </div>
+            </div>
+            <div style={{ height: '200px', marginTop: '12px' }}>
               <canvas ref={revenueChartRef}></canvas>
             </div>
           </div>
           <div className="chart-card">
-            <h4>Booking Status</h4>
-            <div className="chart-sub">Current distribution</div>
-            <div style={{ height: '200px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+              <div>
+                <h4>Booking Status</h4>
+                <div className="chart-sub">Current distribution</div>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => downloadReport('garages', 'xlsx')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>Garages Excel 📊</button>
+                <button onClick={() => downloadReport('garages', 'pdf')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>Garages PDF 📄</button>
+              </div>
+            </div>
+            <div style={{ height: '200px', marginTop: '12px' }}>
               <canvas ref={statusChartRef}></canvas>
             </div>
           </div>

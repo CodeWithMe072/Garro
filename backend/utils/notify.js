@@ -23,7 +23,8 @@ const STATUS_MESSAGES = {
   work_complete: (name) => `Hi ${name}, all repair work is complete! Your vehicle is being prepared for delivery.`,
   ready_for_delivery: (name) => `Hi ${name}, your vehicle is ready for delivery. Our helper will bring it to you shortly.`,
   delivered: (name) => `Hi ${name}, your vehicle has been delivered! Please check and confirm everything is good.`,
-  closed: (name, total) => `Hi ${name}, your invoice of AED ${total} is ready. Thank you for choosing Garro!`
+  closed: (name, total) => `Hi ${name}, your invoice of AED ${total} is ready. Thank you for choosing Garro!`,
+  complaint_resolved: (name, action) => `Hi ${name}, your complaint has been resolved. Resolution action: ${action.replace(/_/g, ' ')}.`
 };
 
 // Send Email via Resend
@@ -79,6 +80,7 @@ export const notifyCustomer = async (customer, eventType, data = {}) => {
     case 'quote_sent': message = msgFn(customer.name, data.cost); break;
     case 'quote_approved': message = msgFn(customer.name); break;
     case 'closed': message = msgFn(customer.name, data.total); break;
+    case 'complaint_resolved': message = msgFn(customer.name, data.actionType); break;
     default: message = msgFn(customer.name);
   }
 
