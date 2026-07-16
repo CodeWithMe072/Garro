@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+<<<<<<< HEAD
 import { useLanguage } from '../context/LanguageContext';
 import {
   LuLayoutDashboard,
@@ -20,6 +21,9 @@ import {
   LuChevronLeft,
   LuChevronRight
 } from 'react-icons/lu';
+=======
+import AdminSidebar from '../components/AdminSidebar';
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
 const CatalogManagement = () => {
   const { user } = useAuth();
@@ -356,6 +360,7 @@ const CatalogManagement = () => {
   };
 
   return (
+<<<<<<< HEAD
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
@@ -418,6 +423,10 @@ const CatalogManagement = () => {
           </Link>
         </div>
       </aside>
+=======
+    <div className="dash-wrapper">
+      <AdminSidebar />
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">

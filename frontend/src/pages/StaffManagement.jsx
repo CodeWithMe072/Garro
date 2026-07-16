@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+<<<<<<< HEAD
 import { 
   LuCalendarClock, 
   LuClipboardList, 
@@ -19,6 +20,9 @@ import {
   LuChevronRight
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
+=======
+import AdminSidebar from '../components/AdminSidebar';
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
 const StaffManagement = () => {
   const [helpers, setHelpers] = useState([]);
@@ -173,6 +177,7 @@ const StaffManagement = () => {
   }
 
   return (
+<<<<<<< HEAD
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
@@ -181,6 +186,20 @@ const StaffManagement = () => {
             {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
           </button>
         </div>
+=======
+    <div className="dash-wrapper">
+      <AdminSidebar />
+      <main className="dash-main w-100" style={{ padding: '2rem' }}>
+        <div className="ph" style={{ marginBottom: '24px' }}>
+        <div>
+          <h1>👔 Staff Management</h1>
+          <p>{staffList.length} staff members · Manage accounts and scheduling</p>
+        </div>
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+          <Link to="/admin/create-staff" className="btn-primary-garro py-2 px-3 fw-bold text-white shadow-sm" style={{ textDecoration: 'none', borderRadius: '10px' }}>+ Create Account Directly</Link>
+        </div>
+      </div>
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
         <span className="sidebar-label">{t('overview')}</span>
         <div className="sidebar-section">
@@ -243,6 +262,7 @@ const StaffManagement = () => {
             <h1 className="fs-3 fw-bold text-dark m-0">👔 {t('staff_management')}</h1>
             <p className="text-muted small m-0">{staffList.length} {t('staff_members_manage')}</p>
           </div>
+<<<<<<< HEAD
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
             {/* Language Switcher */}
             <div style={{ position: 'relative' }}>
@@ -304,6 +324,16 @@ const StaffManagement = () => {
                       <div className="sc-name">{s.first_name} {s.last_name}</div>
                       <span className={`sc-role ${s.role}`}>{s.role.toUpperCase()}</span>
                     </div>
+=======
+          
+          <div className="staff-grid">
+            {staffList.map(s => (
+              <div key={s.id} className={`sc ${!s.is_active ? 'inactive' : ''}`}>
+                <div className="sc-top">
+                  <div className="sc-av" style={{ background: s.is_active ? '#ff5c1a' : '#94a3b8' }}>
+                    {s.first_name[0]}{s.last_name[0]}
+                    <div className={`sc-status ${s.is_active ? 'active' : 'inactive'}`}></div>
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                   </div>
                   <div className="sc-info">
                     {s.email && <span><span className="material-icons-round" style={{ fontSize: '14px', color: '#94a3b8' }}>email</span>{s.email}</span>}
@@ -360,12 +390,54 @@ const StaffManagement = () => {
               </div>
             </div>
 
+<<<<<<< HEAD
             {/* Invite history */}
             <div className="panel">
                <div className="panel-head">
                  <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuClipboardList /></span>
                  <h3>{t('recent_invitations')}</h3>
                </div>
+=======
+        {/* Right: Invite panel */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          
+          {/* Send Invite */}
+          <div className="panel">
+            <div className="panel-head">
+              <span style={{ fontSize: '20px' }}>📨</span>
+              <h3>Send Invite Link</h3>
+            </div>
+            <div className="panel-body">
+              <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>Generate a secure invite link. The staff member sets their own password when they join.</p>
+              <form onSubmit={e => e.preventDefault()}>
+                <div className="fg">
+                  <label>Staff Email *</label>
+                  <input type="email" name="email" className="inp" placeholder="staff@example.com" required />
+                </div>
+                <div className="fg">
+                  <label>Role</label>
+                  <select name="role" className="inp">
+                    <option value="staff">👤 Staff</option>
+                    <option value="manager">🌟 Manager</option>
+                  </select>
+                </div>
+                <div className="fg">
+                  <label>Department</label>
+                  <input type="text" name="department" className="inp" placeholder="e.g. Operations, Service" />
+                </div>
+                <button type="submit" className="btn-primary-garro w-100 py-2.5 fw-bold text-white shadow-sm" style={{ border: 'none', borderRadius: '10px' }}>📨 Generate &amp; Copy Invite Link</button>
+              </form>
+              <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '10px', textAlign: 'center' }}>Link expires in 3 days · Only one active invite per email</p>
+            </div>
+          </div>
+
+          {/* Invite history */}
+          <div className="panel">
+            <div className="panel-head">
+              <span style={{ fontSize: '20px' }}>📋</span>
+              <h3>Recent Invites</h3>
+            </div>
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
             <div className="panel-body" style={{ padding: 0 }}>
               {invites.map((inv, idx) => (
                 <div key={idx} className="invite-item" style={{ padding: '11px 20px' }}>
@@ -386,6 +458,7 @@ const StaffManagement = () => {
           </div>
         </div>
       </div>
+    </main>
 
       {/* ── Helper Schedule / Working Hours Modal ── */}
       {scheduleModalOpen && selectedHelper && (

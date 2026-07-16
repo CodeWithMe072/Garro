@@ -86,6 +86,7 @@ h1,h2,h3,h4,h5,h6{font-family:'Poppins',sans-serif;font-weight:700;letter-spacin
 .g-alert.info{background:#eff6ff;color:#1e40af;border-left:3px solid var(--blue)}
 
 .g-footer{background:#0f172a;color:rgba(255,255,255,.65);padding:64px 0 32px;margin-top:80px}
+body:has(.dash-wrapper) .g-footer{margin-top:0}
 .g-footer-logo{font-family:'Poppins',sans-serif;font-weight:800;font-size:23px;color:white;margin-bottom:12px;letter-spacing:-.03em}
 .g-footer-logo span{color:var(--brand)}
 .g-footer h6{color:rgba(255,255,255,.9);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.1em;margin-bottom:18px}
@@ -586,7 +587,7 @@ h1,h2,h3,h4,h5,h6{font-family:'Poppins',sans-serif;font-weight:700;letter-spacin
 .sc-status.inactive{background:var(--red)}
 .sc-name{font-weight:700;font-size:14.5px;color:#0f172a}
 .sc-role{font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;margin-top:3px;display:inline-block}
-.sc-role.staff{background:#dbeafe;color:#1d4ed8}
+.sc-role.staff{background:rgba(255,92,26,0.1);color:#ff5c1a}
 .sc-role.manager{background:#ede9fe;color:#6d28d9}
 .sc-info{font-size:12px;color:#64748b;margin-bottom:12px;display:flex;flex-direction:column;gap:4px}
 .sc-info span{display:flex;align-items:center;gap:6px}

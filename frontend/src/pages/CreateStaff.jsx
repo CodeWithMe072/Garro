@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+<<<<<<< HEAD
 import { 
   LuCircleCheck, 
   LuLayoutDashboard, 
@@ -16,6 +17,9 @@ import {
   LuClipboardList
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
+=======
+import AdminSidebar from '../components/AdminSidebar';
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
 const CreateStaff = () => {
   const navigate = useNavigate();
@@ -87,6 +91,7 @@ const CreateStaff = () => {
   };
 
   return (
+<<<<<<< HEAD
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
@@ -95,6 +100,16 @@ const CreateStaff = () => {
             {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
           </button>
         </div>
+=======
+    <div className="dash-wrapper">
+      <AdminSidebar />
+      <main className="dash-main w-100" style={{ padding: '2rem' }}>
+        <div className="card">
+          <div className="card-head">
+            <h1>👔 Create Staff Account</h1>
+            <p>Create a new staff member account with immediate access.</p>
+          </div>
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
         <span className="sidebar-label">{t('overview')}</span>
         <div className="sidebar-section">
@@ -303,8 +318,13 @@ const CreateStaff = () => {
           </form>
         </div>
       </div>
+<<<<<<< HEAD
       </main>
     </div>
+=======
+    </main>
+  </div>
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
   );
 };
 

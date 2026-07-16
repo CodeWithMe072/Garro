@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
+<<<<<<< HEAD
   LuDroplets, LuSettings, LuWrench, LuPaintbrush, LuWind,
   LuCircle, LuBattery, LuSparkles, LuArrowRight, LuSearch, LuSlidersHorizontal
 } from 'react-icons/lu';
@@ -15,9 +16,27 @@ const allServices = [
   { name: 'Battery Change', icon: LuBattery, color: '#10b981', price: 250, category: 'battery', desc: 'On-site battery testing, jump-start, and same-day replacement.' },
   { name: 'Car Detailing', icon: LuSparkles, color: '#ff5c1a', price: 499, category: 'detailing', desc: 'Ceramic coating, paint protection, and full interior detailing.' },
 ];
+=======
+  Droplets, Settings, Wrench, Paintbrush, Wind,
+  Circle, Battery, Sparkles, ArrowRight, Search, SlidersHorizontal
+} from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
 const Services = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const { t } = useLanguage();
+
+  const allServices = [
+    { name: t('services_cat_wash'), icon: Droplets, color: '#3b82f6', price: 49, category: 'wash', desc: t('services_cat_wash_desc') },
+    { name: t('services_cat_maintenance'), icon: Settings, color: '#ff5c1a', price: 299, category: 'service', desc: t('services_cat_maintenance_desc') },
+    { name: t('services_cat_repair'), icon: Wrench, color: '#8b5cf6', price: 150, category: 'repair', desc: t('services_cat_repair_desc') },
+    { name: t('services_cat_painting'), icon: Paintbrush, color: '#ec4899', price: 399, category: 'painting', desc: t('services_cat_painting_desc') },
+    { name: t('services_cat_ac'), icon: Wind, color: '#06b6d4', price: 149, category: 'ac', desc: t('services_cat_ac_desc') },
+    { name: t('services_cat_tyre'), icon: Circle, color: '#f59e0b', price: 99, category: 'tyre', desc: t('services_cat_tyre_desc') },
+    { name: t('services_cat_battery'), icon: Battery, color: '#10b981', price: 250, category: 'battery', desc: t('services_cat_battery_desc') },
+    { name: t('services_cat_detailing'), icon: Sparkles, color: '#ff5c1a', price: 499, category: 'detailing', desc: t('services_cat_detailing_desc') },
+  ];
 
   const filtered = allServices.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -41,16 +60,20 @@ const Services = () => {
             fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '.08em', marginBottom: '20px'
           }}>
+<<<<<<< HEAD
             <LuSlidersHorizontal size={13} /> What We Offer
+=======
+            <SlidersHorizontal size={13} /> <span dir="auto">{t('services_what_we_offer')}</span>
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           </div>
           <h1 style={{
             fontSize: 'clamp(2.2rem, 4.5vw, 3.2rem)', fontWeight: 900, color: '#0f172a',
             letterSpacing: '-.03em', marginBottom: '14px', fontFamily: "'Poppins', sans-serif"
           }}>
-            Professional <span style={{ color: '#ff5c1a' }}>Car Services</span>
+            <span dir="auto">{t('services_hero_title1')}</span> <span style={{ color: '#ff5c1a' }} dir="auto">{t('services_hero_title2')}</span>
           </h1>
-          <p style={{ color: '#64748b', fontSize: '15px', maxWidth: '520px', margin: '0 auto 32px', lineHeight: 1.7, fontFamily: "'Poppins', sans-serif" }}>
-            From a quick wash to full mechanical overhaul — Garro connects you to certified garages across the UAE.
+          <p dir="auto" style={{ color: '#64748b', fontSize: '15px', maxWidth: '520px', margin: '0 auto 32px', lineHeight: 1.7, fontFamily: "'Poppins', sans-serif" }}>
+            {t('services_hero_desc')}
           </p>
 
           {/* Search bar */}
@@ -58,9 +81,10 @@ const Services = () => {
             <LuSearch size={17} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input
               type="text"
-              placeholder="Search services..."
+              placeholder={t('services_search_placeholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
+              dir="auto"
               style={{
                 width: '100%', padding: '13px 16px 13px 44px',
                 border: '1.5px solid #e2e8f0', borderRadius: '14px',
@@ -78,10 +102,15 @@ const Services = () => {
         <div className="container">
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b', fontFamily: "'Poppins', sans-serif" }}>
+<<<<<<< HEAD
               <LuSearch size={40} style={{ marginBottom: '16px', opacity: 0.3 }} />
               <p style={{ fontSize: '15px' }}>No services found matching "<strong>{searchQuery}</strong>"</p>
+=======
+              <Search size={40} style={{ marginBottom: '16px', opacity: 0.3 }} />
+              <p dir="auto" style={{ fontSize: '15px' }}>{t('services_no_match')} "<strong>{searchQuery}</strong>"</p>
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
               <button onClick={() => setSearchQuery('')} style={{ marginTop: '12px', background: '#ff5c1a', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}>
-                Clear Search
+                <span dir="auto">{t('services_clear_search')}</span>
               </button>
             </div>
           ) : (
@@ -115,30 +144,21 @@ const Services = () => {
                       <Icon size={26} />
                     </div>
 
-                    <h5 style={{
-                      fontWeight: 800, fontSize: '15.5px', color: '#0f172a',
-                      fontFamily: "'Poppins', sans-serif", marginBottom: '8px'
-                    }}>
+                    <h5 dir="auto" style={{ fontWeight: 800, fontSize: '18px', color: '#0f172a', marginBottom: '8px', fontFamily: "'Poppins', sans-serif" }}>
                       {name}
                     </h5>
-                    <p style={{
-                      fontSize: '13px', color: '#64748b', lineHeight: 1.65,
-                      fontFamily: "'Poppins', sans-serif", flex: 1, marginBottom: '18px'
-                    }}>
+                    <p dir="auto" style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px', flexGrow: 1, fontFamily: "'Poppins', sans-serif" }}>
                       {desc}
                     </p>
 
-                    <div style={{ marginBottom: '16px' }}>
-                      <span style={{ fontSize: '11px', color: '#94a3b8', fontFamily: "'Poppins', sans-serif" }}>Starting from</span>
-                      <div style={{ fontSize: '20px', fontWeight: 900, color: '#ff5c1a', fontFamily: "'Poppins', sans-serif", letterSpacing: '-.02em' }}>
-                        AED {price}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 'auto' }}>
+                      <div dir="ltr" style={{ fontSize: '15px', color: '#ff5c1a', fontWeight: 800, fontFamily: "'Poppins', sans-serif" }}>
+                        <span dir="auto" style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500, marginRight: '4px' }}>{t('service_from_aed')}</span>
+                        {price}
                       </div>
-                    </div>
-
-                    <Link
-                      to={`/service/${category}`}
-                      style={{
+                      <Link to={`/service/${category}`} style={{
                         display: 'inline-flex', alignItems: 'center', gap: '6px',
+<<<<<<< HEAD
                         color, fontWeight: 700, fontSize: '13.5px',
                         textDecoration: 'none', fontFamily: "'Poppins', sans-serif",
                         transition: 'gap 0.2s'
@@ -148,6 +168,14 @@ const Services = () => {
                     >
                       View Details <LuArrowRight size={15} />
                     </Link>
+=======
+                        color: '#ff5c1a', fontWeight: 700, fontSize: '13.5px',
+                        textDecoration: 'none', fontFamily: "'Poppins', sans-serif"
+                      }}>
+                        <span dir="auto">{t('service_book_now')}</span> <ArrowRight size={16} />
+                      </Link>
+                    </div>
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                   </div>
                 </div>
               ))}

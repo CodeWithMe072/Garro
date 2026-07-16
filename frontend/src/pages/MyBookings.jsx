@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
+<<<<<<< HEAD
 import {
   LuClipboardList,
   LuTriangleAlert,
@@ -15,6 +16,9 @@ import {
   LuStore,
   LuCreditCard
 } from 'react-icons/lu';
+=======
+import AdminSidebar from '../components/AdminSidebar';
+>>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
   const MyBookings = () => {
   const { user } = useAuth();
@@ -382,8 +386,10 @@ import {
     );
   }
 
-  return (
-    <div className="container py-5" style={{ minHeight: 'calc(100vh - 80px)' }}>
+  const isAdmin = ['manager', 'superadmin', 'admin'].includes(user?.role);
+
+  const renderContent = () => (
+    <div className="container py-5" style={{ minHeight: 'calc(100vh - 80px)', width: '100%' }}>
       <h3 className="fw-bold mb-4">My Bookings</h3>
 
       {bookings.length > 0 ? (
@@ -800,6 +806,19 @@ import {
       )}
     </div>
   );
+
+  if (isAdmin) {
+    return (
+      <div className="dash-wrapper">
+        <AdminSidebar pendingBookings={bookings.filter(b => b.status === 'new').length} />
+        <main className="dash-main w-100" style={{ padding: '0 2rem' }}>
+          {renderContent()}
+        </main>
+      </div>
+    );
+  }
+
+  return renderContent();
 };
 
 export default MyBookings;

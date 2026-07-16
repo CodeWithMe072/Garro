@@ -100,7 +100,31 @@ const Navbar = () => {
 
         {/* Nav Links */}
         <ul className={`g-nav-links ${isMobileMenuOpen ? 'open' : ''}`} id="navLinks">
-          {isAuthenticated ? (
+          {/* Public Links Always Visible */}
+          <li>
+            <Link to={isAuthenticated ? "/home" : "/"} className={isActive(isAuthenticated ? '/home' : '/')}>
+              {t('home')}
+            </Link>
+          </li>
+          <li>
+            <Link to="/services" className={isActive('/services')}>
+              <span dir="auto">{t('our_services')}</span>
+            </Link>
+          </li>
+
+          <li>
+            <Link to="/about" className={isActive('/about')}>
+              <span dir="auto">{t('nav_about') || 'About'}</span>
+            </Link>
+          </li>
+          <li>
+            <Link to="/contact" className={isActive('/contact')}>
+              <span dir="auto">{t('contact_us')}</span>
+            </Link>
+          </li>
+
+          {/* Authenticated Links */}
+          {isAuthenticated && (
             <>
               <li>
                 <Link to="/home" className={isActive('/home')}>
@@ -129,15 +153,11 @@ const Navbar = () => {
               {['staff', 'manager', 'superadmin'].includes(user?.role) && (
                 <li>
                   <Link to={user?.role === 'staff' ? '/admin/staff' : '/admin'} className={location.pathname.includes('admin') ? 'active' : ''}>
-                    <LuZap size={15} /> {t('dashboard')}
+                    <Zap size={15} /> <span dir="auto">{t('dashboard')}</span>
                   </Link>
                 </li>
               )}
             </>
-          ) : (
-            <li>
-              <Link to="/"><LuHouse size={15} /> {t('home')}</Link>
-            </li>
           )}
         </ul>
 
