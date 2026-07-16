@@ -2,13 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
+import {
+  LuLayoutDashboard,
+  LuStore,
+  LuSearch,
+  LuSettings,
+  LuClipboardList,
+  LuUser,
+  LuBriefcase,
+  LuUsers,
+  LuGlobe,
+  LuPencil,
+  LuRefreshCw,
+  LuTrash2,
+  LuChevronLeft,
+  LuChevronRight
+} from 'react-icons/lu';
 import CustomMultiSelect from '../components/CustomMultiSelect';
 
 const GarageManagement = () => {
   const { user } = useAuth();
   const { toast, confirm } = useNotification();
+  const { t, lang, changeLanguage } = useLanguage();
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const [garages, setGarages] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('admin_sidebar_collapsed') === 'true';
+  });
+
+  const toggleSidebar = () => {
+    const nextState = !isCollapsed;
+    setIsCollapsed(nextState);
+    localStorage.setItem('admin_sidebar_collapsed', String(nextState));
+  };
   
   const [serviceOptions, setServiceOptions] = useState([]);
   const [areaOptions, setAreaOptions] = useState([]);
@@ -239,89 +268,142 @@ const GarageManagement = () => {
   };
 
   return (
-    <div className="dash-wrapper">
+    <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
-        <span className="sidebar-label">Overview</span>
+        <div className="sidebar-toggle-container">
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
+            {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
+          </button>
+        </div>
+
+        <span className="sidebar-label">{t('overview')}</span>
         <div className="sidebar-section">
           <Link to="/admin" className="sidebar-link">
-            <span className="icon">📊</span>Dashboard
+            <span className="icon"><LuLayoutDashboard /></span>
+            <span className="link-text">{t('dashboard')}</span>
           </Link>
         </div>
 
-        <span className="sidebar-label">Operations</span>
+        <span className="sidebar-label">{t('operations')}</span>
         <div className="sidebar-section">
           <Link to="/admin/manage-garages" className="sidebar-link active">
-            <span className="icon">🏪</span>Manage Garages
+            <span className="icon"><LuStore /></span>
+            <span className="link-text">{t('manage_garages')}</span>
           </Link>
           <Link to="/search" className="sidebar-link">
-            <span className="icon">🔍</span>Find Garages
+            <span className="icon"><LuSearch /></span>
+            <span className="link-text">{t('find_garages')}</span>
           </Link>
           <Link to="/admin/catalog" className="sidebar-link">
-            <span className="icon">⚙️</span>System Catalog
+            <span className="icon"><LuSettings /></span>
+            <span className="link-text">{t('system_catalog')}</span>
           </Link>
           <Link to="/my-bookings" className="sidebar-link">
-            <span className="icon">📋</span>Bookings
+            <span className="icon"><LuClipboardList /></span>
+            <span className="link-text">{t('bookings')}</span>
           </Link>
         </div>
 
         <div className="sidebar-divider"></div>
-        <span className="sidebar-label">People</span>
+        <span className="sidebar-label">{t('people')}</span>
         <div className="sidebar-section">
           <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👤</span>All Users
+            <span className="icon"><LuUser /></span>
+            <span className="link-text">{t('all_users')}</span>
           </Link>
           <Link to="/admin/staff" className="sidebar-link">
-            <span className="icon">👔</span>Staff View
+            <span className="icon"><LuBriefcase /></span>
+            <span className="link-text">{t('staff_view')}</span>
           </Link>
           <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👥</span>Manage Staff
+            <span className="icon"><LuUsers /></span>
+            <span className="link-text">{t('manage_staff')}</span>
           </Link>
         </div>
 
         <div className="sidebar-divider"></div>
         <div className="sidebar-section">
           <Link to="/home" className="sidebar-link">
-            <span className="icon">🌐</span>Back to Site
+            <span className="icon"><LuGlobe /></span>
+            <span className="link-text">{t('back_to_site')}</span>
           </Link>
         </div>
       </aside>
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">
-        <div className="dash-header">
+        <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div className="dash-title">🏪 Manage Partner Garages</div>
-            <div className="dash-subtitle">Register and configure service partner workshops</div>
+            <div className="dash-title">🏪 {t('manage_partner_garages')}</div>
+            <div className="dash-subtitle">{t('register_configure_workshops')}</div>
           </div>
-          <button onClick={handleOpenAddModal} className="btn-primary-garro py-2 px-4 fw-bold shadow-sm" style={{ borderRadius: '10px' }}>
-            + Add New Garage
-          </button>
+          <div className="d-flex align-items-center gap-3">
+            {/* Language Switcher */}
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="btn btn-outline-secondary d-flex align-items-center gap-2"
+                style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
+              >
+                <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
+              </button>
+              {isLangOpen && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                  background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
+                  boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
+                  minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
+                }}>
+                  {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
+                    <button
+                      key={code}
+                      onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
+                      style={{
+                        background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
+                        borderRadius: '8px', padding: '8px 12px',
+                        color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
+                        fontSize: '13px', fontWeight: lang === code ? 700 : 500,
+                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                        justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
+                      }}
+                    >
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button onClick={handleOpenAddModal} className="btn-primary-garro py-2 px-4 fw-bold shadow-sm" style={{ borderRadius: '10px' }}>
+              + {t('add_new_garage')}
+            </button>
+          </div>
         </div>
 
         {/* Stats */}
         <div className="row g-4 mb-4">
           <div className="col-12 col-md-3">
             <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
-              <div className="text-muted small fw-bold uppercase">Total Garages</div>
+              <div className="text-muted small fw-bold uppercase">{t('total_garages')}</div>
               <div className="fs-2 fw-bold text-dark mt-1">{stats.total}</div>
             </div>
           </div>
           <div className="col-12 col-md-3">
             <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
-              <div className="text-muted small fw-bold uppercase" style={{ color: '#10b981' }}>Active Partners</div>
+              <div className="text-muted small fw-bold uppercase" style={{ color: '#10b981' }}>{t('active_partners')}</div>
               <div className="fs-2 fw-bold text-success mt-1">{stats.active}</div>
             </div>
           </div>
           <div className="col-12 col-md-3">
             <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
-              <div className="text-muted small fw-bold uppercase" style={{ color: '#f59e0b' }}>Suspended/Inactive</div>
+              <div className="text-muted small fw-bold uppercase" style={{ color: '#f59e0b' }}>{t('suspended_inactive')}</div>
               <div className="fs-2 fw-bold text-warning mt-1">{stats.inactive}</div>
             </div>
           </div>
           <div className="col-12 col-md-3">
             <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
-              <div className="text-muted small fw-bold uppercase">Average Commission</div>
+              <div className="text-muted small fw-bold uppercase">{t('avg_commission')}</div>
               <div className="fs-2 fw-bold text-dark mt-1">{stats.avgComm}%</div>
             </div>
           </div>
@@ -334,13 +416,13 @@ const GarageManagement = () => {
               <table className="table align-middle mb-0" style={{ minWidth: '800px' }}>
                 <thead className="table-light">
                   <tr>
-                    <th className="ps-4 py-3">Workshop Name</th>
-                    <th className="py-3">Contact</th>
-                    <th className="py-3">Areas Covered</th>
-                    <th className="py-3">Rating</th>
-                    <th className="py-3">Commission</th>
-                    <th className="py-3">Status</th>
-                    <th className="py-3 text-end pe-4">Actions</th>
+                    <th className="ps-4 py-3">{t('workshop_name')}</th>
+                    <th className="py-3">{t('contact')}</th>
+                    <th className="py-3">{t('areas_covered')}</th>
+                    <th className="py-3">{t('rating')}</th>
+                    <th className="py-3">{t('commission')}</th>
+                    <th className="py-3">{t('status')}</th>
+                    <th className="py-3 text-end pe-4">{t('actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -384,19 +466,19 @@ const GarageManagement = () => {
                         <td className="fw-bold text-dark">{g.commissionPercent ?? 10}%</td>
                         <td>
                           <span className={`badge py-2 px-3 fs-8 ${g.status === 'active' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
-                            {g.status?.toUpperCase() || 'ACTIVE'}
+                            {g.status === 'active' ? t('active').toUpperCase() : t('inactive').toUpperCase()}
                           </span>
                         </td>
                         <td className="text-end pe-4">
                           <div className="d-flex justify-content-end gap-2">
-                            <button onClick={() => handleOpenEditModal(g)} className="btn btn-sm btn-outline-secondary py-1 px-2" style={{ borderRadius: '6px' }}>
-                              ✏️ Edit
+                            <button onClick={() => handleOpenEditModal(g)} className="btn btn-sm btn-outline-secondary py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
+                              <LuPencil className="me-1" /> {t('edit')}
                             </button>
-                            <button onClick={() => handleToggleStatus(g._id)} className="btn btn-sm btn-outline-warning py-1 px-2" style={{ borderRadius: '6px' }}>
-                              🔄 Toggle Active
+                            <button onClick={() => handleToggleStatus(g._id)} className="btn btn-sm btn-outline-warning py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
+                              <LuRefreshCw className="me-1" /> {t('toggle_active')}
                             </button>
-                            <button onClick={() => handleDelete(g._id, g.name)} className="btn btn-sm btn-outline-danger py-1 px-2" style={{ borderRadius: '6px' }}>
-                              🗑️ Delete
+                            <button onClick={() => handleDelete(g._id, g.name)} className="btn btn-sm btn-outline-danger py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
+                              <LuTrash2 className="me-1" /> {t('delete')}
                             </button>
                           </div>
                         </td>
@@ -414,7 +496,9 @@ const GarageManagement = () => {
       {isOpen && (
         <div className="custom-modal-overlay" onClick={() => setIsOpen(false)}>
           <div className="custom-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px', textAlign: 'left' }}>
-            <h3 className="modal-title mb-4">{editGarageId ? '✏️ Edit Garage Workshop' : '🏬 Add Garage Workshop'}</h3>
+            <h3 className="modal-title mb-4 d-flex align-items-center gap-2">
+              {editGarageId ? <><LuPencil /> Edit Garage Workshop</> : <><LuStore /> Add Garage Workshop</>}
+            </h3>
             
             <form onSubmit={handleSubmit}>
               <div className="row g-3">

@@ -3,10 +3,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
-  Home, Shield, Truck, Recycle, Zap, Bell, User, LogOut,
-  ClipboardList, Car, FileText, FileCheck, Receipt, Siren,
-  LayoutDashboard, Users, Globe, Check, ChevronDown
-} from 'lucide-react';
+  LuHouse, LuShield, LuTruck, LuRecycle, LuZap, LuBell, LuUser, LuLogOut,
+  LuClipboardList, LuCar, LuFileText, LuFileCheck, LuReceipt, LuSiren,
+  LuLayoutDashboard, LuUsers, LuGlobe, LuCheck, LuChevronDown
+} from 'react-icons/lu';
 
 const Navbar = () => {
   const { user, isAuthenticated, logout } = useAuth();
@@ -78,10 +78,10 @@ const Navbar = () => {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const notifIcon = (type) => {
-    if (type === 'payment_success') return <Receipt size={16} color="#10b981" />;
-    if (type === 'quote_sent') return <FileText size={16} color="#ff5c1a" />;
-    if (type === 'assigned') return <Zap size={16} color="#8b5cf6" />;
-    return <Bell size={16} color="#64748b" />;
+    if (type === 'payment_success') return <LuReceipt size={16} color="#10b981" />;
+    if (type === 'quote_sent') return <LuFileText size={16} color="#ff5c1a" />;
+    if (type === 'assigned') return <LuZap size={16} color="#8b5cf6" />;
+    return <LuBell size={16} color="#64748b" />;
   };
 
   return (
@@ -104,24 +104,24 @@ const Navbar = () => {
             <>
               <li>
                 <Link to="/home" className={isActive('/home')}>
-                  <Home size={15} /> Home
+                  <LuHouse size={15} /> Home
                 </Link>
               </li>
               <li>
                 <Link to="/insurance" className={isActive('/insurance')}>
-                  <Shield size={15} /> {t('insurance')}
+                  <LuShield size={15} /> {t('insurance')}
                 </Link>
               </li>
               {user?.role === 'customer' && (
                 <>
                   <li>
                     <Link to="/roadside" className={isActive('/roadside')}>
-                      <Truck size={15} /> {t('roadside')}
+                      <LuTruck size={15} /> {t('roadside')}
                     </Link>
                   </li>
                   <li>
                     <Link to="/end-of-life" className={isActive('/end-of-life')}>
-                      <Recycle size={15} /> {t('scrap')}
+                      <LuRecycle size={15} /> {t('scrap')}
                     </Link>
                   </li>
                 </>
@@ -129,14 +129,14 @@ const Navbar = () => {
               {['staff', 'manager', 'superadmin'].includes(user?.role) && (
                 <li>
                   <Link to={user?.role === 'staff' ? '/admin/staff' : '/admin'} className={location.pathname.includes('admin') ? 'active' : ''}>
-                    <Zap size={15} /> {t('dashboard')}
+                    <LuZap size={15} /> {t('dashboard')}
                   </Link>
                 </li>
               )}
             </>
           ) : (
             <li>
-              <Link to="/"><Home size={15} /> {t('home')}</Link>
+              <Link to="/"><LuHouse size={15} /> {t('home')}</Link>
             </li>
           )}
         </ul>
@@ -164,7 +164,7 @@ const Navbar = () => {
                   className="btn-nav-quote d-none d-md-inline-flex"
                   style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)', boxShadow: '0 4px 14px rgba(239,68,68,0.3)', marginRight: '8px' }}
                 >
-                  <Siren size={15} /> Emergency Pickup
+                  <LuSiren size={15} /> Emergency Pickup
                 </Link>
               )}
 
@@ -178,7 +178,7 @@ const Navbar = () => {
                     cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.18s'
                   }}
                 >
-                  <Globe size={14} /> {lang === 'en' ? 'EN' : 'AR'} <ChevronDown size={12} />
+                  <LuGlobe size={14} /> {lang.toUpperCase()} <LuChevronDown size={12} />
                 </button>
                 {isLangOpen && (
                   <div style={{
@@ -187,7 +187,7 @@ const Navbar = () => {
                     boxShadow: '0 10px 24px rgba(0,0,0,0.08)', zIndex: 1000,
                     minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
                   }}>
-                    {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }].map(({ code, label }) => (
+                    {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
                       <button
                         key={code}
                         onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
@@ -201,7 +201,7 @@ const Navbar = () => {
                         }}
                       >
                         <span>{label}</span>
-                        {lang === code && <Check size={12} />}
+                        {lang === code && <LuCheck size={12} />}
                       </button>
                     ))}
                   </div>
@@ -218,7 +218,7 @@ const Navbar = () => {
                     position: 'relative', padding: '8px', display: 'flex', alignItems: 'center', transition: 'color 0.18s'
                   }}
                 >
-                  <Bell size={22} />
+                  <LuBell size={22} />
                   {unreadCount > 0 && (
                     <span style={{
                       position: 'absolute', top: '4px', right: '4px',
@@ -288,59 +288,59 @@ const Navbar = () => {
                   </div>
 
                   <Link to="/profile" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                    <User size={16} />{t('profile')}
+                    <LuUser size={16} />{t('profile')}
                   </Link>
                   <div className="g-dropdown-divider"></div>
 
                   {user?.role === 'customer' && (
                     <>
                       <Link to="/my-requests" className="g-dropdown-item">
-                        <ClipboardList size={16} />{t('requests')}
+                        <LuClipboardList size={16} />{t('requests')}
                       </Link>
                       <Link to="/my-bookings" className="g-dropdown-item">
-                        <FileCheck size={16} />My Bookings
+                        <LuFileCheck size={16} />My Bookings
                       </Link>
                       <Link to="/my-vehicles" className="g-dropdown-item">
-                        <Car size={16} />{t('vehicles')}
+                        <LuCar size={16} />{t('vehicles')}
                       </Link>
                       <Link to="/my-invoices" className="g-dropdown-item">
-                        <Receipt size={16} />My Invoices
+                        <LuReceipt size={16} />My Invoices
                       </Link>
                       <Link to="/my-quotes" className="g-dropdown-item">
-                        <FileText size={16} />My Quotes
+                        <LuFileText size={16} />My Quotes
                       </Link>
                       <div className="g-dropdown-divider"></div>
                       <Link to="/get-quote" className="g-dropdown-item">
-                        <FileText size={16} />{t('get_quote')}
+                        <LuFileText size={16} />{t('get_quote')}
                       </Link>
                       <Link to="/insurance" className="g-dropdown-item">
-                        <Shield size={16} />Insurance &amp; Protection
+                        <LuShield size={16} />Insurance &amp; Protection
                       </Link>
                       <Link to="/roadside" className="g-dropdown-item">
-                        <Truck size={16} />Roadside Assistance
+                        <LuTruck size={16} />Roadside Assistance
                       </Link>
                       <Link to="/emergency-pickup" className="g-dropdown-item" style={{ color: '#ef4444' }}>
-                        <Siren size={16} />Emergency Pickup
+                        <LuSiren size={16} />Emergency Pickup
                       </Link>
                       <Link to="/end-of-life" className="g-dropdown-item">
-                        <Recycle size={16} />End-of-Life &amp; Scrap
+                        <LuRecycle size={16} />End-of-Life &amp; Scrap
                       </Link>
                     </>
                   )}
 
                   {user?.role === 'staff' && (
                     <Link to="/admin/staff" className="g-dropdown-item">
-                      <Zap size={16} />Staff Dashboard
+                      <LuZap size={16} />Staff Dashboard
                     </Link>
                   )}
 
                   {['manager', 'superadmin'].includes(user?.role) && (
                     <>
                       <Link to="/admin" className="g-dropdown-item">
-                        <LayoutDashboard size={16} />Admin Dashboard
+                        <LuLayoutDashboard size={16} />Admin Dashboard
                       </Link>
                       <Link to="/admin/staff" className="g-dropdown-item">
-                        <Users size={16} />Staff View
+                        <LuUsers size={16} />Staff View
                       </Link>
                     </>
                   )}
@@ -351,7 +351,7 @@ const Navbar = () => {
                     onClick={() => { logout(); navigate('/login'); }}
                     style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer' }}
                   >
-                    <LogOut size={16} />Sign Out
+                    <LuLogOut size={16} />Sign Out
                   </button>
                 </div>
               </div>

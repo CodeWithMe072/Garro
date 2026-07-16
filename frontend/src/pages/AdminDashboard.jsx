@@ -2,15 +2,49 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
 import Chart from 'chart.js/auto';
 import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
+import {
+  LuLayoutDashboard,
+  LuStore,
+  LuSearch,
+  LuSettings,
+  LuDollarSign,
+  LuUsers,
+  LuTriangleAlert,
+  LuClipboardList,
+  LuUser,
+  LuBriefcase,
+  LuGlobe,
+  LuCalendar,
+  LuHourglass,
+  LuStar,
+  LuMessageSquare,
+  LuClock,
+  LuCalendarDays,
+  LuChevronLeft,
+  LuChevronRight
+} from 'react-icons/lu';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { toast } = useNotification();
+  const { t, lang, changeLanguage } = useLanguage();
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const revenueChartRef = useRef(null);
   const statusChartRef = useRef(null);
+
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('admin_sidebar_collapsed') === 'true';
+  });
+
+  const toggleSidebar = () => {
+    const nextState = !isCollapsed;
+    setIsCollapsed(nextState);
+    localStorage.setItem('admin_sidebar_collapsed', String(nextState));
+  };
 
   const [catalogServices, setCatalogServices] = useState([]);
 
@@ -215,6 +249,7 @@ const AdminDashboard = () => {
 
   const downloadReport = async (reportType, format) => {
     try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
       const endpoint = reportType === 'revenue' 
         ? `${API_BASE}/api/admin/reports/revenue/export?format=${format}&months=6`
@@ -452,121 +487,179 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="dash-wrapper">
+    <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
-        <span className="sidebar-label">Overview</span>
+        <div className="sidebar-toggle-container">
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
+            {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
+          </button>
+        </div>
+
+        <span className="sidebar-label">{t('overview')}</span>
         <div className="sidebar-section">
           <Link to="/admin" className="sidebar-link active">
-            <span className="icon">📊</span>Dashboard
+            <span className="icon"><LuLayoutDashboard /></span>
+            <span className="link-text">{t('dashboard')}</span>
           </Link>
         </div>
 
-        <span className="sidebar-label">Operations</span>
+        <span className="sidebar-label">{t('operations')}</span>
         <div className="sidebar-section">
           <Link to="/admin/manage-garages" className="sidebar-link">
-            <span className="icon">🏪</span>Manage Garages
+            <span className="icon"><LuStore /></span>
+            <span className="link-text">{t('manage_garages')}</span>
           </Link>
           <Link to="/search" className="sidebar-link">
-            <span className="icon">🔍</span>Find Garages
+            <span className="icon"><LuSearch /></span>
+            <span className="link-text">{t('find_garages')}</span>
           </Link>
           <Link to="/admin/catalog" className="sidebar-link">
-            <span className="icon">⚙️</span>System Catalog
+            <span className="icon"><LuSettings /></span>
+            <span className="link-text">{t('system_catalog')}</span>
           </Link>
           <Link to="/admin/quote-builder" className="sidebar-link">
-            <span className="icon">💰</span>Quote Builder
+            <span className="icon"><LuDollarSign /></span>
+            <span className="link-text">{t('quote_builder')}</span>
           </Link>
           <Link to="/admin/customers" className="sidebar-link">
-            <span className="icon">👥</span>Customer Search
+            <span className="icon"><LuUsers /></span>
+            <span className="link-text">{t('customer_search')}</span>
           </Link>
           <Link to="/admin/complaints" className="sidebar-link">
-            <span className="icon">⚠️</span>Complaints
+            <span className="icon"><LuTriangleAlert /></span>
+            <span className="link-text">{t('complaints')}</span>
           </Link>
           <Link to="/admin/settings" className="sidebar-link">
-            <span className="icon">⚙️</span>System Settings
+            <span className="icon"><LuSettings /></span>
+            <span className="link-text">{t('system_settings')}</span>
           </Link>
           <Link to="/my-bookings" className="sidebar-link">
-            <span className="icon">📋</span>Bookings
+            <span className="icon"><LuClipboardList /></span>
+            <span className="link-text">{t('bookings')}</span>
             {stats.pending_bookings > 0 && <span className="sidebar-badge">{stats.pending_bookings}</span>}
           </Link>
         </div>
 
         <div className="sidebar-divider"></div>
-        <span className="sidebar-label">People</span>
+        <span className="sidebar-label">{t('people')}</span>
         <div className="sidebar-section">
           <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👤</span>All Users
+            <span className="icon"><LuUser /></span>
+            <span className="link-text">{t('all_users')}</span>
           </Link>
           <Link to="/admin/staff" className="sidebar-link">
-            <span className="icon">👔</span>Staff View
+            <span className="icon"><LuBriefcase /></span>
+            <span className="link-text">{t('staff_view')}</span>
           </Link>
           <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👥</span>Manage Staff
+            <span className="icon"><LuUsers /></span>
+            <span className="link-text">{t('manage_staff')}</span>
           </Link>
         </div>
 
         <div className="sidebar-divider"></div>
         <div className="sidebar-section">
           <Link to="/home" className="sidebar-link">
-            <span className="icon">🌐</span>Back to Site
+            <span className="icon"><LuGlobe /></span>
+            <span className="link-text">{t('back_to_site')}</span>
           </Link>
         </div>
       </aside>
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">
-        <div className="dash-header">
+        <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div className="dash-title">Good Morning, {user?.firstName || 'Admin'} 👋</div>
-            <div className="dash-subtitle">Here's what's happening at Garro today</div>
+            <div className="dash-title">
+              {lang === 'ar' ? 'صباح الخير' : (lang === 'ur' ? 'صبح بخیر' : 'Good Morning')}, {user?.firstName || 'Admin'} 👋
+            </div>
+            <div className="dash-subtitle">
+              {lang === 'ar' ? 'إليك ما يحدث في غارو اليوم' : (lang === 'ur' ? 'آج گارو میں کیا ہو رہا ہے' : "Here's what's happening at Garro today")}
+            </div>
+          </div>
+          {/* Language Switcher */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              className="btn btn-outline-secondary d-flex align-items-center gap-2"
+              style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
+            >
+              <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
+            </button>
+            {isLangOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
+                boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
+                minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
+              }}>
+                {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
+                  <button
+                    key={code}
+                    onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
+                    style={{
+                      background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
+                      borderRadius: '8px', padding: '8px 12px',
+                      color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
+                      fontSize: '13px', fontWeight: lang === code ? 700 : 500,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
+                    }}
+                  >
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* ── STATS ── */}
         <div className="stats-grid">
           <div className="stat-card orange">
-            <div className="stat-icon">🏪</div>
+            <div className="stat-icon"><LuStore /></div>
             <div className="stat-value">{stats.total_garages}</div>
-            <div className="stat-label">Active Garages</div>
+            <div className="stat-label">{t('active_garages')}</div>
           </div>
           <div className="stat-card blue">
-            <div className="stat-icon">📅</div>
+            <div className="stat-icon"><LuCalendar /></div>
             <div className="stat-value">{stats.today_bookings}</div>
-            <div className="stat-label">Today's Bookings</div>
-            <div className="stat-sub">{stats.completed_today} completed</div>
+            <div className="stat-label">{t('todays_bookings')}</div>
+            <div className="stat-sub">{stats.completed_today} {t('completed')}</div>
           </div>
           <div className="stat-card yellow">
-            <div className="stat-icon">⏳</div>
+            <div className="stat-icon"><LuHourglass /></div>
             <div className="stat-value" style={{ color: '#f59e0b' }}>{stats.pending_bookings}</div>
-            <div className="stat-label">Pending</div>
+            <div className="stat-label">{t('pending')}</div>
           </div>
           <div className="stat-card green">
-            <div className="stat-icon">💰</div>
+            <div className="stat-icon"><LuDollarSign /></div>
             <div className="stat-value" style={{ fontSize: '20px' }}>AED {stats.month_revenue}</div>
-            <div className="stat-label">Month Revenue</div>
-            <div className="stat-sub">AED {stats.week_revenue} this week</div>
+            <div className="stat-label">{t('month_revenue')}</div>
+            <div className="stat-sub">AED {stats.week_revenue} {t('this_week')}</div>
           </div>
           <div className="stat-card purple">
-            <div className="stat-icon">👤</div>
+            <div className="stat-icon"><LuUsers /></div>
             <div className="stat-value">{stats.total_users}</div>
-            <div className="stat-label">Customers</div>
-            <div className="stat-sub">{stats.total_staff} staff</div>
+            <div className="stat-label">{t('registered_users')}</div>
+            <div className="stat-sub">{stats.total_staff} {t('helper_staff')}</div>
           </div>
           <div className="stat-card pink">
-            <div className="stat-icon">⭐</div>
+            <div className="stat-icon"><LuStar /></div>
             <div className="stat-value">{stats.avg_rating}</div>
-            <div className="stat-label">Avg Rating</div>
-            <div className="stat-sub">{stats.new_reviews} new this week</div>
+            <div className="stat-label">{t('avg_rating')}</div>
+            <div className="stat-sub">{stats.new_reviews} {t('new_reviews')}</div>
           </div>
           <div className="stat-card red">
-            <div className="stat-icon">💬</div>
+            <div className="stat-icon"><LuMessageSquare /></div>
             <div className="stat-value" style={{ color: '#ef4444' }}>{stats.unread_messages}</div>
-            <div className="stat-label">Unread Messages</div>
+            <div className="stat-label">{t('unread_alerts')}</div>
           </div>
           <div className="stat-card teal">
-            <div className="stat-icon">📋</div>
+            <div className="stat-icon"><LuClipboardList /></div>
             <div className="stat-value">{stats.total_bookings}</div>
-            <div className="stat-label">Total Bookings</div>
+            <div className="stat-label">{t('bookings')}</div>
           </div>
         </div>
 
@@ -575,8 +668,8 @@ const AdminDashboard = () => {
           <div className="chart-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <div>
-                <h4>Revenue & Bookings — Last 6 Months</h4>
-                <div className="chart-sub">Completed bookings revenue trend</div>
+                <h4>{t('monthly_bookings_revenue')}</h4>
+                <div className="chart-sub">{lang === 'ar' ? 'اتجاه إيرادات الحجوزات المكتملة' : (lang === 'ur' ? 'مکمل بکنگ کی آمدنی کا رجحان' : 'Completed bookings revenue trend')}</div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => downloadReport('revenue', 'xlsx')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>Excel 📊</button>
@@ -590,8 +683,8 @@ const AdminDashboard = () => {
           <div className="chart-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <div>
-                <h4>Booking Status</h4>
-                <div className="chart-sub">Current distribution</div>
+                <h4>{t('booking_status_dist')}</h4>
+                <div className="chart-sub">{lang === 'ar' ? 'التوزيع الحالي للحجوزات' : (lang === 'ur' ? 'بکنگ کی موجودہ تقسیم' : 'Current distribution')}</div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button onClick={() => downloadReport('garages', 'xlsx')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>Garages Excel 📊</button>
@@ -608,7 +701,7 @@ const AdminDashboard = () => {
         <div className="data-row">
           <div className="data-card">
             <div className="data-head">
-              <h4>🕐 Recent Bookings</h4>
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuClock /> Recent Bookings</h4>
               <a href="#">View all →</a>
             </div>
             <table className="g-table">
@@ -692,7 +785,9 @@ const AdminDashboard = () => {
             </div>
 
             <div className="mb-3 p-3 rounded-3" style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
-              <div className="small text-muted fw-semibold mb-2">📋 Request Details</div>
+              <div className="small text-muted fw-semibold mb-2" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <LuClipboardList /> Request Details
+              </div>
               <div className="fw-bold text-dark">{selectedRequest.userId?.name || 'Unknown User'}</div>
               <div className="small text-secondary">{selectedRequest.vehicleId ? `${selectedRequest.vehicleId.make} ${selectedRequest.vehicleId.model} (${selectedRequest.vehicleId.year})` : 'Unknown Vehicle'}</div>
               <div className="small text-secondary mt-1">Issue: {selectedRequest.description}</div>
@@ -825,7 +920,9 @@ const AdminDashboard = () => {
                 {assignDate && assignTime && (
                   <div className="mt-3">
                     <div className="small fw-semibold text-dark mb-1">
-                      📊 Helper Schedule — {assignDate}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <LuCalendarDays /> Helper Schedule — {assignDate}
+                      </span>
                       {scheduleLoading && <span className="text-muted ms-2" style={{ fontWeight: 'normal' }}>Loading...</span>}
                     </div>
                     <div className="d-flex gap-3 mb-2" style={{ fontSize: '11px' }}>

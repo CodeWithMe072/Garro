@@ -1,5 +1,20 @@
+import { 
+  LuLayoutDashboard, 
+  LuStore, 
+  LuSearch, 
+  LuSettings, 
+  LuUser, 
+  LuBriefcase, 
+  LuUsers, 
+  LuGlobe,
+  LuChevronLeft,
+  LuChevronRight,
+  LuClipboardList
+} from 'react-icons/lu';
+import { useLanguage } from '../context/LanguageContext';
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 
 const AdminComplaints = () => {
@@ -15,6 +30,18 @@ const AdminComplaints = () => {
   
   const { toast } = useNotification();
   const navigate = useNavigate();
+
+  const { t, lang, changeLanguage } = useLanguage();
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('admin_sidebar_collapsed') === 'true';
+  });
+
+  const toggleSidebar = () => {
+    const nextState = !isCollapsed;
+    setIsCollapsed(nextState);
+    localStorage.setItem('admin_sidebar_collapsed', String(nextState));
+  };
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -78,49 +105,142 @@ const AdminComplaints = () => {
   };
 
   return (
-    <div style={{
-      background: '#0f172a',
-      minHeight: '100vh',
-      color: '#f8fafc',
-      padding: '40px 20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        
-        {/* Navigation */}
-        <div style={{ marginBottom: '24px' }}>
-          <button onClick={() => navigate('/admin')} style={{
-            background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline'
-          }}>
-            ← Return to Admin Dashboard
+    <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
+      {/* ── SIDEBAR ── */}
+      <aside className="dash-sidebar">
+        <div className="sidebar-toggle-container">
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
+            {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
           </button>
         </div>
 
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.025em' }}>
-          ⚠️ Customer Complaints Ledger
-        </h1>
-        <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '32px' }}>
-          Track and resolve complaints raised by customers regarding jobs or helpers.
-        </p>
+        <span className="sidebar-label">{t('overview')}</span>
+        <div className="sidebar-section">
+          <Link to="/admin" className="sidebar-link">
+            <span className="icon"><LuLayoutDashboard /></span>
+            <span className="link-text">{t('dashboard')}</span>
+          </Link>
+        </div>
 
-        {loading ? (
-          <p style={{ color: '#64748b' }}>Retrieving complaints...</p>
-        ) : complaints.length === 0 ? (
-          <div style={{ background: '#1e293b', borderRadius: '16px', padding: '50px 20px', textAlign: 'center', color: '#64748b' }}>
-            <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🎉</span>
-            No customer complaints registered! High-quality operations.
+        <span className="sidebar-label">{t('operations')}</span>
+        <div className="sidebar-section">
+          <Link to="/admin/manage-garages" className="sidebar-link">
+            <span className="icon"><LuStore /></span>
+            <span className="link-text">{t('manage_garages')}</span>
+          </Link>
+          <Link to="/search" className="sidebar-link">
+            <span className="icon"><LuSearch /></span>
+            <span className="link-text">{t('find_garages')}</span>
+          </Link>
+          <Link to="/admin/catalog" className="sidebar-link">
+            <span className="icon"><LuSettings /></span>
+            <span className="link-text">{t('system_catalog')}</span>
+          </Link>
+          <Link to="/my-bookings" className="sidebar-link">
+            <span className="icon"><LuClipboardList /></span>
+            <span className="link-text">{t('bookings')}</span>
+          </Link>
+        </div>
+
+        <div className="sidebar-divider"></div>
+        <span className="sidebar-label">{t('people')}</span>
+        <div className="sidebar-section">
+          <Link to="/admin/manage-staff" className="sidebar-link">
+            <span className="icon"><LuUser /></span>
+            <span className="link-text">{t('all_users')}</span>
+          </Link>
+          <Link to="/admin/staff" className="sidebar-link">
+            <span className="icon"><LuBriefcase /></span>
+            <span className="link-text">{t('staff_view')}</span>
+          </Link>
+          <Link to="/admin/manage-staff" className="sidebar-link">
+            <span className="icon"><LuUsers /></span>
+            <span className="link-text">{t('manage_staff')}</span>
+          </Link>
+        </div>
+
+        <div className="sidebar-divider"></div>
+        <div className="sidebar-section">
+          <Link to="/home" className="sidebar-link">
+            <span className="icon"><LuGlobe /></span>
+            <span className="link-text">{t('back_to_site')}</span>
+          </Link>
+        </div>
+      </aside>
+
+      {/* ── MAIN CONTENT ── */}
+      <main className="dash-main" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px' }}>
+        <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+          
+          {/* Navigation */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <Link to="/admin" className="back" style={{ textDecoration: 'none', color: '#64748b', fontSize: '13.5px' }}>
+              ← {t('dashboard_back')}
+            </Link>
+
+            {/* Language Switcher */}
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="btn btn-outline-secondary d-flex align-items-center gap-2"
+                style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
+              >
+                <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
+              </button>
+              {isLangOpen && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                  background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
+                  boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
+                  minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
+                }}>
+                  {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
+                    <button
+                      key={code}
+                      onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
+                      style={{
+                        background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
+                        borderRadius: '8px', padding: '8px 12px',
+                        color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
+                        fontSize: '13px', fontWeight: lang === code ? 700 : 500,
+                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                        justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
+                      }}
+                    >
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        ) : (
+
+          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', color: '#1e293b', letterSpacing: '-0.025em' }}>
+            ⚠️ {lang === 'ar' ? 'سجل شكاوى العملاء' : (lang === 'ur' ? 'کسٹمر شکایات کا کھاتہ' : 'Customer Complaints Ledger')}
+          </h1>
+          <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
+            {lang === 'ar' ? 'تتبع وحل الشكاوى المقدمة من العملاء بخصوص المهام أو المساعدين.' : (lang === 'ur' ? 'کاموں یا مددگاروں کے بارے میں صارفین کی طرف سے اٹھائی گئی شکایات کو ٹریک اور حل کریں۔' : 'Track and resolve complaints raised by customers regarding jobs or helpers.')}
+          </p>
+
+          {loading ? (
+            <p style={{ color: '#64748b' }}>{t('loading')}</p>
+          ) : complaints.length === 0 ? (
+            <div style={{ background: '#fff', borderRadius: '16px', padding: '50px 20px', textAlign: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
+              <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🎉</span>
+              {lang === 'ar' ? 'لم يتم تسجيل أي شكاوى من العملاء! عمليات عالية الجودة.' : (lang === 'ur' ? 'کوئی کسٹمر شکایت رجسٹرڈ نہیں ہے! اعلیٰ معیار کے آپریشنز۔' : 'No customer complaints registered! High-quality operations.')}
+            </div>
+          ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {complaints.map(c => (
               <div key={c._id} style={{
-                background: '#1e293b',
-                border: '1.5px solid rgba(255, 255, 255, 0.04)',
+                background: '#fff',
+                border: '1px solid #e2e8f0',
                 borderRadius: '16px',
                 padding: '24px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px'
+                gap: '16px',
+                color: '#1e293b'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                   <div style={{ flex: 1, marginRight: '24px' }}>
@@ -132,23 +252,23 @@ const AdminComplaints = () => {
                       }}>
                         {c.status}
                       </span>
-                      <span style={{ fontSize: '12.5px', color: '#94a3b8' }}>
-                        Submitted: {new Date(c.createdAt).toLocaleDateString()}
+                      <span style={{ fontSize: '12.5px', color: '#64748b' }}>
+                        {lang === 'ar' ? 'تاريخ التقديم:' : (lang === 'ur' ? 'جمع کرایا گیا:' : 'Submitted:')}: {new Date(c.createdAt).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 10px' }}>
+                    <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 10px', color: '#1e293b' }}>
                       {c.title || 'Service Complaint'}
                     </h3>
                     
-                    <p style={{ color: '#cbd5e1', fontSize: '14px', lineHeight: '1.5', margin: '0 0 16px' }}>
+                    <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.5', margin: '0 0 16px' }}>
                       {c.description}
                     </p>
 
-                    <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#94a3b8' }}>
-                      <span>Client: <strong>{c.customerId?.name || 'Customer'}</strong> ({c.customerId?.email})</span>
+                    <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#64748b' }}>
+                      <span>{lang === 'ar' ? 'العميل:' : (lang === 'ur' ? 'کلائنٹ:' : 'Client:')} <strong>{c.customerId?.name || 'Customer'}</strong> ({c.customerId?.email})</span>
                       {c.jobId && (
-                        <span>Job Card: <strong>#{c.jobId.slice(-6).toUpperCase()}</strong></span>
+                        <span>{lang === 'ar' ? 'بطاقة المهمة:' : (lang === 'ur' ? 'جاب کارڈ:' : 'Job Card:')} <strong>#{c.jobId.slice(-6).toUpperCase()}</strong></span>
                       )}
                     </div>
                   </div>
@@ -173,7 +293,7 @@ const AdminComplaints = () => {
                         boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)'
                       }}
                     >
-                      Resolve Complaint
+                      {lang === 'ar' ? 'حل الشكوى' : (lang === 'ur' ? 'شکایت حل کریں' : 'Resolve Complaint')}
                     </button>
                   )}
                 </div>
@@ -188,20 +308,20 @@ const AdminComplaints = () => {
                     fontSize: '14px'
                   }}>
                     <div style={{ fontWeight: '700', color: '#10b981', marginBottom: '8px' }}>
-                      Resolved Resolution Details:
+                      {lang === 'ar' ? 'تفاصيل قرار الحل:' : (lang === 'ur' ? 'حل کی تفصیلات:' : 'Resolved Resolution Details:')}
                     </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px' }}>
-                      <div>Type: <strong style={{ textTransform: 'capitalize' }}>{c.resolution.type?.replace(/_/g, ' ')}</strong></div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', color: '#1e293b' }}>
+                      <div>{lang === 'ar' ? 'النوع:' : (lang === 'ur' ? 'قسم:' : 'Type:')}: <strong style={{ textTransform: 'capitalize' }}>{c.resolution.type?.replace(/_/g, ' ')}</strong></div>
                       {['refund', 'compensation'].includes(c.resolution.type) && (
-                        <div>Refunded Amount: <strong>AED {c.resolution.amount?.toFixed(2)}</strong></div>
+                        <div>{lang === 'ar' ? 'المبلغ المسترد:' : (lang === 'ur' ? 'واپس کی گئی رقم:' : 'Refunded Amount:')}: <strong>AED {c.resolution.amount?.toFixed(2)}</strong></div>
                       )}
                       {c.resolution.resolvedAt && (
-                        <div>Resolved On: <strong>{new Date(c.resolution.resolvedAt).toLocaleDateString()}</strong></div>
+                        <div>{lang === 'ar' ? 'تاريخ الحل:' : (lang === 'ur' ? 'حل ہونے کی تاریخ:' : 'Resolved On:')}: <strong>{new Date(c.resolution.resolvedAt).toLocaleDateString()}</strong></div>
                       )}
                     </div>
                     {c.resolution.notes && (
-                      <div style={{ marginTop: '8px', color: '#94a3b8', fontSize: '13px' }}>
-                        Notes: "{c.resolution.notes}"
+                      <div style={{ marginTop: '8px', color: '#64748b', fontSize: '13px' }}>
+                        {lang === 'ar' ? 'ملاحظات:' : (lang === 'ur' ? 'نوٹس:' : 'Notes:')} "{c.resolution.notes}"
                       </div>
                     )}
                   </div>
@@ -210,8 +330,8 @@ const AdminComplaints = () => {
                 {/* Form to submit structured resolution */}
                 {showResolveForm === c._id && (
                   <form onSubmit={(e) => handleResolveSubmit(e, c._id)} style={{
-                    background: '#0f172a',
-                    border: '1px solid rgba(255, 255, 255, 0.06)',
+                    background: '#f8fafc',
+                    border: '1px solid #cbd5e1',
                     borderRadius: '12px',
                     padding: '20px',
                     display: 'flex',
@@ -219,34 +339,34 @@ const AdminComplaints = () => {
                     gap: '16px',
                     marginTop: '8px'
                   }}>
-                    <div style={{ fontWeight: '700', fontSize: '14px' }}>Specify Complaint Resolution:</div>
+                    <div style={{ fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>{lang === 'ar' ? 'تحديد قرار الشكوى:' : (lang === 'ur' ? 'شکایت کا حل متعین کریں:' : 'Specify Complaint Resolution:')}</div>
                     
                     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                       <div style={{ flex: 1, minWidth: '200px' }}>
-                        <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#94a3b8' }}>Resolution Type</label>
+                        <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b' }}>{lang === 'ar' ? 'نوع القرار' : (lang === 'ur' ? 'حل کی قسم' : 'Resolution Type')}</label>
                         <select
                           value={resolutionType}
                           onChange={(e) => setResolutionType(e.target.value)}
                           style={{
                             width: '100%',
-                            background: '#1e293b',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            background: '#fff',
+                            border: '1px solid #cbd5e1',
                             borderRadius: '6px',
                             padding: '8px',
-                            color: 'white'
+                            color: '#1e293b'
                           }}
                         >
-                          <option value="refund">Issue Refund (Stripe Transaction)</option>
-                          <option value="compensation">Compensation (Direct Credit)</option>
+                          <option value="refund">{lang === 'ar' ? 'إصدار استرداد (معاملة Stripe)' : (lang === 'ur' ? 'ریفنڈ جاری کریں (اسٹرائپ ٹرانزیکشن)' : 'Issue Refund (Stripe Transaction)')}</option>
+                          <option value="compensation">{lang === 'ar' ? 'التعويض (ائتمان مباشر)' : (lang === 'ur' ? 'معاوضہ (براہ راست کریڈٹ)' : 'Compensation (Direct Credit)')}</option>
                           <option value="fix_at_garage">Fix vehicle at Garage</option>
                           <option value="replacement">Replacement vehicle provided</option>
-                          <option value="no_action">Dismiss (No action)</option>
+                          <option value="no_action">{lang === 'ar' ? 'إغلاق بدون إجراء' : (lang === 'ur' ? 'بغیر کسی اقدام کے بند کریں' : 'Close No Action')}</option>
                         </select>
                       </div>
 
                       {['refund', 'compensation'].includes(resolutionType) && (
-                        <div style={{ width: '150px' }}>
-                          <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#94a3b8' }}>Amount (AED)</label>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                          <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b' }}>{lang === 'ar' ? 'المبلغ المسترد (AED)' : (lang === 'ur' ? 'رقم (AED)' : 'Refund Amount (AED)')} *</label>
                           <input
                             type="number"
                             min="0.01"
@@ -255,12 +375,11 @@ const AdminComplaints = () => {
                             onChange={(e) => setResolutionAmount(e.target.value)}
                             style={{
                               width: '100%',
-                              background: '#1e293b',
-                              border: '1px solid rgba(255, 255, 255, 0.1)',
+                              background: '#fff',
+                              border: '1px solid #cbd5e1',
                               borderRadius: '6px',
                               padding: '8px',
-                              color: 'white',
-                              boxSizing: 'border-box'
+                              color: '#1e293b'
                             }}
                             required
                           />
@@ -269,50 +388,50 @@ const AdminComplaints = () => {
                     </div>
 
                     <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#94a3b8' }}>Notes / Explanation</label>
+                      <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b' }}>{lang === 'ar' ? 'ملاحظات الحل / تفاصيل التسوية' : (lang === 'ur' ? 'حل کے نوٹس / تصفیہ کی تفصیلات' : 'Resolution Notes / Settlement Details')} *</label>
                       <textarea
+                        rows="3"
                         value={resolutionNotes}
                         onChange={(e) => setResolutionNotes(e.target.value)}
-                        placeholder="Resolution summary, terms or instructions..."
                         style={{
                           width: '100%',
-                          height: '80px',
-                          background: '#1e293b',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          background: '#fff',
+                          border: '1px solid #cbd5e1',
                           borderRadius: '6px',
-                          padding: '10px',
-                          color: 'white',
-                          boxSizing: 'border-box',
-                          resize: 'none'
+                          padding: '8px',
+                          color: '#1e293b'
                         }}
+                        placeholder={lang === 'ar' ? 'أدخل ملاحظات داخلية توضح التوافق مع العميل...' : (lang === 'ur' ? 'گاہک کے ساتھ تصفیہ کی وضاحت کرتے ہوئے اندرونی نوٹ درج کریں...' : 'Enter internal notes explaining the customer alignment...')}
                         required
                       />
                     </div>
 
-                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'end' }}>
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'end' }}>
                       <button
                         type="button"
                         onClick={() => setShowResolveForm(null)}
                         style={{
-                          background: 'rgba(255, 255, 255, 0.05)',
-                          border: 'none',
+                          background: 'none',
+                          border: '1px solid #cbd5e1',
                           borderRadius: '6px',
-                          padding: '8px 16px',
-                          color: '#94a3b8',
+                          padding: '6px 12px',
+                          color: '#475569',
+                          fontSize: '12.5px',
                           cursor: 'pointer'
                         }}
                       >
-                        Cancel
+                        {t('cancel')}
                       </button>
                       <button
                         type="submit"
                         disabled={resolvingId === c._id}
                         style={{
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          background: '#10b981',
                           border: 'none',
                           borderRadius: '6px',
-                          padding: '8px 20px',
+                          padding: '6px 16px',
                           color: 'white',
+                          fontSize: '12.5px',
                           fontWeight: '700',
                           cursor: 'pointer',
                           opacity: resolvingId === c._id ? 0.7 : 1
@@ -328,7 +447,8 @@ const AdminComplaints = () => {
           </div>
         )}
 
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

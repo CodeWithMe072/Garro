@@ -4,6 +4,21 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
+import {
+  LuStar,
+  LuPencil,
+  LuHourglass,
+  LuClock,
+  LuCar,
+  LuUser,
+  LuStore,
+  LuWrench,
+  LuClipboardList,
+  LuTriangleAlert,
+  LuCalendar,
+  LuCalendarDays,
+  LuCircleCheck
+} from 'react-icons/lu';
 
 const TrackRequest = () => {
   const { id } = useParams();
@@ -648,7 +663,7 @@ const TrackRequest = () => {
         <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '16px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="card-body p-4 text-white">
             <h5 className="fw-bold mb-3 d-flex align-items-center gap-2">
-              ⭐ Rate Your Service &amp; Garage Experience
+              <LuStar className="text-warning" /> Rate Your Service &amp; Garage Experience
             </h5>
             {alreadyReviewed ? (
               <div className="text-success fw-semibold d-flex align-items-center gap-2 mt-2">
@@ -746,11 +761,11 @@ const TrackRequest = () => {
                         request.proposedDateStatus !== 'pending' && 
                         user?.role === 'customer' && (
                           <button 
-                            className="btn btn-link p-0 text-decoration-none fw-semibold" 
+                            className="btn btn-link p-0 text-decoration-none fw-semibold d-inline-flex align-items-center" 
                             style={{ fontSize: '13px', color: '#ff5c1a' }}
                             onClick={handleStartEdit}
                           >
-                            ✏️ Edit
+                            <LuPencil size={12} className="me-1" /> Edit
                           </button>
                       )}
                     </div>
@@ -759,7 +774,7 @@ const TrackRequest = () => {
                   {/* Customer view: proposal feedback */}
                   {request.proposedDateStatus === 'pending' && request.proposedDate && user?.role === 'customer' && (
                     <div className="alert alert-info mt-3 mb-0" style={{ fontSize: '12.5px', borderRadius: '8px', border: '1px solid rgba(59, 130, 246, 0.2)', background: 'rgba(59, 130, 246, 0.05)' }}>
-                      ⏳ Proposed new schedule: <strong>{new Date(request.proposedDate).toLocaleString()}</strong>. Waiting for helper confirmation.
+                      <LuHourglass className="me-2" /> Proposed new schedule: <strong>{new Date(request.proposedDate).toLocaleString()}</strong>. Waiting for helper confirmation.
                     </div>
                   )}
                 </div>
@@ -797,7 +812,7 @@ const TrackRequest = () => {
                 {request.proposedDateStatus === 'pending' && request.proposedDate && user?.role !== 'customer' && (
                   <div className="col-12">
                     <div className="alert alert-warning mt-2 mb-0" style={{ borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.2)', background: 'rgba(245, 158, 11, 0.05)' }}>
-                      <div className="fw-bold mb-1 text-dark" style={{ fontSize: '13.5px' }}>🕒 Schedule Change Requested:</div>
+                      <div className="fw-bold mb-1 text-dark d-flex align-items-center gap-2" style={{ fontSize: '13.5px' }}><LuClock /> Schedule Change Requested:</div>
                       <div className="mb-2 text-muted small">Customer proposed: <strong>{new Date(request.proposedDate).toLocaleString()}</strong></div>
                       <div className="d-flex gap-2">
                         <button className="btn-garro btn-primary-garro btn-sm py-1 px-3" onClick={() => handleRespondSchedule('accept')}>Accept</button>
@@ -840,7 +855,7 @@ const TrackRequest = () => {
                 <h5 className="fw-bold text-dark mb-3">Vehicle Information</h5>
                 {request.vehicleId ? (
                   <div className="d-flex align-items-center gap-3">
-                    <div style={{ fontSize: '2.5rem' }}>🚗</div>
+                    <div style={{ fontSize: '2.5rem', display: 'flex', alignItems: 'center' }}><LuCar /></div>
                     <div>
                       <div className="fw-bold text-dark">{request.vehicleId.make} {request.vehicleId.model}</div>
                       <div className="text-muted small">Year: {request.vehicleId.year}</div>
@@ -864,7 +879,7 @@ const TrackRequest = () => {
                 <div className="card-body p-4">
                   <h5 className="fw-bold text-dark mb-3">Client Contact</h5>
                   <div className="d-flex align-items-start gap-3">
-                    <div style={{ fontSize: '2rem' }}>👤</div>
+                    <div style={{ fontSize: '2rem', display: 'flex', alignItems: 'center' }}><LuUser /></div>
                     <div>
                       <div className="fw-bold text-dark">{request.userId.name}</div>
                       <div className="text-muted small">Phone: {request.userId.phone || 'N/A'}</div>
@@ -895,7 +910,7 @@ const TrackRequest = () => {
                   
                   {request.garageId ? (
                     <div className="d-flex align-items-start gap-3 mb-3 pb-3 border-bottom">
-                      <div style={{ fontSize: '2.5rem' }}>🏪</div>
+                      <div style={{ fontSize: '2.5rem', display: 'flex', alignItems: 'center' }}><LuStore /></div>
                       <div>
                         <div className="fw-bold text-dark">{request.garageId.name}</div>
                         <div className="text-muted small">Contact: {request.garageId.phone || 'N/A'}</div>
@@ -910,7 +925,7 @@ const TrackRequest = () => {
 
                   {request.helperId ? (
                     <div className="d-flex align-items-start gap-3">
-                      <div style={{ fontSize: '2.5rem' }}>🧑‍🔧</div>
+                      <div style={{ fontSize: '2.5rem', display: 'flex', alignItems: 'center' }}><LuWrench /></div>
                       <div>
                         <div className="fw-bold text-dark">{request.helperId.name}</div>
                         <div className="text-muted small">Designation: Service Helper</div>
@@ -975,7 +990,7 @@ const TrackRequest = () => {
             </div>
 
             <div className="mb-3 p-3 rounded-3" style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
-              <div className="small text-muted fw-semibold mb-2">📋 Request Details</div>
+              <div className="small text-muted fw-semibold mb-2" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><LuClipboardList /> Request Details</div>
               <div className="fw-bold text-dark">{request.userId?.name || 'Unknown User'}</div>
               <div className="small text-secondary">{request.vehicleId ? `${request.vehicleId.make} ${request.vehicleId.model} (${request.vehicleId.year})` : 'Unknown Vehicle'}</div>
               <div className="small text-secondary mt-1">Issue: {request.description}</div>
@@ -988,17 +1003,17 @@ const TrackRequest = () => {
                     request.urgency === 'today' ? 'bg-warning text-dark' :
                     request.urgency === 'this_week' ? 'bg-info text-dark' : 'bg-secondary'
                   }`} style={{ fontSize: '11px' }}>
-                    {request.urgency === 'asap' ? '🚨 ASAP — Urgent' :
-                     request.urgency === 'today' ? '📅 Today' :
-                     request.urgency === 'this_week' ? '📆 This Week' : '⏳ Flexible'}
+                    {request.urgency === 'asap' ? <span className="d-inline-flex align-items-center gap-1"><LuTriangleAlert /> ASAP — Urgent</span> :
+                     request.urgency === 'today' ? <span className="d-inline-flex align-items-center gap-1"><LuCalendar /> Today</span> :
+                     request.urgency === 'this_week' ? <span className="d-inline-flex align-items-center gap-1"><LuCalendar /> This Week</span> : <span className="d-inline-flex align-items-center gap-1"><LuHourglass /> Flexible</span>}
                   </span>
                 </div>
                 {request.preferredDate && (
                   <div>
                     <div className="small text-muted">Preferred Date/Time</div>
                     <div className="small fw-semibold text-dark mt-1">
-                      📅 {new Date(request.preferredDate).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}{' '}
-                      🕐 {new Date(request.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <span className="d-inline-flex align-items-center gap-1 me-2"><LuCalendar /> {new Date(request.preferredDate).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className="d-inline-flex align-items-center gap-1"><LuClock /> {new Date(request.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
                 )}
@@ -1025,7 +1040,7 @@ const TrackRequest = () => {
                 />
                 {request && getMatchingGarages(request, garagesList).length === 0 && (
                   <p className="text-danger small mt-1">
-                    ⚠️ No garages found supporting <strong>{(request.subCategory || request.serviceType)?.replace('_',' ')}</strong> in area <strong>"{request.location?.address || 'N/A'}"</strong>.
+                    <LuTriangleAlert style={{ verticalAlign: 'middle', marginRight: '4px' }} /> No garages found supporting <strong>{(request.subCategory || request.serviceType)?.replace('_',' ')}</strong> in area <strong>"{request.location?.address || 'N/A'}"</strong>.
                   </p>
                 )}
               </div>
@@ -1039,7 +1054,7 @@ const TrackRequest = () => {
                     .filter(h => h.garageId?._id === assignGarageId)
                     .map(h => ({
                       value: h._id,
-                      label: `${h.name} (⭐ ${h.rating || 5}/5) ${!h.isAvailable ? '[⚠️ Shift Conflict]' : (h.upcomingSlots && h.upcomingSlots.length > 0 ? `[${h.upcomingSlots.length} job(s)]` : '[Free]')}`
+                      label: `${h.name} (${h.rating || 5}/5 Stars) ${!h.isAvailable ? '[Shift Conflict]' : (h.upcomingSlots && h.upcomingSlots.length > 0 ? `[${h.upcomingSlots.length} job(s)]` : '[Free]')}`
                     }))
                   }
                   value={assignHelperId}
@@ -1055,9 +1070,9 @@ const TrackRequest = () => {
               {/* ── Schedule time config ── */}
               <div className="p-3 mb-4 rounded-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                 <div className="d-flex align-items-center justify-content-between mb-2">
-                  <div className="small fw-bold text-dark">🕐 Schedule Helper Visit</div>
+                  <div className="small fw-bold text-dark d-flex align-items-center gap-2"><LuClock /> Schedule Helper Visit</div>
                   {hasConflict && (
-                    <span className="badge bg-danger px-2 py-1" style={{ fontSize: '11px' }}>⚠️ Time Conflict!</span>
+                    <span className="badge bg-danger px-2 py-1 d-inline-flex align-items-center gap-1" style={{ fontSize: '11px' }}><LuTriangleAlert /> Time Conflict!</span>
                   )}
                 </div>
 
@@ -1108,7 +1123,9 @@ const TrackRequest = () => {
                 {assignDate && assignTime && (
                   <div className="mt-3">
                     <div className="small fw-semibold text-dark mb-1">
-                      📊 Helper Schedule — {assignDate}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <LuCalendarDays /> Helper Schedule — {assignDate}
+                      </span>
                       {scheduleLoading && <span className="text-muted ms-2" style={{ fontWeight: 'normal' }}>Loading...</span>}
                     </div>
                     <div className="d-flex gap-3 mb-2 flex-wrap" style={{ fontSize: '11px' }}>
@@ -1156,8 +1173,8 @@ const TrackRequest = () => {
                         else if (isProp) bg = '#f97316';
 
                         const titleStr = isOffHours ? 'Outside working hours (9AM–9PM)' :
-                          (isBusy && isProp) ? '⚠️ CONFLICT — Overlaps a booking!' :
-                          (isBuffer && isProp) ? '⚠️ CONFLICT — Inside recovery buffer!' :
+                          (isBusy && isProp) ? 'Conflict — Overlaps a booking!' :
+                          (isBuffer && isProp) ? 'Conflict — Inside recovery buffer!' :
                           isBusy ? `Booked: ${busyIntervals.find(b=>t>=b.start&&t<b.end)?.label||''}` :
                           isBuffer ? `${bufferIntervals.find(b=>t>=b.start&&t<b.end)?.label||'Recovery'}` :
                           isProp ? `Your slot: ${assignTime} + ${assignDuration}h` : 'Free';
@@ -1178,11 +1195,11 @@ const TrackRequest = () => {
                     })()}
                     {hasConflict ? (
                       <div className="alert alert-danger py-2 px-3 mb-0" style={{ fontSize:'12.5px', borderRadius:'8px' }}>
-                        ⚠️ <strong>Cannot assign:</strong> {conflictReason}
+                        <span className="d-flex align-items-center gap-2"><LuTriangleAlert /> <strong>Cannot assign:</strong> {conflictReason}</span>
                       </div>
                     ) : (
                       <div className="alert alert-success py-2 px-3 mb-0" style={{ fontSize:'12.5px', borderRadius:'8px' }}>
-                        ✅ <strong>{assignTime}</strong> for <strong>{assignDuration} hr(s)</strong> — available, no conflicts.
+                        <span className="d-flex align-items-center gap-2"><LuCircleCheck /> <strong>{assignTime}</strong> for <strong>{assignDuration} hr(s)</strong> — available, no conflicts.</span>
                       </div>
                     )}
                   </div>
@@ -1203,7 +1220,7 @@ const TrackRequest = () => {
                   disabled={submittingAssign || !assignGarageId || !assignHelperId || hasConflict}
                   title={hasConflict ? 'Resolve the time conflict first' : ''}
                 >
-                  {submittingAssign ? 'Assigning...' : hasConflict ? '⚠️ Conflict — Change Time' : 'Confirm Assignment'}
+                  {submittingAssign ? 'Assigning...' : hasConflict ? 'Conflict — Change Time' : 'Confirm Assignment'}
                 </button>
               </div>
             </form>

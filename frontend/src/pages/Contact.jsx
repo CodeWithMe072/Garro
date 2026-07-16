@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
-  Phone, Mail, MapPin, Clock, Send, Instagram,
-  Twitter, Linkedin, Facebook, MessageSquare, CheckCircle
-} from 'lucide-react';
+  LuPhone, LuMail, LuMapPin, LuClock, LuSend, LuInstagram,
+  LuTwitter, LuLinkedin, LuFacebook, LuMessageSquare, LuCircleCheck
+} from 'react-icons/lu';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -19,28 +19,28 @@ const Contact = () => {
 
   const contactInfo = [
     {
-      icon: Phone, title: 'Phone', detail: '+971 50 123 4567',
+      icon: LuPhone, title: 'Phone', detail: '+971 50 123 4567',
       sub: 'Mon–Sat, 9AM–6PM', color: '#ff5c1a'
     },
     {
-      icon: Mail, title: 'Email', detail: 'hello@garro.ae',
+      icon: LuMail, title: 'Email', detail: 'hello@garro.ae',
       sub: 'We reply within 24 hours', color: '#3b82f6'
     },
     {
-      icon: MapPin, title: 'Location', detail: 'Dubai, United Arab Emirates',
+      icon: LuMapPin, title: 'Location', detail: 'Dubai, United Arab Emirates',
       sub: 'Also serving Kerala, India', color: '#10b981'
     },
     {
-      icon: Clock, title: 'Working Hours', detail: 'Mon–Sat: 9AM – 6PM',
+      icon: LuClock, title: 'Working Hours', detail: 'Mon–Sat: 9AM – 6PM',
       sub: 'Sunday: Closed', color: '#8b5cf6'
     },
   ];
 
   const socials = [
-    { icon: Instagram, href: '#', label: 'Instagram', color: '#e1306c' },
-    { icon: Twitter, href: '#', label: 'Twitter', color: '#1da1f2' },
-    { icon: Linkedin, href: '#', label: 'LinkedIn', color: '#0a66c2' },
-    { icon: Facebook, href: '#', label: 'Facebook', color: '#1877f2' },
+    { icon: LuInstagram, href: '#', label: 'Instagram', color: '#e1306c' },
+    { icon: LuTwitter, href: '#', label: 'Twitter', color: '#1da1f2' },
+    { icon: LuLinkedin, href: '#', label: 'LinkedIn', color: '#0a66c2' },
+    { icon: LuFacebook, href: '#', label: 'Facebook', color: '#1877f2' },
   ];
 
   const inputStyle = {
@@ -63,7 +63,7 @@ const Contact = () => {
             fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '.08em', marginBottom: '20px'
           }}>
-            <MessageSquare size={13} /> Get In Touch
+            <LuMessageSquare size={13} /> Get In Touch
           </div>
           <h1 style={{
             fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, color: '#0f172a',
@@ -161,7 +161,7 @@ const Contact = () => {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       margin: '0 auto 24px', color: '#10b981'
                     }}>
-                      <CheckCircle size={40} strokeWidth={1.5} />
+                      <LuCircleCheck size={40} strokeWidth={1.5} />
                     </div>
                     <h4 style={{ fontWeight: 800, color: '#0f172a', fontFamily: "'Poppins', sans-serif", marginBottom: '10px' }}>
                       Message Sent!
@@ -239,7 +239,7 @@ const Contact = () => {
                               boxShadow: '0 6px 20px rgba(255,92,26,0.3)', transition: 'all 0.2s'
                             }}
                           >
-                            <Send size={18} /> Send Message
+                            <LuSend size={18} /> Send Message
                           </button>
                         </div>
                       </div>

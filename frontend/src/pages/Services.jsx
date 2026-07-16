@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Droplets, Settings, Wrench, Paintbrush, Wind,
-  Circle, Battery, Sparkles, ArrowRight, Search, SlidersHorizontal
-} from 'lucide-react';
+  LuDroplets, LuSettings, LuWrench, LuPaintbrush, LuWind,
+  LuCircle, LuBattery, LuSparkles, LuArrowRight, LuSearch, LuSlidersHorizontal
+} from 'react-icons/lu';
 
 const allServices = [
-  { name: 'Car Wash & Cleaning', icon: Droplets, color: '#3b82f6', price: 49, category: 'wash', desc: 'Premium exterior and interior cleaning services for a spotless finish.' },
-  { name: 'Regular Maintenance', icon: Settings, color: '#ff5c1a', price: 299, category: 'service', desc: 'Oil changes, filters, and full vehicle health checks by certified technicians.' },
-  { name: 'Mechanical Repairs', icon: Wrench, color: '#8b5cf6', price: 150, category: 'repair', desc: 'Engine, suspension, brake repairs and comprehensive diagnostics.' },
-  { name: 'Painting & Denting', icon: Paintbrush, color: '#ec4899', price: 399, category: 'painting', desc: 'Scratch removal, panel beating, and full body painting services.' },
-  { name: 'A/C Service', icon: Wind, color: '#06b6d4', price: 149, category: 'ac', desc: 'Gas top-up, cooling system repairs, and full A/C diagnostics.' },
-  { name: 'Tyre Services', icon: Circle, color: '#f59e0b', price: 99, category: 'tyre', desc: 'Wheel alignment, balancing, rotation, and new tyre fitting.' },
-  { name: 'Battery Change', icon: Battery, color: '#10b981', price: 250, category: 'battery', desc: 'On-site battery testing, jump-start, and same-day replacement.' },
-  { name: 'Car Detailing', icon: Sparkles, color: '#ff5c1a', price: 499, category: 'detailing', desc: 'Ceramic coating, paint protection, and full interior detailing.' },
+  { name: 'Car Wash & Cleaning', icon: LuDroplets, color: '#3b82f6', price: 49, category: 'wash', desc: 'Premium exterior and interior cleaning services for a spotless finish.' },
+  { name: 'Regular Maintenance', icon: LuSettings, color: '#ff5c1a', price: 299, category: 'service', desc: 'Oil changes, filters, and full vehicle health checks by certified technicians.' },
+  { name: 'Mechanical Repairs', icon: LuWrench, color: '#8b5cf6', price: 150, category: 'repair', desc: 'Engine, suspension, brake repairs and comprehensive diagnostics.' },
+  { name: 'Painting & Denting', icon: LuPaintbrush, color: '#ec4899', price: 399, category: 'painting', desc: 'Scratch removal, panel beating, and full body painting services.' },
+  { name: 'A/C Service', icon: LuWind, color: '#06b6d4', price: 149, category: 'ac', desc: 'Gas top-up, cooling system repairs, and full A/C diagnostics.' },
+  { name: 'Tyre Services', icon: LuCircle, color: '#f59e0b', price: 99, category: 'tyre', desc: 'Wheel alignment, balancing, rotation, and new tyre fitting.' },
+  { name: 'Battery Change', icon: LuBattery, color: '#10b981', price: 250, category: 'battery', desc: 'On-site battery testing, jump-start, and same-day replacement.' },
+  { name: 'Car Detailing', icon: LuSparkles, color: '#ff5c1a', price: 499, category: 'detailing', desc: 'Ceramic coating, paint protection, and full interior detailing.' },
 ];
 
 const Services = () => {
@@ -41,7 +41,7 @@ const Services = () => {
             fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '.08em', marginBottom: '20px'
           }}>
-            <SlidersHorizontal size={13} /> What We Offer
+            <LuSlidersHorizontal size={13} /> What We Offer
           </div>
           <h1 style={{
             fontSize: 'clamp(2.2rem, 4.5vw, 3.2rem)', fontWeight: 900, color: '#0f172a',
@@ -55,7 +55,7 @@ const Services = () => {
 
           {/* Search bar */}
           <div style={{ maxWidth: '480px', margin: '0 auto', position: 'relative' }}>
-            <Search size={17} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <LuSearch size={17} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input
               type="text"
               placeholder="Search services..."
@@ -78,7 +78,7 @@ const Services = () => {
         <div className="container">
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b', fontFamily: "'Poppins', sans-serif" }}>
-              <Search size={40} style={{ marginBottom: '16px', opacity: 0.3 }} />
+              <LuSearch size={40} style={{ marginBottom: '16px', opacity: 0.3 }} />
               <p style={{ fontSize: '15px' }}>No services found matching "<strong>{searchQuery}</strong>"</p>
               <button onClick={() => setSearchQuery('')} style={{ marginTop: '12px', background: '#ff5c1a', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}>
                 Clear Search
@@ -146,7 +146,7 @@ const Services = () => {
                       onMouseEnter={e => e.currentTarget.style.gap = '10px'}
                       onMouseLeave={e => e.currentTarget.style.gap = '6px'}
                     >
-                      View Details <ArrowRight size={15} />
+                      View Details <LuArrowRight size={15} />
                     </Link>
                   </div>
                 </div>
@@ -178,7 +178,7 @@ const Services = () => {
                 boxShadow: '0 6px 20px rgba(255,92,26,0.3)'
               }}
             >
-              Get a Custom Quote <ArrowRight size={18} />
+              Get a Custom Quote <LuArrowRight size={18} />
             </Link>
           </div>
         </div>

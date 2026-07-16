@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Truck, 
-  MapPin, 
-  AlertTriangle, 
-  Zap, 
-  Navigation, 
-  CheckCircle2, 
-  Phone, 
-  ShieldAlert, 
-  Wrench,
-  Clock,
-  Compass
-} from 'lucide-react';
+  LuTruck, 
+  LuMapPin, 
+  LuNavigation, 
+  LuPhone, 
+  LuShieldAlert, 
+  LuClock, 
+  LuCompass
+} from 'react-icons/lu';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import CustomDropdown from '../components/CustomDropdown';
@@ -187,7 +183,7 @@ const EmergencyPickup = () => {
 
         <div className="container position-relative" style={{ zIndex: 2 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.18)', color: '#ef4444', padding: '5px 14px', borderRadius: '50px', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '20px' }}>
-            <ShieldAlert size={14} /> Immediate Emergency Dispatch
+            <LuShieldAlert size={14} /> Immediate Emergency Dispatch
           </div>
           <h1 style={{ fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, color: '#0f172a', marginBottom: '12px', letterSpacing: '-.02em' }}>
             Stranded? Request a <span style={{ color: '#ef4444' }}>Tow Truck Now.</span>
@@ -226,7 +222,7 @@ const EmergencyPickup = () => {
                       <div style={{ display: 'flex', gap: '10px' }}>
                         <div style={{ position: 'relative', flex: 1 }}>
                           <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
-                            <MapPin size={16} />
+                            <LuMapPin size={16} />
                           </span>
                           <input
                             type="text"
@@ -263,7 +259,7 @@ const EmergencyPickup = () => {
                           onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
                           onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
                         >
-                          <Navigation size={15} color="#ef4444" className={isLocating ? 'spin-anim' : ''} />
+                          <LuNavigation size={15} color="#ef4444" className={isLocating ? 'spin-anim' : ''} />
                           {isLocating ? 'Locating...' : 'Get GPS'}
                         </button>
                       </div>
@@ -407,7 +403,7 @@ const EmergencyPickup = () => {
                         marginTop: '10px'
                       }}
                     >
-                      <Truck size={18} />
+                      <LuTruck size={18} />
                       {isSubmitting ? 'Dispatching Recovery Operator...' : 'Confirm Emergency Dispatch'}
                     </button>
 
@@ -432,16 +428,16 @@ const EmergencyPickup = () => {
                     position: 'absolute', right: '-40px', bottom: '-40px',
                     color: 'rgba(255,255,255,0.03)', pointerEvents: 'none'
                   }}>
-                    <Compass size={200} />
+                    <LuCompass size={200} />
                   </div>
 
                   <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '20px' }}>What Happens Next?</h3>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {[
-                      { icon: Clock, title: '1. Instant Verification', desc: 'Our operator reviews details and coordinates are sent to our tow dispatch network.' },
-                      { icon: Compass, title: '2. Auto-Routing Driver', desc: 'The closest available flatbed recovery truck accepts the task and navigates to you.' },
-                      { icon: MapPin, title: '3. Track Live on App', desc: 'Track your operator live on map till they arrive at your location.' }
+                      { icon: LuClock, title: '1. Instant Verification', desc: 'Our operator reviews details and coordinates are sent to our tow dispatch network.' },
+                      { icon: LuCompass, title: '2. Auto-Routing Driver', desc: 'The closest available flatbed recovery truck accepts the task and navigates to you.' },
+                      { icon: LuMapPin, title: '3. Track Live on App', desc: 'Track your operator live on map till they arrive at your location.' }
                     ].map(({ icon: Icon, title, desc }) => (
                       <div key={title} style={{ display: 'flex', gap: '14px' }}>
                         <div style={{
@@ -475,7 +471,7 @@ const EmergencyPickup = () => {
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     margin: '0 auto 16px'
                   }}>
-                    <Phone size={22} />
+                    <LuPhone size={22} />
                   </div>
                   <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>Prefer to call?</h4>
                   <p style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px' }}>

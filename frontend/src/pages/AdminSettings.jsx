@@ -1,5 +1,20 @@
+import { 
+  LuLayoutDashboard, 
+  LuStore, 
+  LuSearch, 
+  LuSettings, 
+  LuUser, 
+  LuBriefcase, 
+  LuUsers, 
+  LuGlobe,
+  LuChevronLeft,
+  LuChevronRight,
+  LuClipboardList
+} from 'react-icons/lu';
+import { useLanguage } from '../context/LanguageContext';
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 
 const AdminSettings = () => {
@@ -11,6 +26,18 @@ const AdminSettings = () => {
 
   const { toast } = useNotification();
   const navigate = useNavigate();
+
+  const { t, lang, changeLanguage } = useLanguage();
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('admin_sidebar_collapsed') === 'true';
+  });
+
+  const toggleSidebar = () => {
+    const nextState = !isCollapsed;
+    setIsCollapsed(nextState);
+    localStorage.setItem('admin_sidebar_collapsed', String(nextState));
+  };
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -69,37 +96,129 @@ const AdminSettings = () => {
   };
 
   return (
-    <div style={{
-      background: '#0f172a',
-      minHeight: '100vh',
-      color: '#f8fafc',
-      padding: '40px 20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-        
-        {/* Navigation */}
-        <div style={{ marginBottom: '24px' }}>
-          <button onClick={() => navigate('/admin')} style={{
-            background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline'
-          }}>
-            ← Return to Admin Dashboard
+    <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
+      {/* ── SIDEBAR ── */}
+      <aside className="dash-sidebar">
+        <div className="sidebar-toggle-container">
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
+            {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
           </button>
         </div>
 
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.025em' }}>
-          ⚙️ System Configuration
-        </h1>
-        <p style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '32px' }}>
-          Manage global marketplace fees, tax parameters, and helper assignment configurations.
-        </p>
+        <span className="sidebar-label">{t('overview')}</span>
+        <div className="sidebar-section">
+          <Link to="/admin" className="sidebar-link">
+            <span className="icon"><LuLayoutDashboard /></span>
+            <span className="link-text">{t('dashboard')}</span>
+          </Link>
+        </div>
 
-        {loading ? (
-          <p style={{ color: '#64748b' }}>Retrieving global configurations...</p>
-        ) : (
+        <span className="sidebar-label">{t('operations')}</span>
+        <div className="sidebar-section">
+          <Link to="/admin/manage-garages" className="sidebar-link">
+            <span className="icon"><LuStore /></span>
+            <span className="link-text">{t('manage_garages')}</span>
+          </Link>
+          <Link to="/search" className="sidebar-link">
+            <span className="icon"><LuSearch /></span>
+            <span className="link-text">{t('find_garages')}</span>
+          </Link>
+          <Link to="/admin/catalog" className="sidebar-link">
+            <span className="icon"><LuSettings /></span>
+            <span className="link-text">{t('system_catalog')}</span>
+          </Link>
+          <Link to="/my-bookings" className="sidebar-link">
+            <span className="icon"><LuClipboardList /></span>
+            <span className="link-text">{t('bookings')}</span>
+          </Link>
+        </div>
+
+        <div className="sidebar-divider"></div>
+        <span className="sidebar-label">{t('people')}</span>
+        <div className="sidebar-section">
+          <Link to="/admin/manage-staff" className="sidebar-link">
+            <span className="icon"><LuUser /></span>
+            <span className="link-text">{t('all_users')}</span>
+          </Link>
+          <Link to="/admin/staff" className="sidebar-link">
+            <span className="icon"><LuBriefcase /></span>
+            <span className="link-text">{t('staff_view')}</span>
+          </Link>
+          <Link to="/admin/manage-staff" className="sidebar-link">
+            <span className="icon"><LuUsers /></span>
+            <span className="link-text">{t('manage_staff')}</span>
+          </Link>
+        </div>
+
+        <div className="sidebar-divider"></div>
+        <div className="sidebar-section">
+          <Link to="/home" className="sidebar-link">
+            <span className="icon"><LuGlobe /></span>
+            <span className="link-text">{t('back_to_site')}</span>
+          </Link>
+        </div>
+      </aside>
+
+      {/* ── MAIN CONTENT ── */}
+      <main className="dash-main" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px' }}>
+        <div style={{ maxWidth: '640px', margin: '0 auto' }}>
+          
+          {/* Navigation */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <Link to="/admin" className="back" style={{ textDecoration: 'none', color: '#64748b', fontSize: '13.5px' }}>
+              ← {t('dashboard_back')}
+            </Link>
+
+            {/* Language Switcher */}
+            <div style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="btn btn-outline-secondary d-flex align-items-center gap-2"
+                style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
+              >
+                <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
+              </button>
+              {isLangOpen && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                  background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
+                  boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
+                  minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
+                }}>
+                  {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
+                    <button
+                      key={code}
+                      onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
+                      style={{
+                        background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
+                        borderRadius: '8px', padding: '8px 12px',
+                        color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
+                        fontSize: '13px', fontWeight: lang === code ? 700 : 500,
+                        cursor: 'pointer', display: 'flex', alignItems: 'center',
+                        justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
+                      }}
+                    >
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', color: '#1e293b', letterSpacing: '-0.025em' }}>
+            ⚙️ {lang === 'ar' ? 'تهيئة النظام' : (lang === 'ur' ? 'سسٹم کنفیگریشن' : 'System Configuration')}
+          </h1>
+          <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
+            {lang === 'ar' ? 'إدارة رسوم السوق العالمية، معلمات الضرائب، وتكوينات تعيين المساعدين.' : (lang === 'ur' ? 'عالمی مارکیٹ پلیس کی فیس، ٹیکس کے پیرامیٹرز اور مددگاروں کے تفویض کی ترتیبات کا انتظام کریں۔' : 'Manage global marketplace fees, tax parameters, and helper assignment configurations.')}
+          </p>
+
+          {loading ? (
+            <p style={{ color: '#64748b' }}>{t('loading')}</p>
+          ) : (
           <form onSubmit={handleSubmit} style={{
-            background: '#1e293b',
-            border: '1.5px solid rgba(255, 255, 255, 0.04)',
+            background: '#fff',
+            border: '1px solid #e2e8f0',
             borderRadius: '16px',
             padding: '32px',
             display: 'flex',
@@ -107,8 +226,8 @@ const AdminSettings = () => {
             gap: '24px'
           }}>
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#cbd5e1' }}>
-                Value Added Tax (VAT %)
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
+                {lang === 'ar' ? 'ضريبة القيمة المضافة (VAT %)' : (lang === 'ur' ? 'ویلیو ایڈڈ ٹیکس (VAT %)' : 'Value Added Tax (VAT %)')}
               </label>
               <input
                 type="number"
@@ -119,24 +238,24 @@ const AdminSettings = () => {
                 onChange={(e) => setVat(e.target.value)}
                 style={{
                   width: '100%',
-                  background: '#0f172a',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
                   borderRadius: '8px',
                   padding: '12px',
-                  color: 'white',
+                  color: '#1e293b',
                   fontSize: '15px',
                   boxSizing: 'border-box'
                 }}
                 required
               />
               <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '6px' }}>
-                Applied globally to the subtotal and service fee on invoices. Default is 5%.
+                {lang === 'ar' ? 'تطبق عالمياً على المجموع الفرعي ورسوم الخدمة في الفواتير. الافتراضي هو 5٪.' : (lang === 'ur' ? 'انوائسز پر کل رقم اور سروس فیس پر لاگو ہوتا ہے۔ ڈیفالٹ 5% ہے۔' : 'Applied globally to the subtotal and service fee on invoices. Default is 5%.')}
               </span>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#cbd5e1' }}>
-                Marketplace Service Fee (%)
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
+                {lang === 'ar' ? 'رسوم خدمة السوق (٪)' : (lang === 'ur' ? 'مارکیٹ پلیس سروس فیس (%)' : 'Marketplace Service Fee (%)')}
               </label>
               <input
                 type="number"
@@ -147,44 +266,44 @@ const AdminSettings = () => {
                 onChange={(e) => setServiceFee(e.target.value)}
                 style={{
                   width: '100%',
-                  background: '#0f172a',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
                   borderRadius: '8px',
                   padding: '12px',
-                  color: 'white',
+                  color: '#1e293b',
                   fontSize: '15px',
                   boxSizing: 'border-box'
                 }}
                 required
               />
               <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '6px' }}>
-                Garro marketplace platform fee deducted from the total parts and labor subtotal. Default is 10%.
+                {lang === 'ar' ? 'يتم خصم رسوم منصة غارو من المجموع الفرعي لقطع الغيار والعمالة. الافتراضي هو 10٪.' : (lang === 'ur' ? 'حصوں اور لیبر کے کل مجموعہ سے گارو پلیٹ فارم فیس کاٹی جائے گی۔ ڈیفالٹ 10% ہے۔' : 'Garro marketplace platform fee deducted from the total parts and labor subtotal. Default is 10%.')}
               </span>
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#cbd5e1' }}>
-                Helper Assignment Mode
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
+                {lang === 'ar' ? 'وضع تعيين المساعد' : (lang === 'ur' ? 'مددگار تفویض کا طریقہ' : 'Helper Assignment Mode')}
               </label>
               <select
                 value={assignMode}
                 onChange={(e) => setAssignMode(e.target.value)}
                 style={{
                   width: '100%',
-                  background: '#0f172a',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  background: '#fff',
+                  border: '1px solid #cbd5e1',
                   borderRadius: '8px',
                   padding: '12px',
-                  color: 'white',
+                  color: '#1e293b',
                   fontSize: '15px',
                   boxSizing: 'border-box'
                 }}
                 required
               >
-                <option value="manual">Manual Assignment (Admin selected)</option>
+                <option value="manual">{lang === 'ar' ? 'تعيين يدوي (يختاره المسؤول)' : (lang === 'ur' ? 'دستی تفویض (ایڈمن کے ذریعہ منتخب کردہ)' : 'Manual Assignment (Admin selected)')}</option>
               </select>
               <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '6px' }}>
-                Control how helpers are assigned to booking cards. Currently only Manual mode is supported.
+                {lang === 'ar' ? 'التحكم في كيفية تعيين المساعدين لبطاقات الحجز. حالياً يتم دعم الوضع اليدوي فقط.' : (lang === 'ur' ? 'بکنگ کارڈز پر ہیلپرز کو تفویض کرنے کا طریقہ کار۔ فی الحال صرف دستی طریقہ سپورٹڈ ہے۔' : 'Control how helpers are assigned to booking cards. Currently only Manual mode is supported.')}
               </span>
             </div>
 
@@ -205,11 +324,12 @@ const AdminSettings = () => {
                 marginTop: '12px'
               }}
             >
-              {saving ? 'Saving Config...' : 'Save Configuration'}
+              {saving ? (lang === 'ar' ? 'جاري الحفظ...' : (lang === 'ur' ? 'محفوظ ہو رہا ہے...' : 'Saving Config...')) : (lang === 'ar' ? 'حفظ الإعدادات' : (lang === 'ur' ? 'ترتیبات محفوظ کریں' : 'Save Configuration'))}
             </button>
           </form>
         )}
       </div>
+      </main>
     </div>
   );
 };

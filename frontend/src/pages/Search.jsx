@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search as SearchIcon, ArrowRight, Star, MapPin, CheckCircle } from 'lucide-react';
+import { LuSearch as SearchIcon, LuArrowRight, LuStar, LuMapPin, LuCircleCheck } from 'react-icons/lu';
 import { Link } from 'react-router-dom';
 
 const mockGarages = [
@@ -68,18 +68,18 @@ const Search = () => {
                     </h5>
                     {garage.verified && (
                       <div title="Verified Partner" style={{ color: '#10b981', display: 'flex' }}>
-                        <CheckCircle size={20} />
+                        <LuCircleCheck size={20} />
                       </div>
                     )}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#64748b', fontSize: '13.5px', fontFamily: "'Poppins', sans-serif", marginBottom: '12px' }}>
-                    <MapPin size={16} color="#ff5c1a" /> {garage.area}
+                    <LuMapPin size={16} color="#ff5c1a" /> {garage.area}
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '24px', flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#fffbeb', color: '#f59e0b', padding: '4px 8px', borderRadius: '8px', fontSize: '13px', fontWeight: 700, fontFamily: "'Poppins', sans-serif" }}>
-                      <Star size={14} fill="#f59e0b" /> {garage.rating}
+                      <LuStar size={14} fill="#f59e0b" /> {garage.rating}
                     </div>
                     <span style={{ fontSize: '13px', color: '#94a3b8', fontFamily: "'Poppins', sans-serif" }}>({garage.reviews} reviews)</span>
                   </div>
@@ -95,7 +95,7 @@ const Search = () => {
                     onMouseEnter={e => { e.currentTarget.style.background = '#ff5c1a'; e.currentTarget.style.color = '#fff'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,92,26,0.08)'; e.currentTarget.style.color = '#ff5c1a'; }}
                   >
-                    View Garage <ArrowRight size={16} />
+                    View Garage <LuArrowRight size={16} />
                   </Link>
                 </div>
               </div>

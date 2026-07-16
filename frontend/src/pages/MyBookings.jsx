@@ -4,6 +4,17 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
+import {
+  LuClipboardList,
+  LuTriangleAlert,
+  LuCalendar,
+  LuCalendarDays,
+  LuHourglass,
+  LuClock,
+  LuCircleCheck,
+  LuStore,
+  LuCreditCard
+} from 'react-icons/lu';
 
   const MyBookings = () => {
   const { user } = useAuth();
@@ -394,7 +405,7 @@ import CustomDropdown from '../components/CustomDropdown';
                   <div className="card-body p-4">
                     <div className="d-flex align-items-center mb-4 pb-3 border-bottom">
                       <div className="garage-icon-wrapper me-3" style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '1.5rem' }}>🏪</span>
+                        <LuStore size={24} className="text-secondary" />
                       </div>
                       <div>
                         <h6 className="fw-bold mb-1">{booking.garageId ? booking.garageId.name : 'Pending Assignment'}</h6>
@@ -467,7 +478,7 @@ import CustomDropdown from '../components/CustomDropdown';
                             className="btn btn-sm w-100 py-2 fw-bold"
                             style={{ background: 'linear-gradient(135deg, #185FA5, #1e7bc2)', color: 'white', border: 'none' }}
                           >
-                            💳 Pay Now
+                            <span className="d-flex align-items-center justify-content-center gap-1"><LuCreditCard /> Pay Now</span>
                           </button>
                         </div>
                       )}
@@ -481,7 +492,7 @@ import CustomDropdown from '../components/CustomDropdown';
         </div>
       ) : (
         <div className="text-center py-5 bg-white rounded-3 shadow-sm">
-          <div style={{ fontSize: '4rem', opacity: 0.5, marginBottom: '20px' }}>🗓️</div>
+          <div style={{ display: 'flex', justifyContent: 'center', opacity: 0.5, marginBottom: '20px' }}><LuCalendar size={64} /></div>
           <h5 className="fw-bold">No bookings yet</h5>
           <p className="text-muted">You haven't made any garage bookings yet.</p>
           <Link to="/get-quote" className="btn btn-primary-garro mt-2">Book Now</Link>
@@ -527,7 +538,7 @@ import CustomDropdown from '../components/CustomDropdown';
             </div>
 
             <div className="mb-3 p-3 rounded-3" style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
-              <div className="small text-muted fw-semibold mb-2">📋 Request Details</div>
+              <div className="small text-muted fw-semibold mb-2" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><LuClipboardList /> Request Details</div>
               <div className="fw-bold text-dark">{selectedRequest.userId?.name || 'Unknown User'}</div>
               <div className="small text-secondary">{selectedRequest.vehicleId ? `${selectedRequest.vehicleId.make} ${selectedRequest.vehicleId.model} (${selectedRequest.vehicleId.year})` : 'Unknown Vehicle'}</div>
               <div className="small text-secondary mt-1">Issue: {selectedRequest.description}</div>
@@ -540,17 +551,17 @@ import CustomDropdown from '../components/CustomDropdown';
                     selectedRequest.urgency === 'today' ? 'bg-warning text-dark' :
                     selectedRequest.urgency === 'this_week' ? 'bg-info text-dark' : 'bg-secondary'
                   }`} style={{ fontSize: '11px' }}>
-                    {selectedRequest.urgency === 'asap' ? '🚨 ASAP — Urgent' :
-                     selectedRequest.urgency === 'today' ? '📅 Today' :
-                     selectedRequest.urgency === 'this_week' ? '📆 This Week' : '⏳ Flexible'}
+                    {selectedRequest.urgency === 'asap' ? <span className="d-inline-flex align-items-center gap-1"><LuTriangleAlert /> ASAP — Urgent</span> :
+                     selectedRequest.urgency === 'today' ? <span className="d-inline-flex align-items-center gap-1"><LuCalendar /> Today</span> :
+                     selectedRequest.urgency === 'this_week' ? <span className="d-inline-flex align-items-center gap-1"><LuCalendar /> This Week</span> : <span className="d-inline-flex align-items-center gap-1"><LuHourglass /> Flexible</span>}
                   </span>
                 </div>
                 {selectedRequest.preferredDate && (
                   <div>
                     <div className="small text-muted">Preferred Date/Time</div>
                     <div className="small fw-semibold text-dark mt-1">
-                      📅 {new Date(selectedRequest.preferredDate).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}{' '}
-                      🕐 {new Date(selectedRequest.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <span className="d-inline-flex align-items-center gap-1 me-2"><LuCalendar /> {new Date(selectedRequest.preferredDate).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className="d-inline-flex align-items-center gap-1"><LuClock /> {new Date(selectedRequest.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
                   </div>
                 )}
@@ -577,7 +588,7 @@ import CustomDropdown from '../components/CustomDropdown';
                 />
                 {selectedRequest && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
                   <p className="text-danger small mt-1">
-                    ⚠️ No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.address || 'N/A'}"</strong>.
+                    <LuTriangleAlert style={{ verticalAlign: 'middle', marginRight: '4px' }} /> No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.address || 'N/A'}"</strong>.
                   </p>
                 )}
               </div>
@@ -591,7 +602,7 @@ import CustomDropdown from '../components/CustomDropdown';
                     .filter(h => h.garageId?._id === assignGarageId)
                     .map(h => ({
                       value: h._id,
-                      label: `${h.name} (⭐ ${h.rating || 5}/5) ${!h.isAvailable ? '[⚠️ Shift Conflict]' : (h.upcomingSlots && h.upcomingSlots.length > 0 ? `[${h.upcomingSlots.length} job(s)]` : '[Free]')}`
+                      label: `${h.name} (${h.rating || 5}/5 Stars) ${!h.isAvailable ? '[Shift Conflict]' : (h.upcomingSlots && h.upcomingSlots.length > 0 ? `[${h.upcomingSlots.length} job(s)]` : '[Free]')}`
                     }))
                   }
                   value={assignHelperId}
@@ -607,9 +618,9 @@ import CustomDropdown from '../components/CustomDropdown';
               {/* ── Scheduling section ── */}
               <div className="p-3 mb-3 rounded-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                 <div className="d-flex align-items-center justify-content-between mb-2">
-                  <div className="small fw-bold text-dark">🕐 Schedule Helper Visit</div>
+                  <div className="small fw-bold text-dark d-flex align-items-center gap-2"><LuClock /> Schedule Helper Visit</div>
                   {hasConflict && (
-                    <span className="badge bg-danger px-2 py-1" style={{ fontSize: '11px' }}>⚠️ Time Conflict!</span>
+                    <span className="badge bg-danger px-2 py-1 d-inline-flex align-items-center gap-1" style={{ fontSize: '11px' }}><LuTriangleAlert /> Time Conflict!</span>
                   )}
                 </div>
                 <div className="row g-2 mb-2">
@@ -657,7 +668,9 @@ import CustomDropdown from '../components/CustomDropdown';
                   <div className="mt-3">
                     {/* Visual Timeline */}
                     <div className="small fw-semibold text-dark mb-1">
-                      📊 Helper Schedule — {assignDate}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <LuCalendarDays /> Helper Schedule — {assignDate}
+                      </span>
                       {scheduleLoading && <span className="text-muted ms-2" style={{ fontWeight: 'normal' }}>Loading...</span>}
                     </div>
 
@@ -725,8 +738,8 @@ import CustomDropdown from '../components/CustomDropdown';
                         else if (isProp) bg = '#f97316';
 
                         const titleStr = isOffHours ? 'Outside working hours (9AM–9PM)' :
-                          (isBusy && isProp) ? '⚠️ CONFLICT — Overlaps a booking!' :
-                          (isBuffer && isProp) ? '⚠️ CONFLICT — Inside recovery buffer!' :
+                          (isBusy && isProp) ? 'Conflict — Overlaps a booking!' :
+                          (isBuffer && isProp) ? 'Conflict — Inside recovery buffer!' :
                           isBusy ? `Booked: ${busyIntervals.find(b=>t>=b.start&&t<b.end)?.label||''}` :
                           isBuffer ? `${bufferIntervals.find(b=>t>=b.start&&t<b.end)?.label||'Recovery'}` :
                           isProp ? `Your slot: ${assignTime} + ${assignDuration}h` : 'Free';
@@ -753,11 +766,11 @@ import CustomDropdown from '../components/CustomDropdown';
                     {/* Conflict / OK Alert */}
                     {hasConflict ? (
                       <div className="alert alert-danger py-2 px-3 mb-0" style={{ fontSize:'12.5px', borderRadius:'8px' }}>
-                        ⚠️ <strong>Cannot assign:</strong> {conflictReason}
-                      </div>
-                    ) : (
-                      <div className="alert alert-success py-2 px-3 mb-0" style={{ fontSize:'12.5px', borderRadius:'8px' }}>
-                        ✅ <strong>{assignTime}</strong> for <strong>{assignDuration} hr(s)</strong> — available, no conflicts.
+                        <span className="d-flex align-items-center gap-2"><LuTriangleAlert /> <strong>Cannot assign:</strong> {conflictReason}</span>
+                    </div>
+                  ) : (
+                    <div className="alert alert-success py-2 px-3 mb-0" style={{ fontSize:'12.5px', borderRadius:'8px' }}>
+                      <span className="d-flex align-items-center gap-2"><LuCircleCheck /> <strong>{assignTime}</strong> for <strong>{assignDuration} hr(s)</strong> — available, no conflicts.</span>
                       </div>
                     )}
                   </div>
@@ -778,7 +791,7 @@ import CustomDropdown from '../components/CustomDropdown';
                   disabled={submittingAssign || !assignGarageId || !assignHelperId || hasConflict}
                   title={hasConflict ? 'Resolve the time conflict first' : ''}
                 >
-                  {submittingAssign ? 'Assigning...' : hasConflict ? '⚠️ Conflict — Change Time' : 'Confirm Assignment'}
+                  {submittingAssign ? 'Assigning...' : hasConflict ? 'Conflict — Change Time' : 'Confirm Assignment'}
                 </button>
               </div>
             </form>

@@ -1,4 +1,13 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import {
+  LuCircleCheck,
+  LuX,
+  LuInfo,
+  LuSparkles,
+  LuTriangleAlert,
+  LuTrash2,
+  LuCircleHelp
+} from 'react-icons/lu';
 
 const NotificationContext = createContext(null);
 
@@ -119,9 +128,9 @@ export const NotificationProvider = ({ children }) => {
         {toasts.map((t) => (
           <div key={t.id} className={`custom-toast ${t.type}`} onClick={() => dismissToast(t.id)}>
             <div className="toast-icon">
-              {t.type === 'success' && '✅'}
-              {t.type === 'error' && '❌'}
-              {t.type === 'info' && 'ℹ️'}
+              {t.type === 'success' && <LuCircleCheck />}
+              {t.type === 'error' && <LuX />}
+              {t.type === 'info' && <LuInfo />}
             </div>
             <div className="toast-content">{t.message}</div>
             <button className="toast-close">&times;</button>
@@ -135,10 +144,10 @@ export const NotificationProvider = ({ children }) => {
         <div className="custom-modal-overlay" onClick={modal.onCancel}>
           <div className={`custom-modal ${modal.type}`} onClick={(e) => e.stopPropagation()}>
             <div className="modal-icon">
-              {modal.type === 'success' && '🎉'}
-              {modal.type === 'error' && '⚠️'}
-              {modal.type === 'delete' && '🗑️'}
-              {modal.type === 'confirm' && '❓'}
+              {modal.type === 'success' && <LuSparkles />}
+              {modal.type === 'error' && <LuTriangleAlert />}
+              {modal.type === 'delete' && <LuTrash2 />}
+              {modal.type === 'confirm' && <LuCircleHelp />}
             </div>
             <h3 className="modal-title">{modal.title}</h3>
             <p className="modal-message">{modal.message}</p>

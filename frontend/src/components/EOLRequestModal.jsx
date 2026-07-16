@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Send, CheckCircle2 } from 'lucide-react';
+import { LuX, LuSend, LuCircleCheck } from 'react-icons/lu';
 
 const EOLRequestModal = ({ isOpen, onClose, initialServiceType }) => {
   const [formData, setFormData] = useState({
@@ -122,7 +122,7 @@ const EOLRequestModal = ({ isOpen, onClose, initialServiceType }) => {
             onMouseEnter={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
             onMouseLeave={e => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
           >
-            <X size={16} />
+            <LuX size={16} />
           </button>
         </div>
 
@@ -142,7 +142,7 @@ const EOLRequestModal = ({ isOpen, onClose, initialServiceType }) => {
                 margin: '0 auto 20px',
                 boxShadow: '0 4px 12px rgba(16, 185, 129, 0.15)'
               }}>
-                <CheckCircle2 size={36} />
+                <LuCircleCheck size={36} />
               </div>
               <h5 style={{ fontWeight: 800, fontSize: '16.5px', color: '#0f172a', marginBottom: '8px', fontFamily: "'Poppins', sans-serif" }}>
                 We have received your request
@@ -374,7 +374,7 @@ const EOLRequestModal = ({ isOpen, onClose, initialServiceType }) => {
                     <>Processing...</>
                   ) : (
                     <>
-                      <Send size={15} /> Send Request
+                      <LuSend size={15} /> Send Request
                     </>
                   )}
                 </button>

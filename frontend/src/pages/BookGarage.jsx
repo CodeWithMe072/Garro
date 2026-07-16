@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { LuCircleCheck, LuX } from 'react-icons/lu';
 
 const BookGarage = () => {
   const { id } = useParams();
@@ -100,10 +101,10 @@ const BookGarage = () => {
     if (promoCode.toUpperCase() === 'GARRO20') {
       const disc = subtotal * 0.2;
       setDiscount(disc);
-      setPromoMsg({ text: '✅ Promo applied! 20% off', type: 'text-success' });
+      setPromoMsg({ text: <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuCircleCheck /> Promo applied! 20% off</span>, type: 'text-success' });
     } else {
       setDiscount(0);
-      setPromoMsg({ text: '❌ Invalid promo code', type: 'text-danger' });
+      setPromoMsg({ text: <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuX /> Invalid promo code</span>, type: 'text-danger' });
     }
   };
 

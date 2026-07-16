@@ -1,10 +1,37 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { 
+  LuCircleCheck, 
+  LuLayoutDashboard, 
+  LuStore, 
+  LuSearch, 
+  LuSettings, 
+  LuUser, 
+  LuBriefcase, 
+  LuUsers, 
+  LuGlobe,
+  LuChevronLeft,
+  LuChevronRight,
+  LuClipboardList
+} from 'react-icons/lu';
+import { useLanguage } from '../context/LanguageContext';
 
 const CreateStaff = () => {
   const navigate = useNavigate();
   const { toast } = useNotification();
+  const { t, lang, changeLanguage } = useLanguage();
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('admin_sidebar_collapsed') === 'true';
+  });
+
+  const toggleSidebar = () => {
+    const nextState = !isCollapsed;
+    setIsCollapsed(nextState);
+    localStorage.setItem('admin_sidebar_collapsed', String(nextState));
+  };
+
   const [role, setRole] = useState('staff');
   const [formData, setFormData] = useState({
     firstName: '',
@@ -60,16 +87,119 @@ const CreateStaff = () => {
   };
 
   return (
-    <div className="page-wrap">
-      <div className="card">
-        <div className="card-head">
-          <Link to="/admin/manage-staff" className="back">
-            <span className="material-icons-round" style={{ fontSize: '16px' }}>arrow_back</span> 
-            Back to Staff Management
-          </Link>
-          <h1>👔 Create Staff Account</h1>
-          <p>Create a new staff member account with immediate access.</p>
+    <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
+      {/* ── SIDEBAR ── */}
+      <aside className="dash-sidebar">
+        <div className="sidebar-toggle-container">
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
+            {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
+          </button>
         </div>
+
+        <span className="sidebar-label">{t('overview')}</span>
+        <div className="sidebar-section">
+          <Link to="/admin" className="sidebar-link">
+            <span className="icon"><LuLayoutDashboard /></span>
+            <span className="link-text">{t('dashboard')}</span>
+          </Link>
+        </div>
+
+        <span className="sidebar-label">{t('operations')}</span>
+        <div className="sidebar-section">
+          <Link to="/admin/manage-garages" className="sidebar-link">
+            <span className="icon"><LuStore /></span>
+            <span className="link-text">{t('manage_garages')}</span>
+          </Link>
+          <Link to="/search" className="sidebar-link">
+            <span className="icon"><LuSearch /></span>
+            <span className="link-text">{t('find_garages')}</span>
+          </Link>
+          <Link to="/admin/catalog" className="sidebar-link">
+            <span className="icon"><LuSettings /></span>
+            <span className="link-text">{t('system_catalog')}</span>
+          </Link>
+          <Link to="/my-bookings" className="sidebar-link">
+            <span className="icon"><LuClipboardList /></span>
+            <span className="link-text">{t('bookings')}</span>
+          </Link>
+        </div>
+
+        <div className="sidebar-divider"></div>
+        <span className="sidebar-label">{t('people')}</span>
+        <div className="sidebar-section">
+          <Link to="/admin/manage-staff" className="sidebar-link active">
+            <span className="icon"><LuUser /></span>
+            <span className="link-text">{t('all_users')}</span>
+          </Link>
+          <Link to="/admin/staff" className="sidebar-link">
+            <span className="icon"><LuBriefcase /></span>
+            <span className="link-text">{t('staff_view')}</span>
+          </Link>
+          <Link to="/admin/manage-staff" className="sidebar-link active">
+            <span className="icon"><LuUsers /></span>
+            <span className="link-text">{t('manage_staff')}</span>
+          </Link>
+        </div>
+
+        <div className="sidebar-divider"></div>
+        <div className="sidebar-section">
+          <Link to="/home" className="sidebar-link">
+            <span className="icon"><LuGlobe /></span>
+            <span className="link-text">{t('back_to_site')}</span>
+          </Link>
+        </div>
+      </aside>
+
+      {/* ── MAIN CONTENT ── */}
+      <main className="dash-main" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px' }}>
+        <div className="card" style={{ maxWidth: '680px', margin: '0 auto' }}>
+          <div className="card-head" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Link to="/admin/manage-staff" className="back" style={{ textDecoration: 'none' }}>
+                <span className="material-icons-round" style={{ fontSize: '16px', verticalAlign: 'middle' }}>arrow_back</span> 
+                {lang === 'ar' ? 'العودة لإدارة الموظفين' : (lang === 'ur' ? 'اسٹاف مینیجمنٹ پر واپس جائیں' : 'Back to Staff Management')}
+              </Link>
+
+              {/* Language Switcher */}
+              <div style={{ position: 'relative' }}>
+                <button 
+                  onClick={() => setIsLangOpen(!isLangOpen)}
+                  className="btn btn-outline-secondary d-flex align-items-center gap-2"
+                  style={{ borderRadius: '10px', padding: '6px 12px', fontSize: '12.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
+                >
+                  <LuGlobe size={13} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
+                </button>
+                {isLangOpen && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                    background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
+                    boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
+                    minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
+                  }}>
+                    {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
+                      <button
+                        key={code}
+                        onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
+                        style={{
+                          background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
+                          borderRadius: '8px', padding: '8px 12px',
+                          color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
+                          fontSize: '13px', fontWeight: lang === code ? 700 : 500,
+                          cursor: 'pointer', display: 'flex', alignItems: 'center',
+                          justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
+                        }}
+                      >
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <h1>👔 {t('add_new_helper')}</h1>
+            <p>{t('create_internal_credentials')}</p>
+          </div>
 
         <div className="card-body">
           <div className="info-box">
@@ -167,12 +297,13 @@ const CreateStaff = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-              <Link to="/admin/manage-staff" className="btn-secondary">Cancel</Link>
-              <button type="submit" className="btn-submit">✅ Create Staff Account</button>
+              <Link to="/admin/manage-staff" className="btn-secondary" style={{ textDecoration: 'none' }}>{t('cancel')}</Link>
+              <button type="submit" className="btn-submit d-inline-flex align-items-center"><LuCircleCheck className="me-1" /> {t('create_staff_account')}</button>
             </div>
           </form>
         </div>
       </div>
+      </main>
     </div>
   );
 };

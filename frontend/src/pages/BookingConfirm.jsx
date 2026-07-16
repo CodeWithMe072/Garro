@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
-  CheckCircle, Calendar, Clock, Truck, Wrench,
-  MapPin, CreditCard, Home, ClipboardList, Download,
-  Loader
-} from 'lucide-react';
+  LuCircleCheck, LuCalendar, LuClock, LuTruck, LuWrench,
+  LuMapPin, LuCreditCard, LuHouse, LuClipboardList, LuDownload,
+  LuLoader
+} from 'react-icons/lu';
 
 const BookingConfirm = () => {
   const { id } = useParams();
@@ -40,7 +40,7 @@ const BookingConfirm = () => {
     return (
       <div style={{ minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc' }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', color: '#64748b' }}>
-          <Loader size={32} color="#ff5c1a" className="animate-spin" />
+          <LuLoader size={32} color="#ff5c1a" className="animate-spin" />
           <span style={{ fontFamily: "'Poppins', sans-serif", fontSize: '14px' }}>Loading booking details...</span>
         </div>
       </div>
@@ -66,11 +66,11 @@ const BookingConfirm = () => {
   const statusLabel = status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ');
 
   const details = [
-    { icon: MapPin, label: 'Garage', value: garageName, sub: garageArea },
-    { icon: Calendar, label: 'Date', value: bookingDate, sub: null },
-    { icon: Clock, label: 'Time', value: bookingTime, sub: null },
-    { icon: Truck, label: 'Pickup Type', value: pickupType, sub: null },
-    { icon: CreditCard, label: 'Total Amount', value: `AED ${Number(total).toFixed(2)}`, sub: null, highlight: true },
+    { icon: LuMapPin, label: 'Garage', value: garageName, sub: garageArea },
+    { icon: LuCalendar, label: 'Date', value: bookingDate, sub: null },
+    { icon: LuClock, label: 'Time', value: bookingTime, sub: null },
+    { icon: LuTruck, label: 'Pickup Type', value: pickupType, sub: null },
+    { icon: LuCreditCard, label: 'Total Amount', value: `AED ${Number(total).toFixed(2)}`, sub: null, highlight: true },
   ];
 
   return (
@@ -88,7 +88,7 @@ const BookingConfirm = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 24px', color: '#10b981'
               }}>
-                <CheckCircle size={44} strokeWidth={1.5} />
+                <LuCircleCheck size={44} strokeWidth={1.5} />
               </div>
               <h1 style={{
                 fontSize: '28px', fontWeight: 900, color: '#0f172a',
@@ -219,7 +219,7 @@ const BookingConfirm = () => {
                   boxShadow: '0 6px 20px rgba(255,92,26,0.3)'
                 }}
               >
-                <ClipboardList size={18} /> View My Bookings
+                <LuClipboardList size={18} /> View My Bookings
               </Link>
               <Link
                 to="/home"
@@ -231,7 +231,7 @@ const BookingConfirm = () => {
                   fontFamily: "'Poppins', sans-serif"
                 }}
               >
-                <Home size={18} /> Back to Home
+                <LuHouse size={18} /> Back to Home
               </Link>
             </div>
 

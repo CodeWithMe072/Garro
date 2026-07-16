@@ -1,22 +1,21 @@
 import React, { useState } from 'react';
 import { 
-  ShieldCheck, 
-  Shield, 
-  FileText, 
-  FileSignature, 
-  Truck, 
-  ChevronDown, 
-  ChevronUp, 
-  Check, 
-  BadgeCheck, 
-  Users, 
-  Clock, 
-  ThumbsUp, 
-  HelpCircle,
-  Siren,
-  Sparkles,
-  Info
-} from 'lucide-react';
+  LuShieldCheck, 
+  LuShield, 
+  LuFileText, 
+  LuFilePenLine, 
+  LuTruck, 
+  LuChevronDown, 
+  LuChevronUp, 
+  LuCheck, 
+  LuBadgeCheck, 
+  LuUsers, 
+  LuClock, 
+  LuThumbsUp, 
+  LuSiren,
+  LuSparkles,
+  LuInfo
+} from 'react-icons/lu';
 
 const Insurance = () => {
   // FAQ accordion states
@@ -97,7 +96,7 @@ const Insurance = () => {
                 letterSpacing: '.08em',
                 marginBottom: '28px'
               }}>
-                <ShieldCheck size={14} /> Insurance &amp; Protection
+                <LuShieldCheck size={14} /> Insurance &amp; Protection
               </div>
 
               <h1 style={{ 
@@ -143,7 +142,7 @@ const Insurance = () => {
                   justifyContent: 'center',
                   color: '#ff5c1a'
                 }}>
-                  <Info size={16} />
+                  <LuInfo size={16} />
                 </div>
                 <p style={{ fontSize: '13px', color: '#b45309', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>
                   We're working hard to bring you the most reliable and transparent vehicle protection experience.
@@ -202,7 +201,7 @@ const Insurance = () => {
                   zIndex: 3,
                   border: '2.5px solid #ffffff'
                 }}>
-                  <ShieldCheck size={38} strokeWidth={1.8} />
+                  <LuShieldCheck size={38} strokeWidth={1.8} />
                 </div>
 
                 {/* Floating Callout 1: Comprehensive Insurance */}
@@ -222,7 +221,7 @@ const Insurance = () => {
                   width: '185px'
                 }}>
                   <div style={{ color: '#ff5c1a', background: '#fff4ef', padding: '6px', borderRadius: '8px' }}>
-                    <Shield size={16} />
+                    <LuShield size={16} />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Comprehensive</div>
@@ -247,7 +246,7 @@ const Insurance = () => {
                   width: '185px'
                 }}>
                   <div style={{ color: '#ff8c42', background: '#fff4ef', padding: '6px', borderRadius: '8px' }}>
-                    <Truck size={16} />
+                    <LuTruck size={16} />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Roadside Assist</div>
@@ -272,7 +271,7 @@ const Insurance = () => {
                   width: '185px'
                 }}>
                   <div style={{ color: '#3b82f6', background: '#eff6ff', padding: '6px', borderRadius: '8px' }}>
-                    <BadgeCheck size={16} />
+                    <LuBadgeCheck size={16} />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Extended Warranty</div>
@@ -297,7 +296,7 @@ const Insurance = () => {
                   width: '185px'
                 }}>
                   <div style={{ color: '#8b5cf6', background: '#f5f3ff', padding: '6px', borderRadius: '8px' }}>
-                    <FileSignature size={16} />
+                    <LuFilePenLine size={16} />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Claims Support</div>
@@ -327,7 +326,7 @@ const Insurance = () => {
                 height: '100%'
               }}>
                 <div style={{ color: '#ff5c1a', marginBottom: '20px' }}>
-                  <FileText size={32} strokeWidth={1.5} />
+                  <LuFileText size={32} strokeWidth={1.5} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Insurance Comparison</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
@@ -350,7 +349,7 @@ const Insurance = () => {
                 height: '100%'
               }}>
                 <div style={{ color: '#3b82f6', marginBottom: '20px' }}>
-                  <BadgeCheck size={32} strokeWidth={1.5} />
+                  <LuBadgeCheck size={32} strokeWidth={1.5} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Extended Warranty</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
@@ -373,7 +372,7 @@ const Insurance = () => {
                 height: '100%'
               }}>
                 <div style={{ color: '#8b5cf6', marginBottom: '20px' }}>
-                  <FileSignature size={32} strokeWidth={1.5} />
+                  <LuFilePenLine size={32} strokeWidth={1.5} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Claims Assistance</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
@@ -396,7 +395,7 @@ const Insurance = () => {
                 height: '100%'
               }}>
                 <div style={{ color: '#10b981', marginBottom: '20px' }}>
-                  <Truck size={32} strokeWidth={1.5} />
+                  <LuTruck size={32} strokeWidth={1.5} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Roadside Coverage</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
@@ -442,7 +441,7 @@ const Insurance = () => {
                         color: '#ff5c1a',
                         flexShrink: 0
                       }}>
-                        <Check size={14} strokeWidth={3} />
+                        <LuCheck size={14} strokeWidth={3} />
                       </div>
                       <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155' }}>{item}</span>
                     </div>
@@ -611,7 +610,7 @@ const Insurance = () => {
                         }}
                       >
                         <span>{faq.q}</span>
-                        {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        {isOpen ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
                       </button>
                       {isOpen && (
                         <div style={{ 
@@ -663,7 +662,7 @@ const Insurance = () => {
                         }}
                       >
                         <span>{faq.q}</span>
-                        {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        {isOpen ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
                       </button>
                       {isOpen && (
                         <div style={{ 
@@ -715,7 +714,7 @@ const Insurance = () => {
                 color: '#ff5c1a',
                 flexShrink: 0
               }}>
-                <Shield size={28} />
+                <LuShield size={28} />
               </div>
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>Launching Soon</h3>

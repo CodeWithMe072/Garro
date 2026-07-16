@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Recycle, FileText, Tag, Wrench, Leaf, UserCheck,
-  CheckCircle, ChevronDown, ChevronUp, Phone,
-  Truck, Clock, Users, ThumbsUp, BadgeCheck,
-  Star, Shield, Banknote, MapPin, ClipboardList,
-  CalendarCheck, PackageCheck
-} from 'lucide-react';
+  LuRecycle, LuFileText, LuTag, LuWrench, LuLeaf, LuUserCheck,
+  LuCircleCheck, LuChevronDown, LuChevronUp, LuPhone,
+  LuTruck, LuClock, LuUsers, LuThumbsUp, LuBadgeCheck,
+  LuStar, LuShield, LuBanknote, LuMapPin, LuClipboardList,
+  LuCalendarCheck, LuPackageCheck
+} from 'react-icons/lu';
 import EOLRequestModal from '../components/EOLRequestModal.jsx';
 
 const EndOfLife = () => {
@@ -24,15 +24,15 @@ const EndOfLife = () => {
   };
 
   const stats = [
-    { icon: Recycle, value: '10K+', label: 'Vehicles Recycled' },
-    { icon: Users, value: '500+', label: 'Partner Scrap Yards' },
-    { icon: Clock, value: '48h', label: 'Average Pickup Time' },
-    { icon: ThumbsUp, value: '98%', label: 'Customer Satisfaction' },
+    { icon: LuRecycle, value: '10K+', label: 'Vehicles Recycled' },
+    { icon: LuUsers, value: '500+', label: 'Partner Scrap Yards' },
+    { icon: LuClock, value: '48h', label: 'Average Pickup Time' },
+    { icon: LuThumbsUp, value: '98%', label: 'Customer Satisfaction' },
   ];
 
   const services = [
     {
-      icon: Tag,
+      icon: LuTag,
       title: 'Instant Vehicle Valuation',
       desc: 'Get an instant valuation for your vehicle based on condition, model and market value.',
       btnLabel: 'Get Valuation',
@@ -40,7 +40,7 @@ const EndOfLife = () => {
       color: '#ff5c1a',
     },
     {
-      icon: BadgeCheck,
+      icon: LuBadgeCheck,
       title: 'Certified Scrapping',
       desc: 'We follow government-approved scrapping process and issue valid End-of-Life Certificates.',
       btnLabel: 'Get Certificate',
@@ -48,7 +48,7 @@ const EndOfLife = () => {
       color: '#10b981',
     },
     {
-      icon: Truck,
+      icon: LuTruck,
       title: 'Free Vehicle Pickup',
       desc: 'We offer free pickup service anywhere in UAE — at your home, office or workshop.',
       btnLabel: 'Schedule Pickup',
@@ -56,7 +56,7 @@ const EndOfLife = () => {
       color: '#3b82f6',
     },
     {
-      icon: Leaf,
+      icon: LuLeaf,
       title: 'Eco-Friendly Disposal',
       desc: 'Environment-safe dismantling and recycling to reduce pollution and promote sustainability.',
       btnLabel: 'Learn More',
@@ -64,7 +64,7 @@ const EndOfLife = () => {
       color: '#059669',
     },
     {
-      icon: Wrench,
+      icon: LuWrench,
       title: 'Parts Salvage',
       desc: 'Usable parts are salvaged and reused to add more value and produce more waste.',
       btnLabel: 'Learn More',
@@ -72,7 +72,7 @@ const EndOfLife = () => {
       color: '#8b5cf6',
     },
     {
-      icon: FileText,
+      icon: LuFileText,
       title: 'Deregistration Assistance',
       desc: 'We handle all documentation for deregistration of a vehicle for a hassle-free experience.',
       btnLabel: 'Get Help',
@@ -84,36 +84,36 @@ const EndOfLife = () => {
   const steps = [
     {
       num: 1,
-      icon: ClipboardList,
+      icon: LuClipboardList,
       title: 'Request Valuation',
       desc: 'Share your vehicle details and get an instant quote and best estimate.',
     },
     {
       num: 2,
-      icon: BadgeCheck,
+      icon: LuBadgeCheck,
       title: 'Receive Offer',
       desc: 'We inspect the vehicle and give you the best offer.',
     },
     {
       num: 3,
-      icon: CalendarCheck,
+      icon: LuCalendarCheck,
       title: 'Schedule Pickup',
       desc: 'Choose a convenient time. We\'ll tow your vehicle for free.',
     },
     {
       num: 4,
-      icon: PackageCheck,
+      icon: LuPackageCheck,
       title: 'Get Paid & Certificate',
       desc: 'Get instant payment and receive your End-of-Life Certificate.',
     },
   ];
 
   const whyChoose = [
-    { icon: Banknote, title: 'Best Market Price', desc: 'We ensure you get the highest possible value.' },
-    { icon: Truck, title: 'Free Pickup Across UAE', desc: 'We come to you, anywhere in UAE.' },
-    { icon: Shield, title: 'No Hidden Charges', desc: 'Transparent process with zero hidden fees.' },
-    { icon: Star, title: 'Secure & Instant Payment', desc: 'Get paid instantly through secure methods.' },
-    { icon: CheckCircle, title: 'Government Compliant', desc: 'All processes are RTA-approved and legal.' },
+    { icon: LuBanknote, title: 'Best Market Price', desc: 'We ensure you get the highest possible value.' },
+    { icon: LuTruck, title: 'Free Pickup Across UAE', desc: 'We come to you, anywhere in UAE.' },
+    { icon: LuShield, title: 'No Hidden Charges', desc: 'Transparent process with zero hidden fees.' },
+    { icon: LuStar, title: 'Secure & Instant Payment', desc: 'Get paid instantly through secure methods.' },
+    { icon: LuCircleCheck, title: 'Government Compliant', desc: 'All processes are RTA-approved and legal.' },
   ];
 
   const faqs = [
@@ -159,7 +159,7 @@ const EndOfLife = () => {
                 fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '.08em', marginBottom: '24px'
               }}>
-                <Recycle size={13} /> End-of-Life &amp; Scrap
+                <LuRecycle size={13} /> End-of-Life &amp; Scrap
               </div>
 
               <h1 style={{
@@ -180,9 +180,9 @@ const EndOfLife = () => {
               {/* Trust badges */}
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '36px' }}>
                 {[
-                  { icon: BadgeCheck, label: 'Best Market Price' },
-                  { icon: Shield, label: '100% Safe & Legal' },
-                  { icon: Recycle, label: 'Hassle-free Process' },
+                  { icon: LuBadgeCheck, label: 'Best Market Price' },
+                  { icon: LuShield, label: '100% Safe & Legal' },
+                  { icon: LuRecycle, label: 'Hassle-free Process' },
                 ].map(({ icon: Icon, label }) => (
                   <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', fontWeight: 600, color: '#334155' }}>
                     <Icon size={15} color="#ff5c1a" /> {label}
@@ -203,7 +203,7 @@ const EndOfLife = () => {
                     transition: 'all 0.2s', fontFamily: "'Poppins', sans-serif"
                   }}
                 >
-                  <Tag size={18} /> Get Valuation
+                  <LuTag size={18} /> Get Valuation
                 </button>
                 <button
                   onClick={() => handleOpenModal('General Inquiry')}
@@ -216,7 +216,7 @@ const EndOfLife = () => {
                     fontFamily: "'Poppins', sans-serif"
                   }}
                 >
-                  <Truck size={18} /> Free Pickup
+                  <LuTruck size={18} /> Free Pickup
                 </button>
               </div>
             </div>
@@ -247,7 +247,7 @@ const EndOfLife = () => {
                   display: 'flex', alignItems: 'center', gap: '8px'
                 }}>
                   <div style={{ background: '#fff4ef', color: '#ff5c1a', padding: '6px', borderRadius: '8px' }}>
-                    <Tag size={15} />
+                    <LuTag size={15} />
                   </div>
                   <div>
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Instant Valuation</div>
@@ -262,7 +262,7 @@ const EndOfLife = () => {
                   display: 'flex', alignItems: 'center', gap: '8px'
                 }}>
                   <div style={{ background: '#eff6ff', color: '#3b82f6', padding: '6px', borderRadius: '8px' }}>
-                    <Truck size={15} />
+                    <LuTruck size={15} />
                   </div>
                   <div>
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Free Pickup</div>
@@ -277,7 +277,7 @@ const EndOfLife = () => {
                   display: 'flex', alignItems: 'center', gap: '8px'
                 }}>
                   <div style={{ background: '#f0fdf4', color: '#10b981', padding: '6px', borderRadius: '8px' }}>
-                    <Leaf size={15} />
+                    <LuLeaf size={15} />
                   </div>
                   <div>
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Eco-Friendly Disposal</div>
@@ -292,7 +292,7 @@ const EndOfLife = () => {
                   display: 'flex', alignItems: 'center', gap: '8px'
                 }}>
                   <div style={{ background: '#faf5ff', color: '#8b5cf6', padding: '6px', borderRadius: '8px' }}>
-                    <FileText size={15} />
+                    <LuFileText size={15} />
                   </div>
                   <div>
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Deregistration Support</div>
@@ -510,7 +510,7 @@ const EndOfLife = () => {
                       }}
                     >
                       <span>{faq.q}</span>
-                      {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                      {isOpen ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
                     </button>
                     {isOpen && (
                       <div style={{
@@ -544,18 +544,20 @@ const EndOfLife = () => {
               position: 'absolute', right: '200px', top: '50%', transform: 'translateY(-50%)',
               opacity: 0.06
             }} className="d-none d-lg-block">
-              <Recycle size={160} color="#ff5c1a" />
+              <LuRecycle size={160} color="#ff5c1a" />
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', zIndex: 2 }}>
               <div style={{
-                width: '64px', height: '64px', borderRadius: '18px',
+                width: '64px',
+                height: '64px',
+                borderRadius: '18px',
                 background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: '#fff', flexShrink: 0,
                 boxShadow: '0 8px 24px rgba(255,92,26,0.3)'
               }}>
-                <Recycle size={28} />
+                <LuRecycle size={28} />
               </div>
               <div>
                 <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', marginBottom: '6px' }}>
@@ -579,7 +581,7 @@ const EndOfLife = () => {
                   fontFamily: "'Poppins', sans-serif", transition: 'all 0.2s'
                 }}
               >
-                <Tag size={17} /> Get Valuation
+                <LuTag size={17} /> Get Valuation
               </button>
               <a
                 href="tel:8004277"
@@ -592,7 +594,7 @@ const EndOfLife = () => {
                   transition: 'all 0.2s'
                 }}
               >
-                <Phone size={16} color="#ff5c1a" /> Contact Us
+                <LuPhone size={16} color="#ff5c1a" /> Contact Us
               </a>
             </div>
           </div>

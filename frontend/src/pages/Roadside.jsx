@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Truck, 
-  Clock, 
-  MapPin, 
-  BadgeCheck, 
-  Wrench, 
-  Zap, 
-  Fuel, 
-  ChevronDown, 
-  ChevronUp, 
-  Check, 
-  Users, 
-  ThumbsUp, 
-  Info,
-  HardHat
-} from 'lucide-react';
+  LuTruck, 
+  LuClock, 
+  LuMapPin, 
+  LuBadgeCheck, 
+  LuWrench, 
+  LuZap, 
+  LuFuel, 
+  LuChevronDown, 
+  LuChevronUp, 
+  LuCheck, 
+  LuUsers, 
+  LuThumbsUp, 
+  LuInfo,
+  LuHardHat
+} from 'react-icons/lu';
 
 const Roadside = () => {
   // FAQ accordion states
@@ -96,7 +96,7 @@ const Roadside = () => {
                 letterSpacing: '.08em',
                 marginBottom: '28px'
               }}>
-                <Truck size={14} /> Roadside Assistance
+                <LuTruck size={14} /> Roadside Assistance
               </div>
 
               <h1 style={{ 
@@ -141,7 +141,7 @@ const Roadside = () => {
                     transition: 'all 0.2s'
                   }}
                 >
-                  <Truck size={16} /> Request Emergency Tow
+                  <LuTruck size={16} /> Request Emergency Tow
                 </Link>
               </div>
 
@@ -166,7 +166,7 @@ const Roadside = () => {
                   justifyContent: 'center',
                   color: '#ff5c1a'
                 }}>
-                  <Info size={16} />
+                  <LuInfo size={16} />
                 </div>
                 <p style={{ fontSize: '13px', color: '#b45309', margin: 0, lineHeight: 1.5, fontWeight: 500 }}>
                   Fast. Reliable. Professional. We're on the way to keep you moving.
@@ -224,7 +224,7 @@ const Roadside = () => {
                   width: '185px'
                 }}>
                   <div style={{ color: '#ff5c1a', background: '#fff4ef', padding: '6px', borderRadius: '8px' }}>
-                    <Zap size={16} />
+                    <LuZap size={16} />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Battery Jump</div>
@@ -249,7 +249,7 @@ const Roadside = () => {
                   width: '185px'
                 }}>
                   <div style={{ color: '#ff8c42', background: '#fff4ef', padding: '6px', borderRadius: '8px' }}>
-                    <Wrench size={16} />
+                    <LuWrench size={16} />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Flat Tyre Assist</div>
@@ -274,7 +274,7 @@ const Roadside = () => {
                   width: '185px'
                 }}>
                   <div style={{ color: '#3b82f6', background: '#eff6ff', padding: '6px', borderRadius: '8px' }}>
-                    <Fuel size={16} />
+                    <LuFuel size={16} />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Fuel Delivery</div>
@@ -299,7 +299,7 @@ const Roadside = () => {
                   width: '185px'
                 }}>
                   <div style={{ color: '#8b5cf6', background: '#f5f3ff', padding: '6px', borderRadius: '8px' }}>
-                    <Truck size={16} />
+                    <LuTruck size={16} />
                   </div>
                   <div>
                     <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Towing Service</div>
@@ -329,7 +329,7 @@ const Roadside = () => {
                 height: '100%'
               }}>
                 <div style={{ color: '#ff5c1a', marginBottom: '20px' }}>
-                  <Clock size={32} strokeWidth={1.5} />
+                  <LuClock size={32} strokeWidth={1.5} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>24x7 Support</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
@@ -352,7 +352,7 @@ const Roadside = () => {
                 height: '100%'
               }}>
                 <div style={{ color: '#3b82f6', marginBottom: '20px' }}>
-                  <MapPin size={32} strokeWidth={1.5} />
+                  <LuMapPin size={32} strokeWidth={1.5} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Nationwide Coverage</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
@@ -375,7 +375,7 @@ const Roadside = () => {
                 height: '100%'
               }}>
                 <div style={{ color: '#8b5cf6', marginBottom: '20px' }}>
-                  <HardHat size={32} strokeWidth={1.5} />
+                  <LuHardHat size={32} strokeWidth={1.5} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Trusted Professionals</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
@@ -398,7 +398,7 @@ const Roadside = () => {
                 height: '100%'
               }}>
                 <div style={{ color: '#10b981', marginBottom: '20px' }}>
-                  <BadgeCheck size={32} strokeWidth={1.5} />
+                  <LuBadgeCheck size={32} strokeWidth={1.5} />
                 </div>
                 <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Safe &amp; Reliable</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
@@ -443,7 +443,7 @@ const Roadside = () => {
                         color: '#ff5c1a',
                         flexShrink: 0
                       }}>
-                        <Check size={14} strokeWidth={3} />
+                        <LuCheck size={14} strokeWidth={3} />
                       </div>
                       <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155' }}>{item}</span>
                     </div>
@@ -598,7 +598,7 @@ const Roadside = () => {
                     <div key={index} style={{ border: '1.5px solid #e2e8f0', borderRadius: '14px', overflow: 'hidden', transition: 'all 0.2s' }}>
                       <button onClick={() => toggleFaq(index)} style={{ width: '100%', background: isOpen ? '#fff4ef' : '#ffffff', border: 'none', padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', textAlign: 'left', cursor: 'pointer', fontWeight: 700, fontSize: '13.5px', color: isOpen ? '#ff5c1a' : '#0f172a', transition: 'all 0.2s' }}>
                         <span>{faq.q}</span>
-                        {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        {isOpen ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
                       </button>
                       {isOpen && (
                         <div style={{ padding: '16px 20px', background: '#ffffff', fontSize: '12.5px', color: '#64748b', lineHeight: 1.65, borderTop: '1px solid #e2e8f0' }}>
@@ -619,7 +619,7 @@ const Roadside = () => {
                     <div key={actualIndex} style={{ border: '1.5px solid #e2e8f0', borderRadius: '14px', overflow: 'hidden', transition: 'all 0.2s' }}>
                       <button onClick={() => toggleFaq(actualIndex)} style={{ width: '100%', background: isOpen ? '#fff4ef' : '#ffffff', border: 'none', padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', textAlign: 'left', cursor: 'pointer', fontWeight: 700, fontSize: '13.5px', color: isOpen ? '#ff5c1a' : '#0f172a', transition: 'all 0.2s' }}>
                         <span>{faq.q}</span>
-                        {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                        {isOpen ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
                       </button>
                       {isOpen && (
                         <div style={{ padding: '16px 20px', background: '#ffffff', fontSize: '12.5px', color: '#64748b', lineHeight: 1.65, borderTop: '1px solid #e2e8f0' }}>
@@ -641,7 +641,7 @@ const Roadside = () => {
           <div style={{ background: 'linear-gradient(135deg, #fffcf9, #fff8f2)', border: '1.5px solid #ffe8dd', borderRadius: '24px', padding: '36px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '20px', zIndex: 2 }}>
               <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: '#fff4ef', border: '1px solid #ffe3d5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff5c1a', flexShrink: 0 }}>
-                <Truck size={28} />
+                <LuTruck size={28} />
               </div>
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>Launching Soon</h3>

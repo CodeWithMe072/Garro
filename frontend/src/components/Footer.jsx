@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
-  Facebook, Instagram, Linkedin, Twitter, MessageCircle,
-  ChevronRight, Phone, Mail, Clock, MapPin, Send
-} from 'lucide-react';
+  LuFacebook, LuInstagram, LuLinkedin, LuTwitter, LuMessageCircle,
+  LuChevronRight, LuPhone, LuMail, LuClock, LuMapPin, LuSend
+} from 'react-icons/lu';
 
 const Footer = () => {
   const { isAuthenticated } = useAuth();
@@ -23,11 +23,11 @@ const Footer = () => {
   };
 
   const socials = [
-    { icon: Facebook, href: 'https://facebook.com', title: 'Facebook' },
-    { icon: Instagram, href: 'https://instagram.com', title: 'Instagram' },
-    { icon: Linkedin, href: 'https://linkedin.com', title: 'LinkedIn' },
-    { icon: MessageCircle, href: 'https://wa.me/97180042776', title: 'WhatsApp' },
-    { icon: Twitter, href: 'https://twitter.com', title: 'Twitter/X' },
+    { icon: LuFacebook, href: 'https://facebook.com', title: 'Facebook' },
+    { icon: LuInstagram, href: 'https://instagram.com', title: 'Instagram' },
+    { icon: LuLinkedin, href: 'https://linkedin.com', title: 'LinkedIn' },
+    { icon: LuMessageCircle, href: 'https://wa.me/97180042776', title: 'WhatsApp' },
+    { icon: LuTwitter, href: 'https://twitter.com', title: 'Twitter/X' },
   ];
 
   const quickLinks = [
@@ -56,10 +56,10 @@ const Footer = () => {
   ];
 
   const contactItems = [
-    { icon: Phone, label: t('emergency_pickup'), value: '+971 50 123 4567', href: 'tel:+971501234567' },
-    { icon: Mail, label: null, value: 'hello@garro.ae', href: 'mailto:hello@garro.ae' },
-    { icon: Clock, label: null, value: '09:00 AM – 06:00 PM (Mon–Sat)', href: null },
-    { icon: MapPin, label: null, value: '1604, City Bay, Business Bay, Dubai, UAE', href: null },
+    { icon: LuPhone, label: t('emergency_pickup'), value: '+971 50 123 4567', href: 'tel:+971501234567' },
+    { icon: LuMail, label: null, value: 'hello@garro.ae', href: 'mailto:hello@garro.ae' },
+    { icon: LuClock, label: null, value: '09:00 AM – 06:00 PM (Mon–Sat)', href: null },
+    { icon: LuMapPin, label: null, value: '1604, City Bay, Business Bay, Dubai, UAE', href: null },
   ];
 
   return (
@@ -89,7 +89,7 @@ const Footer = () => {
               {quickLinks.map(({ to, label }) => (
                 <li key={label}>
                   <Link to={to}>
-                    <ChevronRight size={14} />{label}
+                    <LuChevronRight size={14} />{label}
                   </Link>
                 </li>
               ))}
@@ -103,7 +103,7 @@ const Footer = () => {
               {serviceLinks.map(({ to, label }) => (
                 <li key={label}>
                   <Link to={to}>
-                    <ChevronRight size={14} />{label}
+                    <LuChevronRight size={14} />{label}
                   </Link>
                 </li>
               ))}
@@ -117,14 +117,14 @@ const Footer = () => {
               {supportLinks.map(({ href, label }) => (
                 <li key={label}>
                   <a href={href}>
-                    <ChevronRight size={14} />{label}
+                    <LuChevronRight size={14} />{label}
                   </a>
                 </li>
               ))}
               {isAuthenticated && (
                 <li>
                   <Link to="/my-requests">
-                    <ChevronRight size={14} />{t('requests')}
+                    <LuChevronRight size={14} />{t('requests')}
                   </Link>
                 </li>
               )}
@@ -168,7 +168,7 @@ const Footer = () => {
                   style={{ flex: 1, background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '9px', padding: '9px 12px', color: 'white', fontSize: '13px', fontFamily: "'Poppins',sans-serif", outline: 'none' }}
                 />
                 <button type="submit" style={{ background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', border: 'none', borderRadius: '9px', padding: '9px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}>
-                  <Send size={16} color="white" />
+                  <LuSend size={16} color="white" />
                 </button>
               </form>
               {showSuccess && (

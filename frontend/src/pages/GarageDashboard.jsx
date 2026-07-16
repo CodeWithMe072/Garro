@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { LuZap, LuDollarSign, LuCircleCheck, LuStar } from 'react-icons/lu';
 
 const GarageDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -131,7 +132,7 @@ const GarageDashboard = () => {
             <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Active Repairs</span>
-                <span style={{ fontSize: '20px' }}>⚡</span>
+                <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuZap style={{ color: '#f59e0b' }} /></span>
               </div>
               <div style={{ fontSize: '32px', fontWeight: '800' }}>{stats.activeJobs}</div>
               <div style={{ color: '#f97316', fontSize: '12px', marginTop: '6px', fontWeight: '600' }}>In-Progress & Picked Up</div>
@@ -141,7 +142,7 @@ const GarageDashboard = () => {
             <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Total Earnings</span>
-                <span style={{ fontSize: '20px' }}>💰</span>
+                <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuDollarSign style={{ color: '#10b981' }} /></span>
               </div>
               <div style={{ fontSize: '32px', fontWeight: '800', color: '#10b981' }}>AED {stats.totalEarnings.toFixed(2)}</div>
               <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px' }}>Paid / Settled Invoices</div>
@@ -151,7 +152,7 @@ const GarageDashboard = () => {
             <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Completed Repairs</span>
-                <span style={{ fontSize: '20px' }}>✅</span>
+                <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuCircleCheck style={{ color: '#10b981' }} /></span>
               </div>
               <div style={{ fontSize: '32px', fontWeight: '800' }}>{stats.completedJobs}</div>
               <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px' }}>Delivered & Closed</div>
@@ -161,7 +162,7 @@ const GarageDashboard = () => {
             <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                 <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Garage Rating</span>
-                <span style={{ fontSize: '20px' }}>⭐</span>
+                <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuStar style={{ color: '#fbbf24' }} /></span>
               </div>
               <div style={{ fontSize: '32px', fontWeight: '800', color: '#fbbf24' }}>{stats.avgRating} <span style={{ fontSize: '16px', color: '#94a3b8' }}>/ 5.0</span></div>
               <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px' }}>Based on {stats.reviewsCount} reviews</div>

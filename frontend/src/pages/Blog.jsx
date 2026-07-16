@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  BookOpen, Calendar, Clock, ArrowRight, Tag,
-  Search, Mail, Bell, ChevronRight
-} from 'lucide-react';
+  LuBookOpen, LuCalendar, LuClock, LuArrowRight, LuTag,
+  LuSearch, LuMail, LuBell, LuChevronRight
+} from 'react-icons/lu';
 
 const blogPosts = [
   {
@@ -76,7 +76,7 @@ const Blog = () => {
             fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '.08em', marginBottom: '20px'
           }}>
-            <BookOpen size={13} /> Garro Blog
+            <LuBookOpen size={13} /> Garro Blog
           </div>
           <h1 style={{
             fontSize: 'clamp(2.2rem, 4.5vw, 3.2rem)', fontWeight: 900, color: '#0f172a',
@@ -90,7 +90,7 @@ const Blog = () => {
 
           {/* Search */}
           <div style={{ maxWidth: '440px', margin: '0 auto', position: 'relative' }}>
-            <Search size={17} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <LuSearch size={17} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
             <input
               type="text"
               placeholder="Search articles..."
@@ -113,7 +113,7 @@ const Blog = () => {
         <div className="container">
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b', fontFamily: "'Poppins', sans-serif" }}>
-              <BookOpen size={40} style={{ marginBottom: '16px', opacity: 0.3 }} />
+              <LuBookOpen size={40} style={{ marginBottom: '16px', opacity: 0.3 }} />
               <p style={{ fontSize: '15px' }}>No articles found for "<strong>{searchQuery}</strong>"</p>
               <button onClick={() => setSearchQuery('')} style={{
                 marginTop: '12px', background: '#ff5c1a', color: '#fff',
@@ -141,7 +141,7 @@ const Blog = () => {
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       position: 'relative'
                     }}>
-                      <BookOpen size={48} color={post.categoryColor} style={{ opacity: 0.5 }} />
+                      <LuBookOpen size={48} color={post.categoryColor} style={{ opacity: 0.5 }} />
                       {/* Category badge */}
                       <div style={{
                         position: 'absolute', top: '14px', left: '14px',
@@ -158,10 +158,10 @@ const Blog = () => {
                       {/* Meta */}
                       <div style={{ display: 'flex', gap: '14px', marginBottom: '12px' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11.5px', color: '#94a3b8', fontFamily: "'Poppins', sans-serif" }}>
-                          <Calendar size={12} /> {post.date}
+                          <LuCalendar size={12} /> {post.date}
                         </span>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11.5px', color: '#94a3b8', fontFamily: "'Poppins', sans-serif" }}>
-                          <Clock size={12} /> {post.readTime} read
+                          <LuClock size={12} /> {post.readTime} read
                         </span>
                       </div>
 
@@ -184,7 +184,7 @@ const Blog = () => {
                         color: post.categoryColor, fontWeight: 700, fontSize: '13.5px',
                         fontFamily: "'Poppins', sans-serif", cursor: 'pointer'
                       }}>
-                        Read More <ArrowRight size={14} />
+                        Read More <LuArrowRight size={14} />
                       </div>
                     </div>
                   </div>
@@ -216,7 +216,7 @@ const Blog = () => {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 20px', color: '#ff5c1a'
             }}>
-              <Bell size={24} />
+              <LuBell size={24} />
             </div>
 
             <h3 style={{ fontWeight: 900, fontSize: '24px', color: '#fff', fontFamily: "'Poppins', sans-serif", marginBottom: '10px' }}>
@@ -239,7 +239,7 @@ const Blog = () => {
             ) : (
               <div style={{ display: 'flex', gap: '10px', maxWidth: '440px', margin: '0 auto', justifyContent: 'center', flexWrap: 'wrap' }}>
                 <div style={{ position: 'relative', flex: 1, minWidth: '240px' }}>
-                  <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                  <LuMail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                   <input
                     type="email"
                     placeholder="Enter your email address"
@@ -265,7 +265,7 @@ const Blog = () => {
                     boxShadow: '0 6px 20px rgba(255,92,26,0.35)', whiteSpace: 'nowrap'
                   }}
                 >
-                  Subscribe <ChevronRight size={16} />
+                  Subscribe <LuChevronRight size={16} />
                 </button>
               </div>
             )}

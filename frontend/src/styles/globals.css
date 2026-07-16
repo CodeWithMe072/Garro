@@ -349,6 +349,64 @@ h1,h2,h3,h4,h5,h6{font-family:'Poppins',sans-serif;font-weight:700;letter-spacin
 .sidebar-divider{height:1px;background:rgba(255,255,255,.07);margin:10px 12px}
 .sidebar-badge{margin-left:auto;background:var(--brand);color:white;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;min-width:20px;text-align:center}
 
+/* Collapsible Admin Sidebar */
+.dash-wrapper{
+  transition: grid-template-columns 0.2s ease-in-out;
+}
+.dash-wrapper.collapsed {
+  grid-template-columns: 80px 1fr !important;
+}
+.dash-wrapper.collapsed .dash-sidebar {
+  width: 80px;
+  overflow: hidden;
+}
+.dash-wrapper.collapsed .sidebar-label {
+  display: none;
+}
+.dash-wrapper.collapsed .sidebar-link {
+  justify-content: center;
+  padding: 9px 0;
+  gap: 0;
+}
+.dash-wrapper.collapsed .sidebar-link .link-text {
+  display: none;
+}
+.dash-wrapper.collapsed .sidebar-link .sidebar-badge {
+  display: none;
+}
+.dash-wrapper.collapsed .sidebar-divider {
+  margin: 10px auto;
+  width: 40px;
+}
+.sidebar-toggle-container {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  margin-bottom: 8px;
+}
+.dash-wrapper.collapsed .sidebar-toggle-container {
+  justify-content: center;
+  padding: 0 0 12px;
+}
+.sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: white;
+}
+
 /* Sidebar (Staff) */
 .staff-wrapper{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 68px)}
 .staff-sidebar{
@@ -1441,21 +1499,42 @@ html[lang="ar"] h6, html[lang="ur"] h6,
 html[lang="ar"] input, html[lang="ur"] input,
 html[lang="ar"] textarea, html[lang="ur"] textarea,
 html[lang="ar"] li, html[lang="ur"] li,
-html[lang="ar"] td, html[lang="ur"] td,
-html[lang="ar"] th, html[lang="ur"] th,
 html[lang="ar"] option, html[lang="ur"] option,
 html[lang="ar"] strong, html[lang="ur"] strong,
 html[lang="ar"] em, html[lang="ur"] em,
 html[lang="ar"] b, html[lang="ur"] b,
 html[lang="ar"] i, html[lang="ur"] i,
 html[lang="ar"] small, html[lang="ur"] small,
-html[lang="ar"] a, html[lang="ur"] a,
-html[lang="ar"] button, html[lang="ur"] button,
 .rtl-text {
   direction: rtl;
 }
 
-/* RTL Text alignment for block text elements and inputs only */
+/* Force structural layout elements (links, buttons, table cells, flex/grid containers) to stay LTR */
+html[lang="ar"] a, html[lang="ur"] a,
+html[lang="ar"] button, html[lang="ur"] button,
+html[lang="ar"] td, html[lang="ur"] td,
+html[lang="ar"] th, html[lang="ur"] th,
+html[lang="ar"] .d-flex, html[lang="ur"] .d-flex,
+html[lang="ar"] .flex, html[lang="ur"] .flex {
+  direction: ltr !important;
+}
+
+/* Ensure inner elements/text blocks inside structural components shape correctly in RTL */
+html[lang="ar"] a *, html[lang="ur"] a *,
+html[lang="ar"] button *, html[lang="ur"] button *,
+html[lang="ar"] td *, html[lang="ur"] td *,
+html[lang="ar"] th *, html[lang="ur"] th * {
+  direction: rtl;
+}
+
+/* Maintain English LTR order for icons inside links or buttons specifically */
+html[lang="ar"] a .icon, html[lang="ur"] a .icon,
+html[lang="ar"] button .icon {
+  direction: ltr !important;
+}
+
+/* RTL Text alignment for block text elements, inputs, and default alignment */
+html[lang="ar"] body, html[lang="ur"] body,
 html[lang="ar"] p, html[lang="ur"] p,
 html[lang="ar"] label, html[lang="ur"] label,
 html[lang="ar"] h1, html[lang="ur"] h1,
@@ -1492,6 +1571,12 @@ html[lang="ar"] .sd-faq-q, html[lang="ur"] .sd-faq-q {
 html[lang="ar"] .qform-label, html[lang="ur"] .qform-label {
   text-align: right;
   justify-content: flex-start;
+}
+
+/* Preserve text alignment for centered blocks */
+html[lang="ar"] .text-center, html[lang="ur"] .text-center,
+html[lang="ar"] .text-center *, html[lang="ur"] .text-center * {
+  text-align: center !important;
 }
 
 /* Style CustomDropdown inside dark forms/cards to match the dark theme */

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BadgeCheck, Truck, Shield } from 'lucide-react';
+import { LuBadgeCheck, LuTruck, LuShield } from 'react-icons/lu';
 
 const About = () => {
   return (
@@ -71,7 +71,7 @@ const About = () => {
           <div className="row g-4">
             <div className="col-md-4">
               <div className="values-card">
-                <div className="values-icon"><BadgeCheck size={28} /></div>
+                <div className="values-icon"><LuBadgeCheck size={28} /></div>
                 <h5 className="fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }}>Upfront, Verified Trust &amp; Transparency</h5>
                 <ul className="text-muted mt-3" style={{ fontSize: '13.5px', lineHeight: 1.9, fontFamily: "'Poppins', sans-serif", paddingLeft: '18px' }}>
                   <li>Detailed quote provided for services, no surprises on pricing.</li>
@@ -82,7 +82,7 @@ const About = () => {
             </div>
             <div className="col-md-4">
               <div className="values-card">
-                <div className="values-icon"><Truck size={28} /></div>
+                <div className="values-icon"><LuTruck size={28} /></div>
                 <h5 className="fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }}>Frictionless Dispatch &amp; Live Logistics</h5>
                 <ul className="text-muted mt-3" style={{ fontSize: '13.5px', lineHeight: 1.9, fontFamily: "'Poppins', sans-serif", paddingLeft: '18px' }}>
                   <li>Seamless scheduling of service times and dispatch, supported 09:00 AM – 06:00 PM (Mon–Sat).</li>
@@ -93,7 +93,7 @@ const About = () => {
             </div>
             <div className="col-md-4">
               <div className="values-card">
-                <div className="values-icon"><Shield size={28} /></div>
+                <div className="values-icon"><LuShield size={28} /></div>
                 <h5 className="fw-bold" style={{ fontFamily: "'Poppins', sans-serif" }}>100% Certified Garages &amp; Handpicked Experts</h5>
                 <ul className="text-muted mt-3" style={{ fontSize: '13.5px', lineHeight: 1.9, fontFamily: "'Poppins', sans-serif", paddingLeft: '18px' }}>
                   <li>Garro partners exclusively with Dubai's trusted car service marketplaces for unparalleled quality.</li>

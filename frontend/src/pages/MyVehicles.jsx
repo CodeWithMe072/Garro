@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import CustomDropdown from '../components/CustomDropdown';
+import { LuTrash2, LuPencil, LuPlus } from 'react-icons/lu';
 
 const MyVehicles = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -342,7 +343,7 @@ const MyVehicles = () => {
                         gap: '4px'
                       }}
                     >
-                      Delete 🗑️
+                      Delete <LuTrash2 size={13} style={{ marginLeft: '4px' }} />
                     </button>
                   </div>
                 </div>
@@ -412,7 +413,7 @@ const MyVehicles = () => {
             }}
           >
             <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '20px', color: 'white' }}>
-              {editVehicleId ? '✏️ Edit Registered Vehicle' : '➕ Add New Vehicle'}
+              {editVehicleId ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuPencil /> Edit Registered Vehicle</span> : <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuPlus /> Add New Vehicle</span>}
             </h3>
             
             <form onSubmit={handleVehicleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>

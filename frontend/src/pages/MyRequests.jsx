@@ -3,6 +3,16 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
+import {
+  LuClock,
+  LuUser,
+  LuFileText,
+  LuCircleCheck,
+  LuWrench,
+  LuX,
+  LuClipboardList,
+  LuSettings
+} from 'react-icons/lu';
 
 const MyRequests = () => {
   const { user }        = useAuth();
@@ -24,8 +34,8 @@ const MyRequests = () => {
       const invoiceNo = location.state?.invoiceNumber;
       toast.success(
         invoiceNo
-          ? `✅ Payment confirmed! Invoice ${invoiceNo} is ready.`
-          : '✅ Payment confirmed! Your invoice is being prepared.'
+          ? `Payment confirmed! Invoice ${invoiceNo} is ready.`
+          : 'Payment confirmed! Your invoice is being prepared.'
       );
       // Clear state so toast doesn't repeat on refresh
       window.history.replaceState({}, document.title);
@@ -78,18 +88,28 @@ const MyRequests = () => {
   };
 
   const getStatusLabel = (status) => {
-    const map = {
-      new:           '🟡 New',
-      assigned:      '🔵 Assigned',
-      quote_pending: '🟣 Quote Pending',
-      approved:      '🟢 Approved',
-      paid:          '✅ Paid',
-      in_progress:   '🔧 In Progress',
-      completed:     '✅ Completed',
-      cancelled:     '❌ Cancelled',
-      closed:        '📋 Closed'
-    };
-    return map[status] || status?.replace(/_/g, ' ');
+    switch (status) {
+      case 'new':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuClock /> New</span>;
+      case 'assigned':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuUser /> Assigned</span>;
+      case 'quote_pending':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuFileText /> Quote Pending</span>;
+      case 'approved':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuCircleCheck /> Approved</span>;
+      case 'paid':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuCircleCheck /> Paid</span>;
+      case 'in_progress':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuWrench /> In Progress</span>;
+      case 'completed':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuCircleCheck /> Completed</span>;
+      case 'cancelled':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuX /> Cancelled</span>;
+      case 'closed':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuClipboardList /> Closed</span>;
+      default:
+        return status?.replace(/_/g, ' ');
+    }
   };
 
   const tabs = [
@@ -153,10 +173,10 @@ const MyRequests = () => {
         {/* Stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
           {[
-            { label: 'Total Requests', value: requests.length, icon: '📋', color: '#185FA5' },
-            { label: 'Active',  value: requests.filter(r => activeStatuses.includes(r.status)).length, icon: '⚙️', color: '#f59e0b' },
-            { label: 'Completed', value: requests.filter(r => ['completed','closed','paid'].includes(r.status)).length, icon: '✅', color: '#10b981' },
-            { label: 'Invoices', value: invoices.length, icon: '📄', color: '#8b5cf6' }
+            { label: 'Total Requests', value: requests.length, icon: <LuClipboardList style={{ color: '#185FA5' }} />, color: '#185FA5' },
+            { label: 'Active',  value: requests.filter(r => activeStatuses.includes(r.status)).length, icon: <LuSettings style={{ color: '#f59e0b' }} />, color: '#f59e0b' },
+            { label: 'Completed', value: requests.filter(r => ['completed','closed','paid'].includes(r.status)).length, icon: <LuCircleCheck style={{ color: '#10b981' }} />, color: '#10b981' },
+            { label: 'Invoices', value: invoices.length, icon: <LuFileText style={{ color: '#8b5cf6' }} />, color: '#8b5cf6' }
           ].map(s => (
             <div key={s.label} style={{
               background: 'white', borderRadius: 14, padding: '16px 18px',
@@ -353,8 +373,8 @@ const MyRequests = () => {
                           display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                         }}>
                           <div>
-                            <div style={{ fontSize: 11, color: '#16a34a', fontWeight: 700, marginBottom: 2 }}>
-                              ✅ INVOICE PAID
+                            <div style={{ fontSize: 11, color: '#16a34a', fontWeight: 700, marginBottom: 2, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <LuCircleCheck /> INVOICE PAID
                             </div>
                             <div style={{ fontSize: 13, fontWeight: 700, color: '#1a1a2e' }}>
                               {inv.invoiceNumber} — AED {Number(inv.totalAmount || 0).toFixed(2)}

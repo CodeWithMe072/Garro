@@ -2,11 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
+import {
+  LuLayoutDashboard,
+  LuStore,
+  LuSearch,
+  LuSettings,
+  LuClipboardList,
+  LuUser,
+  LuBriefcase,
+  LuUsers,
+  LuGlobe,
+  LuPencil,
+  LuRefreshCw,
+  LuTrash2,
+  LuPlus,
+  LuChevronLeft,
+  LuChevronRight
+} from 'react-icons/lu';
 
 const CatalogManagement = () => {
   const { user } = useAuth();
   const { toast, confirm } = useNotification();
+  const { t, lang, changeLanguage } = useLanguage();
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('brands');
+
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem('admin_sidebar_collapsed') === 'true';
+  });
+
+  const toggleSidebar = () => {
+    const nextState = !isCollapsed;
+    setIsCollapsed(nextState);
+    localStorage.setItem('admin_sidebar_collapsed', String(nextState));
+  };
 
   // Loading states
   const [loading, setLoading] = useState(true);
@@ -326,60 +356,110 @@ const CatalogManagement = () => {
   };
 
   return (
-    <div className="dash-wrapper">
+    <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
-        <span className="sidebar-label">Overview</span>
+        <div className="sidebar-toggle-container">
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
+            {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
+          </button>
+        </div>
+
+        <span className="sidebar-label">{t('overview')}</span>
         <div className="sidebar-section">
           <Link to="/admin" className="sidebar-link">
-            <span className="icon">📊</span>Dashboard
+            <span className="icon"><LuLayoutDashboard /></span>
+            <span className="link-text">{t('dashboard')}</span>
           </Link>
         </div>
 
-        <span className="sidebar-label">Operations</span>
+        <span className="sidebar-label">{t('operations')}</span>
         <div className="sidebar-section">
           <Link to="/admin/manage-garages" className="sidebar-link">
-            <span className="icon">🏪</span>Manage Garages
+            <span className="icon"><LuStore /></span>
+            <span className="link-text">{t('manage_garages')}</span>
           </Link>
           <Link to="/search" className="sidebar-link">
-            <span className="icon">🔍</span>Find Garages
+            <span className="icon"><LuSearch /></span>
+            <span className="link-text">{t('find_garages')}</span>
           </Link>
           <Link to="/admin/catalog" className="sidebar-link active">
-            <span className="icon">⚙️</span>System Catalog
+            <span className="icon"><LuSettings /></span>
+            <span className="link-text">{t('system_catalog')}</span>
           </Link>
           <Link to="/my-bookings" className="sidebar-link">
-            <span className="icon">📋</span>Bookings
+            <span className="icon"><LuClipboardList /></span>
+            <span className="link-text">{t('bookings')}</span>
           </Link>
         </div>
 
         <div className="sidebar-divider"></div>
-        <span className="sidebar-label">People</span>
+        <span className="sidebar-label">{t('people')}</span>
         <div className="sidebar-section">
           <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👤</span>All Users
+            <span className="icon"><LuUser /></span>
+            <span className="link-text">{t('all_users')}</span>
           </Link>
           <Link to="/admin/staff" className="sidebar-link">
-            <span className="icon">👔</span>Staff View
+            <span className="icon"><LuBriefcase /></span>
+            <span className="link-text">{t('staff_view')}</span>
           </Link>
           <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon">👥</span>Manage Staff
+            <span className="icon"><LuUsers /></span>
+            <span className="link-text">{t('manage_staff')}</span>
           </Link>
         </div>
 
         <div className="sidebar-divider"></div>
         <div className="sidebar-section">
           <Link to="/home" className="sidebar-link">
-            <span className="icon">🌐</span>Back to Site
+            <span className="icon"><LuGlobe /></span>
+            <span className="link-text">{t('back_to_site')}</span>
           </Link>
         </div>
       </aside>
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">
-        <div className="dash-header mb-4">
+        <div className="dash-header mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div className="dash-title">⚙️ System Catalog Settings</div>
-            <div className="dash-subtitle">Manage metadata catalogs for vehicles brands, services, and coverage zones</div>
+            <div className="dash-title">⚙️ {t('system_catalog_settings')}</div>
+            <div className="dash-subtitle">{t('manage_metadata_catalogs')}</div>
+          </div>
+          {/* Language Switcher */}
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              className="btn btn-outline-secondary d-flex align-items-center gap-2"
+              style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
+            >
+              <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
+            </button>
+            {isLangOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
+                boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
+                minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
+              }}>
+                {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
+                  <button
+                    key={code}
+                    onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
+                    style={{
+                      background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
+                      borderRadius: '8px', padding: '8px 12px',
+                      color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
+                      fontSize: '13px', fontWeight: lang === code ? 700 : 500,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
+                    }}
+                  >
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -390,21 +470,21 @@ const CatalogManagement = () => {
             style={{ borderRadius: '10px 10px 0 0', minWidth: '150px' }}
             onClick={() => setActiveTab('brands')}
           >
-            🏷️ Brands & Models
+            🏷️ {lang === 'ar' ? 'الماركات والموديلات' : (lang === 'ur' ? 'برانڈز اور ماڈلز' : 'Brands & Models')}
           </button>
           <button 
             className={`btn py-2 px-4 fw-bold ${activeTab === 'services' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
             style={{ borderRadius: '10px 10px 0 0', minWidth: '150px' }}
             onClick={() => setActiveTab('services')}
           >
-            🔧 Service Catalog
+            🔧 {lang === 'ar' ? 'دليل الخدمات' : (lang === 'ur' ? 'سروس کیٹلاگ' : 'Service Catalog')}
           </button>
           <button 
             className={`btn py-2 px-4 fw-bold ${activeTab === 'locations' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
             style={{ borderRadius: '10px 10px 0 0', minWidth: '150px' }}
             onClick={() => setActiveTab('locations')}
           >
-            📍 Cities & Areas
+            📍 {lang === 'ar' ? 'المدن والمناطق' : (lang === 'ur' ? 'شہر اور علاقے' : 'Cities & Areas')}
           </button>
         </div>
 
@@ -480,14 +560,14 @@ const CatalogManagement = () => {
                                 <span className={`badge py-1 px-2 ${b.isActive ? 'bg-success text-white' : 'bg-warning text-dark'}`} style={{ fontSize: '10px' }}>
                                   {b.isActive ? 'Active' : 'Inactive'}
                                 </span>
-                                <button onClick={() => handleOpenEditModal('brand', b)} className="btn btn-xs p-1 text-white border-0 bg-transparent">
-                                  ✏️
+                                <button onClick={() => handleOpenEditModal('brand', b)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Edit">
+                                  <LuPencil size={13} style={{ color: '#94a3b8' }} />
                                 </button>
-                                <button onClick={() => handleToggleStatus('brand', b)} className="btn btn-xs p-1 text-white border-0 bg-transparent">
-                                  🔄
+                                <button onClick={() => handleToggleStatus('brand', b)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Toggle Status">
+                                  <LuRefreshCw size={13} style={{ color: '#94a3b8' }} />
                                 </button>
-                                <button onClick={() => handleDelete('brand', b._id, b.name)} className="btn btn-xs p-1 text-white border-0 bg-transparent">
-                                  🗑️
+                                <button onClick={() => handleDelete('brand', b._id, b.name)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Delete">
+                                  <LuTrash2 size={13} style={{ color: '#ef4444' }} />
                                 </button>
                               </div>
                             </button>
@@ -536,14 +616,14 @@ const CatalogManagement = () => {
                                       </td>
                                       <td className="text-end">
                                         <div className="d-flex justify-content-end gap-1">
-                                          <button onClick={() => handleOpenEditModal('model', m)} className="btn btn-xs btn-outline-secondary py-1 px-2">
-                                            ✏️
+                                          <button onClick={() => handleOpenEditModal('model', m)} className="btn btn-xs btn-outline-secondary py-1 px-2" title="Edit">
+                                            <LuPencil size={13} />
                                           </button>
-                                          <button onClick={() => handleToggleStatus('model', m)} className="btn btn-xs btn-outline-warning py-1 px-2">
-                                            🔄
+                                          <button onClick={() => handleToggleStatus('model', m)} className="btn btn-xs btn-outline-warning py-1 px-2" title="Toggle Status">
+                                            <LuRefreshCw size={13} />
                                           </button>
-                                          <button onClick={() => handleDelete('model', m._id, m.name)} className="btn btn-xs btn-outline-danger py-1 px-2">
-                                            🗑️
+                                          <button onClick={() => handleDelete('model', m._id, m.name)} className="btn btn-xs btn-outline-danger py-1 px-2" title="Delete">
+                                            <LuTrash2 size={13} />
                                           </button>
                                         </div>
                                       </td>
@@ -601,14 +681,14 @@ const CatalogManagement = () => {
                                 <span className={`badge py-1 px-2 ${c.isActive ? 'bg-success text-white' : 'bg-warning text-dark'}`} style={{ fontSize: '10px' }}>
                                   {c.isActive ? 'Active' : 'Inactive'}
                                 </span>
-                                <button onClick={() => handleOpenEditModal('category', c)} className="btn btn-xs p-1 text-white border-0 bg-transparent">
-                                  ✏️
+                                <button onClick={() => handleOpenEditModal('category', c)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Edit">
+                                  <LuPencil size={13} style={{ color: '#94a3b8' }} />
                                 </button>
-                                <button onClick={() => handleToggleStatus('category', c)} className="btn btn-xs p-1 text-white border-0 bg-transparent">
-                                  🔄
+                                <button onClick={() => handleToggleStatus('category', c)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Toggle Status">
+                                  <LuRefreshCw size={13} style={{ color: '#94a3b8' }} />
                                 </button>
-                                <button onClick={() => handleDelete('category', c._id, c.name)} className="btn btn-xs p-1 text-white border-0 bg-transparent">
-                                  🗑️
+                                <button onClick={() => handleDelete('category', c._id, c.name)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Delete">
+                                  <LuTrash2 size={13} style={{ color: '#ef4444' }} />
                                 </button>
                               </div>
                             </button>
@@ -659,14 +739,14 @@ const CatalogManagement = () => {
                                       </td>
                                       <td className="text-end">
                                         <div className="d-flex justify-content-end gap-1">
-                                          <button onClick={() => handleOpenEditModal('subcategory', sub)} className="btn btn-xs btn-outline-secondary py-1 px-2">
-                                            ✏️
+                                          <button onClick={() => handleOpenEditModal('subcategory', sub)} className="btn btn-xs btn-outline-secondary py-1 px-2" title="Edit">
+                                            <LuPencil size={13} />
                                           </button>
-                                          <button onClick={() => handleToggleStatus('subcategory', sub)} className="btn btn-xs btn-outline-warning py-1 px-2">
-                                            🔄
+                                          <button onClick={() => handleToggleStatus('subcategory', sub)} className="btn btn-xs btn-outline-warning py-1 px-2" title="Toggle Status">
+                                            <LuRefreshCw size={13} />
                                           </button>
-                                          <button onClick={() => handleDelete('subcategory', sub._id, sub.name)} className="btn btn-xs btn-outline-danger py-1 px-2">
-                                            🗑️
+                                          <button onClick={() => handleDelete('subcategory', sub._id, sub.name)} className="btn btn-xs btn-outline-danger py-1 px-2" title="Delete">
+                                            <LuTrash2 size={13} />
                                           </button>
                                         </div>
                                       </td>
@@ -719,14 +799,14 @@ const CatalogManagement = () => {
                                 <span className={`badge py-1 px-2 ${c.isActive ? 'bg-success text-white' : 'bg-warning text-dark'}`} style={{ fontSize: '10px' }}>
                                   {c.isActive ? 'Active' : 'Inactive'}
                                 </span>
-                                <button onClick={() => handleOpenEditModal('city', c)} className="btn btn-xs p-1 text-white border-0 bg-transparent">
-                                  ✏️
+                                <button onClick={() => handleOpenEditModal('city', c)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Edit">
+                                  <LuPencil size={13} style={{ color: '#94a3b8' }} />
                                 </button>
-                                <button onClick={() => handleToggleStatus('city', c)} className="btn btn-xs p-1 text-white border-0 bg-transparent">
-                                  🔄
+                                <button onClick={() => handleToggleStatus('city', c)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Toggle Status">
+                                  <LuRefreshCw size={13} style={{ color: '#94a3b8' }} />
                                 </button>
-                                <button onClick={() => handleDelete('city', c._id, c.name)} className="btn btn-xs p-1 text-white border-0 bg-transparent">
-                                  🗑️
+                                <button onClick={() => handleDelete('city', c._id, c.name)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Delete">
+                                  <LuTrash2 size={13} style={{ color: '#ef4444' }} />
                                 </button>
                               </div>
                             </button>
@@ -775,14 +855,14 @@ const CatalogManagement = () => {
                                       </td>
                                       <td className="text-end">
                                         <div className="d-flex justify-content-end gap-1">
-                                          <button onClick={() => handleOpenEditModal('area', a)} className="btn btn-xs btn-outline-secondary py-1 px-2">
-                                            ✏️
+                                          <button onClick={() => handleOpenEditModal('area', a)} className="btn btn-xs btn-outline-secondary py-1 px-2" title="Edit">
+                                            <LuPencil size={13} />
                                           </button>
-                                          <button onClick={() => handleToggleStatus('area', a)} className="btn btn-xs btn-outline-warning py-1 px-2">
-                                            🔄
+                                          <button onClick={() => handleToggleStatus('area', a)} className="btn btn-xs btn-outline-warning py-1 px-2" title="Toggle Status">
+                                            <LuRefreshCw size={13} />
                                           </button>
-                                          <button onClick={() => handleDelete('area', a._id, a.name)} className="btn btn-xs btn-outline-danger py-1 px-2">
-                                            🗑️
+                                          <button onClick={() => handleDelete('area', a._id, a.name)} className="btn btn-xs btn-outline-danger py-1 px-2" title="Delete">
+                                            <LuTrash2 size={13} />
                                           </button>
                                         </div>
                                       </td>
@@ -812,7 +892,7 @@ const CatalogManagement = () => {
         <div className="custom-modal-overlay" onClick={() => setModalOpen(false)}>
           <div className="custom-modal confirm" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', textAlign: 'left' }}>
             <h3 className="modal-title mb-4">
-              {editId ? '✏️ Edit Catalog Item' : '➕ Add Catalog Item'}
+              {editId ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuPencil /> Edit Catalog Item</span> : <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuPlus /> Add Catalog Item</span>}
               <span className="text-primary-garro small d-block mt-1" style={{ fontSize: '12px' }}>Category: {modalType}</span>
             </h3>
 
