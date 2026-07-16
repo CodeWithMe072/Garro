@@ -9,7 +9,9 @@ import {
   LuGlobe,
   LuChevronLeft,
   LuChevronRight,
-  LuClipboardList
+  LuClipboardList,
+  LuTriangleAlert,
+  LuPartyPopper
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -106,7 +108,6 @@ const AdminComplaints = () => {
   };
 
   return (
-<<<<<<< HEAD
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
@@ -215,28 +216,10 @@ const AdminComplaints = () => {
                 </div>
               )}
             </div>
-=======
-    <div className="dash-wrapper">
-      <AdminSidebar />
-      <main className="dash-main w-100" style={{ padding: '2rem' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', letterSpacing: '-0.025em', color: '#0f172a' }}>
-          ⚠️ Customer Complaints Ledger
-        </h1>
-        <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
-          Track and resolve complaints raised by customers regarding jobs or helpers.
-        </p>
-
-        {loading ? (
-          <p style={{ color: '#64748b' }}>Retrieving complaints...</p>
-        ) : complaints.length === 0 ? (
-          <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '50px 20px', textAlign: 'center', color: '#64748b' }}>
-            <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🎉</span>
-            No customer complaints registered! High-quality operations.
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           </div>
 
-          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', color: '#1e293b', letterSpacing: '-0.025em' }}>
-            ⚠️ {lang === 'ar' ? 'سجل شكاوى العملاء' : (lang === 'ur' ? 'کسٹمر شکایات کا کھاتہ' : 'Customer Complaints Ledger')}
+          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', color: '#1e293b', letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <LuTriangleAlert /> {lang === 'ar' ? 'سجل شكاوى العملاء' : (lang === 'ur' ? 'کسٹمر شکایات کا کھاتہ' : 'Customer Complaints Ledger')}
           </h1>
           <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
             {lang === 'ar' ? 'تتبع وحل الشكاوى المقدمة من العملاء بخصوص المهام أو المساعدين.' : (lang === 'ur' ? 'کاموں یا مددگاروں کے بارے میں صارفین کی طرف سے اٹھائی گئی شکایات کو ٹریک اور حل کریں۔' : 'Track and resolve complaints raised by customers regarding jobs or helpers.')}
@@ -246,14 +229,13 @@ const AdminComplaints = () => {
             <p style={{ color: '#64748b' }}>{t('loading')}</p>
           ) : complaints.length === 0 ? (
             <div style={{ background: '#fff', borderRadius: '16px', padding: '50px 20px', textAlign: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
-              <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🎉</span>
+              <span style={{ fontSize: '48px', display: 'flex', justifyContent: 'center', marginBottom: '16px', color: '#10b981' }}><LuPartyPopper /></span>
               {lang === 'ar' ? 'لم يتم تسجيل أي شكاوى من العملاء! عمليات عالية الجودة.' : (lang === 'ur' ? 'کوئی کسٹمر شکایت رجسٹرڈ نہیں ہے! اعلیٰ معیار کے آپریشنز۔' : 'No customer complaints registered! High-quality operations.')}
             </div>
           ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {complaints.map(c => (
               <div key={c._id} style={{
-<<<<<<< HEAD
                 background: '#fff',
                 border: '1px solid #e2e8f0',
                 borderRadius: '16px',
@@ -317,45 +299,6 @@ const AdminComplaints = () => {
                       {lang === 'ar' ? 'حل الشكوى' : (lang === 'ur' ? 'شکایت حل کریں' : 'Resolve Complaint')}
                     </button>
                   )}
-=======
-                background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '16px',
-                padding: '24px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'start',
-                boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
-              }}>
-                <div style={{ flex: 1, marginRight: '24px' }}>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{
-                      background: c.status === 'resolved' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                      color: c.status === 'resolved' ? '#10b981' : '#ef4444',
-                      borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase'
-                    }}>
-                      {c.status}
-                    </span>
-                    <span style={{ fontSize: '12.5px', color: '#64748b' }}>
-                      Submitted: {new Date(c.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 10px', color: '#0f172a' }}>
-                    {c.title}
-                  </h3>
-                  
-                  <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.5', margin: '0 0 16px' }}>
-                    {c.description}
-                  </p>
-
-                  <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#64748b' }}>
-                    <span>Client: <strong>{c.customerId?.name || 'Customer'}</strong> ({c.customerId?.email})</span>
-                    {c.jobId && (
-                      <span>Job Card: <strong>#{c.jobId.slice(-6).toUpperCase()}</strong></span>
-                    )}
-                  </div>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                 </div>
 
                 {/* Structured Resolution Display */}
@@ -506,11 +449,7 @@ const AdminComplaints = () => {
             ))}
           </div>
         )}
-<<<<<<< HEAD
-
         </div>
-=======
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
       </main>
     </div>
   );

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
-<<<<<<< HEAD
 import { 
   LuCircleCheck, 
   LuLayoutDashboard, 
@@ -14,12 +13,10 @@ import {
   LuGlobe,
   LuChevronLeft,
   LuChevronRight,
-  LuClipboardList
+  LuClipboardList,
+  LuStar
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
-=======
-import AdminSidebar from '../components/AdminSidebar';
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
 const CreateStaff = () => {
   const navigate = useNavigate();
@@ -91,7 +88,6 @@ const CreateStaff = () => {
   };
 
   return (
-<<<<<<< HEAD
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
@@ -100,16 +96,6 @@ const CreateStaff = () => {
             {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
           </button>
         </div>
-=======
-    <div className="dash-wrapper">
-      <AdminSidebar />
-      <main className="dash-main w-100" style={{ padding: '2rem' }}>
-        <div className="card">
-          <div className="card-head">
-            <h1>👔 Create Staff Account</h1>
-            <p>Create a new staff member account with immediate access.</p>
-          </div>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
         <span className="sidebar-label">{t('overview')}</span>
         <div className="sidebar-section">
@@ -212,7 +198,7 @@ const CreateStaff = () => {
               </div>
             </div>
 
-            <h1>👔 {t('add_new_helper')}</h1>
+            <h1 className="d-flex align-items-center gap-2"><LuBriefcase /> {t('add_new_helper')}</h1>
             <p>{t('create_internal_credentials')}</p>
           </div>
 
@@ -275,14 +261,14 @@ const CreateStaff = () => {
               <label className={`role-card ${role === 'staff' ? 'selected' : ''}`}>
                 <input type="radio" name="role" value="staff" checked={role === 'staff'} onChange={() => setRole('staff')} />
                 <div className="rc-check"><span className="material-icons-round" style={{ color: 'white', fontSize: '14px' }}>check</span></div>
-                <div className="rc-icon">👤</div>
+                <div className="rc-icon"><LuUser /></div>
                 <div className="rc-name">Staff</div>
                 <div className="rc-desc">Can manage assigned bookings, update statuses, view their schedule.</div>
               </label>
               <label className={`role-card ${role === 'manager' ? 'selected' : ''}`}>
                 <input type="radio" name="role" value="manager" checked={role === 'manager'} onChange={() => setRole('manager')} />
                 <div className="rc-check"><span className="material-icons-round" style={{ color: 'white', fontSize: '14px' }}>check</span></div>
-                <div className="rc-icon">🌟</div>
+                <div className="rc-icon" style={{ color: '#f59e0b' }}><LuStar /></div>
                 <div className="rc-name">Manager</div>
                 <div className="rc-desc">Full access — can view all bookings, create staff, and access analytics.</div>
               </label>
@@ -318,13 +304,8 @@ const CreateStaff = () => {
           </form>
         </div>
       </div>
-<<<<<<< HEAD
       </main>
     </div>
-=======
-    </main>
-  </div>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
   );
 };
 

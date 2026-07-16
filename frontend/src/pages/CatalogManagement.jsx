@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-<<<<<<< HEAD
 import { useLanguage } from '../context/LanguageContext';
 import {
   LuLayoutDashboard,
@@ -19,11 +18,10 @@ import {
   LuTrash2,
   LuPlus,
   LuChevronLeft,
-  LuChevronRight
+  LuChevronRight,
+  LuTag,
+  LuWrench
 } from 'react-icons/lu';
-=======
-import AdminSidebar from '../components/AdminSidebar';
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
 const CatalogManagement = () => {
   const { user } = useAuth();
@@ -360,7 +358,6 @@ const CatalogManagement = () => {
   };
 
   return (
-<<<<<<< HEAD
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
@@ -423,10 +420,6 @@ const CatalogManagement = () => {
           </Link>
         </div>
       </aside>
-=======
-    <div className="dash-wrapper">
-      <AdminSidebar />
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">
@@ -541,7 +534,9 @@ const CatalogManagement = () => {
                   <div className="card border-0 shadow-sm" style={{ borderRadius: '16px', maxWidth: 'none' }}>
                     <div className="card-body p-4">
                       <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 className="fw-bold text-dark mb-0">🏷️ Brands / Makes</h5>
+                        <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                          <LuTag /> Brands / Makes
+                        </h5>
                         <button onClick={() => handleOpenAddModal('brand')} className="btn btn-sm btn-primary-garro px-3 py-1">
                           + Add Brand
                         </button>
@@ -552,11 +547,14 @@ const CatalogManagement = () => {
                           <div className="text-center py-4 text-muted">No brands found.</div>
                         ) : (
                           brands.map(b => (
-                            <button 
+                            <div 
                               key={b._id} 
+                              role="button"
+                              tabIndex={0}
                               className={`list-group-item list-group-item-action border-0 d-flex justify-content-between align-items-center mb-2 p-3 ${selectedBrand?._id === b._id ? 'bg-primary-garro text-white active' : 'bg-light text-dark'}`}
-                              style={{ borderRadius: '8px' }}
+                              style={{ borderRadius: '8px', cursor: 'pointer' }}
                               onClick={() => setSelectedBrand(b)}
+                              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedBrand(b); } }}
                             >
                               <div>
                                 <div className="fw-bold">{b.name}</div>
@@ -579,7 +577,7 @@ const CatalogManagement = () => {
                                   <LuTrash2 size={13} style={{ color: '#ef4444' }} />
                                 </button>
                               </div>
-                            </button>
+                            </div>
                           ))
                         )}
                       </div>
@@ -662,7 +660,9 @@ const CatalogManagement = () => {
                   <div className="card border-0 shadow-sm" style={{ borderRadius: '16px', maxWidth: 'none' }}>
                     <div className="card-body p-4">
                       <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 className="fw-bold text-dark mb-0">🛠️ Service Categories</h5>
+                        <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                          <LuWrench /> Service Categories
+                        </h5>
                         <button onClick={() => handleOpenAddModal('category')} className="btn btn-sm btn-primary-garro px-3 py-1">
                           + Add Category
                         </button>
@@ -673,11 +673,14 @@ const CatalogManagement = () => {
                           <div className="text-center py-4 text-muted">No categories configured.</div>
                         ) : (
                           categories.map(c => (
-                            <button 
+                            <div 
                               key={c._id} 
+                              role="button"
+                              tabIndex={0}
                               className={`list-group-item list-group-item-action border-0 d-flex justify-content-between align-items-center mb-2 p-3 ${selectedCategory?._id === c._id ? 'bg-primary-garro text-white active' : 'bg-light text-dark'}`}
-                              style={{ borderRadius: '8px' }}
+                              style={{ borderRadius: '8px', cursor: 'pointer' }}
                               onClick={() => setSelectedCategory(c)}
+                              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedCategory(c); } }}
                             >
                               <div>
                                 <div className="fw-bold">{c.name}</div>
@@ -700,7 +703,7 @@ const CatalogManagement = () => {
                                   <LuTrash2 size={13} style={{ color: '#ef4444' }} />
                                 </button>
                               </div>
-                            </button>
+                            </div>
                           ))
                         )}
                       </div>
@@ -715,7 +718,9 @@ const CatalogManagement = () => {
                       {selectedCategory ? (
                         <>
                           <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h5 className="fw-bold text-dark mb-0">🔧 Subcategories in: <span className="text-primary-garro">{selectedCategory.name}</span></h5>
+                            <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                              <LuWrench /> Subcategories in: <span className="text-primary-garro">{selectedCategory.name}</span>
+                            </h5>
                             <button onClick={() => handleOpenAddModal('subcategory')} className="btn btn-sm btn-primary-garro px-3 py-1">
                               + Add Subcategory
                             </button>
@@ -785,7 +790,9 @@ const CatalogManagement = () => {
                   <div className="card border-0 shadow-sm" style={{ borderRadius: '16px', maxWidth: 'none' }}>
                     <div className="card-body p-4">
                       <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 className="fw-bold text-dark mb-0">🌍 Cities</h5>
+                        <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                          <LuGlobe /> Cities
+                        </h5>
                         <button onClick={() => handleOpenAddModal('city')} className="btn btn-sm btn-primary-garro px-3 py-1">
                           + Add City
                         </button>
@@ -796,11 +803,14 @@ const CatalogManagement = () => {
                           <div className="text-center py-4 text-muted">No cities configured.</div>
                         ) : (
                           cities.map(c => (
-                            <button 
+                            <div 
                               key={c._id} 
+                              role="button"
+                              tabIndex={0}
                               className={`list-group-item list-group-item-action border-0 d-flex justify-content-between align-items-center mb-2 p-3 ${selectedCity?._id === c._id ? 'bg-primary-garro text-white active' : 'bg-light text-dark'}`}
-                              style={{ borderRadius: '8px' }}
+                              style={{ borderRadius: '8px', cursor: 'pointer' }}
                               onClick={() => setSelectedCity(c)}
+                              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedCity(c); } }}
                             >
                               <div className="fw-bold">{c.name}</div>
 
@@ -818,7 +828,7 @@ const CatalogManagement = () => {
                                   <LuTrash2 size={13} style={{ color: '#ef4444' }} />
                                 </button>
                               </div>
-                            </button>
+                            </div>
                           ))
                         )}
                       </div>

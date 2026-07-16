@@ -5,8 +5,6 @@ import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import Chart from 'chart.js/auto';
 import { io } from 'socket.io-client';
-import CustomDropdown from '../components/CustomDropdown';
-<<<<<<< HEAD
 import {
   LuLayoutDashboard,
   LuStore,
@@ -28,19 +26,12 @@ import {
   LuChevronLeft,
   LuChevronRight
 } from 'react-icons/lu';
-=======
-import AdminSidebar from '../components/AdminSidebar';
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
 const AdminDashboard = () => {
   const { user } = useAuth();
   const { toast } = useNotification();
-<<<<<<< HEAD
   const { t, lang, changeLanguage } = useLanguage();
   const [isLangOpen, setIsLangOpen] = useState(false);
-=======
-  const { t } = useLanguage();
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
   const revenueChartRef = useRef(null);
   const statusChartRef = useRef(null);
 
@@ -497,7 +488,6 @@ const AdminDashboard = () => {
   return (
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
-<<<<<<< HEAD
       <aside className="dash-sidebar">
         <div className="sidebar-toggle-container">
           <button className="sidebar-toggle-btn" onClick={toggleSidebar} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
@@ -575,15 +565,11 @@ const AdminDashboard = () => {
           </Link>
         </div>
       </aside>
-=======
-      <AdminSidebar pendingBookings={stats.pending_bookings} />
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">
         <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-<<<<<<< HEAD
             <div className="dash-title">
               {lang === 'ar' ? 'صباح الخير' : (lang === 'ur' ? 'صبح بخیر' : 'Good Morning')}, {user?.firstName || 'Admin'} 👋
             </div>
@@ -625,10 +611,6 @@ const AdminDashboard = () => {
                 ))}
               </div>
             )}
-=======
-            <div className="dash-title"><span dir="auto">{t('good_morning')}</span>, {user?.firstName || 'Admin'} 👋</div>
-            <div className="dash-subtitle" dir="auto">{t('happening_today')}</div>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           </div>
         </div>
 
@@ -659,13 +641,8 @@ const AdminDashboard = () => {
           <div className="stat-card purple">
             <div className="stat-icon"><LuUsers /></div>
             <div className="stat-value">{stats.total_users}</div>
-<<<<<<< HEAD
             <div className="stat-label">{t('registered_users')}</div>
             <div className="stat-sub">{stats.total_staff} {t('helper_staff')}</div>
-=======
-            <div className="stat-label">{t('customers')}</div>
-            <div className="stat-sub">{stats.total_staff} {t('staff')}</div>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           </div>
           <div className="stat-card pink">
             <div className="stat-icon"><LuStar /></div>
@@ -676,27 +653,18 @@ const AdminDashboard = () => {
           <div className="stat-card red">
             <div className="stat-icon"><LuMessageSquare /></div>
             <div className="stat-value" style={{ color: '#ef4444' }}>{stats.unread_messages}</div>
-<<<<<<< HEAD
             <div className="stat-label">{t('unread_alerts')}</div>
-=======
-            <div className="stat-label">{t('unread_messages')}</div>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           </div>
           <div className="stat-card teal">
             <div className="stat-icon"><LuClipboardList /></div>
             <div className="stat-value">{stats.total_bookings}</div>
-<<<<<<< HEAD
             <div className="stat-label">{t('bookings')}</div>
-=======
-            <div className="stat-label">{t('total_bookings')}</div>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           </div>
         </div>
 
         {/* ── CHARTS ── */}
         <div className="charts-row">
           <div className="chart-card">
-<<<<<<< HEAD
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <div>
                 <h4>{t('monthly_bookings_revenue')}</h4>
@@ -708,16 +676,10 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div style={{ height: '200px', marginTop: '12px' }}>
-=======
-            <h4>{t('revenue_bookings')}</h4>
-            <div className="chart-sub">{t('revenue_trend')}</div>
-            <div style={{ height: '200px' }}>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
               <canvas ref={revenueChartRef}></canvas>
             </div>
           </div>
           <div className="chart-card">
-<<<<<<< HEAD
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
               <div>
                 <h4>{t('booking_status_dist')}</h4>
@@ -729,11 +691,6 @@ const AdminDashboard = () => {
               </div>
             </div>
             <div style={{ height: '200px', marginTop: '12px' }}>
-=======
-            <h4>{t('booking_status')}</h4>
-            <div className="chart-sub">{t('current_distribution')}</div>
-            <div style={{ height: '200px' }}>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
               <canvas ref={statusChartRef}></canvas>
             </div>
           </div>
@@ -743,13 +700,8 @@ const AdminDashboard = () => {
         <div className="data-row">
           <div className="data-card">
             <div className="data-head">
-<<<<<<< HEAD
               <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuClock /> Recent Bookings</h4>
               <a href="#">View all →</a>
-=======
-              <h4>🕐 {t('recent_bookings')}</h4>
-              <a href="#">{t('view_all')} →</a>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
             </div>
             <table className="g-table">
               <tbody>

@@ -1,15 +1,8 @@
 import React, { useState } from 'react';
 import {
-<<<<<<< HEAD
   LuPhone, LuMail, LuMapPin, LuClock, LuSend, LuInstagram,
   LuTwitter, LuLinkedin, LuFacebook, LuMessageSquare, LuCircleCheck
 } from 'react-icons/lu';
-=======
-  Phone, Mail, MapPin, Clock, Send, Instagram,
-  Twitter, Linkedin, Facebook, MessageSquare, CheckCircle
-} from 'lucide-react';
-import { useLanguage } from '../context/LanguageContext';
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -27,7 +20,6 @@ const Contact = () => {
 
   const contactInfo = [
     {
-<<<<<<< HEAD
       icon: LuPhone, title: 'Phone', detail: '+971 50 123 4567',
       sub: 'Mon–Sat, 9AM–6PM', color: '#ff5c1a'
     },
@@ -42,22 +34,6 @@ const Contact = () => {
     {
       icon: LuClock, title: 'Working Hours', detail: 'Mon–Sat: 9AM – 6PM',
       sub: 'Sunday: Closed', color: '#8b5cf6'
-=======
-      icon: Phone, title: t('contact_phone_title'), detail: '+971 50 123 4567',
-      sub: t('contact_phone_sub'), color: '#ff5c1a'
-    },
-    {
-      icon: Mail, title: t('contact_email_title'), detail: 'hello@garro.ae',
-      sub: t('contact_email_sub'), color: '#3b82f6'
-    },
-    {
-      icon: MapPin, title: t('contact_loc_title'), detail: 'Dubai, United Arab Emirates',
-      sub: t('contact_loc_sub'), color: '#10b981'
-    },
-    {
-      icon: Clock, title: t('contact_hours_title'), detail: 'Mon–Sat: 9AM – 6PM',
-      sub: t('contact_hours_sub'), color: '#8b5cf6'
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
     },
   ];
 
@@ -88,11 +64,7 @@ const Contact = () => {
             fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '.08em', marginBottom: '20px'
           }}>
-<<<<<<< HEAD
             <LuMessageSquare size={13} /> Get In Touch
-=======
-            <MessageSquare size={13} /> <span dir="auto">{t('contact_get_in_touch')}</span>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           </div>
           <h1 style={{
             fontSize: 'clamp(2rem, 4vw, 3rem)', fontWeight: 900, color: '#0f172a',
@@ -268,11 +240,7 @@ const Contact = () => {
                               boxShadow: '0 6px 20px rgba(255,92,26,0.3)', transition: 'all 0.2s'
                             }}
                           >
-<<<<<<< HEAD
                             <LuSend size={18} /> Send Message
-=======
-                            <Send size={18} /> <span dir="auto">{t('contact_btn_send')}</span>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                           </button>
                         </div>
                       </div>

@@ -17,7 +17,10 @@ import {
   LuRefreshCw,
   LuTrash2,
   LuChevronLeft,
-  LuChevronRight
+  LuChevronRight,
+  LuPhone,
+  LuMail,
+  LuStar
 } from 'react-icons/lu';
 import CustomMultiSelect from '../components/CustomMultiSelect';
 import AdminSidebar from '../components/AdminSidebar';
@@ -269,7 +272,6 @@ const GarageManagement = () => {
   };
 
   return (
-<<<<<<< HEAD
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
@@ -337,7 +339,7 @@ const GarageManagement = () => {
       <main className="dash-main">
         <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div className="dash-title">🏪 {t('manage_partner_garages')}</div>
+            <div className="dash-title d-flex align-items-center gap-2"><LuStore /> {t('manage_partner_garages')}</div>
             <div className="dash-subtitle">{t('register_configure_workshops')}</div>
           </div>
           <div className="d-flex align-items-center gap-3">
@@ -381,23 +383,6 @@ const GarageManagement = () => {
               + {t('add_new_garage')}
             </button>
           </div>
-=======
-    <div className="dash-wrapper">
-      <AdminSidebar />
-      <main className="dash-main w-100" style={{ padding: '2rem' }}>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <div>
-            <h2 className="fw-bold text-dark mb-1" style={{ fontSize: '1.8rem', letterSpacing: '-0.02em' }}>Partner Garages</h2>
-            <p className="text-muted mb-0">Manage registered service centers, ratings, and commissions.</p>
-          </div>
-          <button 
-            onClick={handleOpenAddModal}
-            className="btn btn-primary d-flex align-items-center gap-2 px-4 py-2"
-            style={{ borderRadius: '12px', fontWeight: 600, background: 'linear-gradient(135deg,#ff5c1a,#f97316)', border: 'none', boxShadow: '0 4px 12px rgba(255,92,26,0.3)' }}
-          >
-            <span style={{ fontSize: '1.2rem' }}>+</span> Register Garage
-          </button>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
         </div>
 
         {/* Stats */}
@@ -455,7 +440,7 @@ const GarageManagement = () => {
                   ) : garages.length === 0 ? (
                     <tr>
                       <td colSpan="7" className="text-center py-5">
-                        <div style={{ fontSize: '3rem' }}>🏬</div>
+                        <div style={{ fontSize: '3rem', color: '#ff5c1a' }}><LuStore /></div>
                         <div className="fw-bold text-dark fs-5 mt-2">No garages registered yet</div>
                         <p className="text-muted small mt-1">Get started by adding your first service garage workshop.</p>
                       </td>
@@ -469,8 +454,8 @@ const GarageManagement = () => {
                         </td>
                         <td>
                           <div className="fw-semibold text-dark">{g.contactPerson || 'N/A'}</div>
-                          <div className="text-muted small">📞 {g.phone}</div>
-                          <div className="text-muted small">✉️ {g.email || 'N/A'}</div>
+                           <div className="text-muted small d-flex align-items-center gap-1"><LuPhone size={12} /> {g.phone}</div>
+                           <div className="text-muted small d-flex align-items-center gap-1"><LuMail size={12} /> {g.email || 'N/A'}</div>
                         </td>
                         <td style={{ maxWidth: '200px' }}>
                           <span className="small text-muted d-block text-truncate" title={g.areas?.join(', ')}>
@@ -478,11 +463,11 @@ const GarageManagement = () => {
                           </span>
                         </td>
                         <td>
-                          <div className="d-flex align-items-center text-warning fw-bold">
-                            ⭐ {g.rating?.toFixed(1) || '0.0'}
-                          </div>
+                           <div className="d-flex align-items-center text-warning fw-bold gap-1">
+                             <LuStar size={14} /> {g.rating?.toFixed(1) || '0.0'}
+                           </div>
                         </td>
-                        <td className="fw-bold text-dark">{g.commissionPercent ?? 10}%</td>
+                        <td>{g.commissionPercent ?? 10}%</td>
                         <td>
                           <span className={`badge py-2 px-3 fs-8 ${g.status === 'active' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
                             {g.status === 'active' ? t('active').toUpperCase() : t('inactive').toUpperCase()}

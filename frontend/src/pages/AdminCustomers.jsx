@@ -9,7 +9,11 @@ import {
   LuGlobe,
   LuChevronLeft,
   LuChevronRight,
-  LuClipboardList
+  LuClipboardList,
+  LuMail,
+  LuPhone,
+  LuCar,
+  LuFileText
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -103,7 +107,6 @@ const AdminCustomers = () => {
   };
 
   return (
-<<<<<<< HEAD
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
@@ -174,8 +177,8 @@ const AdminCustomers = () => {
             <Link to="/admin" className="back" style={{ textDecoration: 'none', color: '#64748b', fontSize: '13.5px', display: 'inline-block', marginBottom: '4px' }}>
               ← {t('dashboard_back')}
             </Link>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: 0, letterSpacing: '-0.025em' }}>
-              👥 {lang === 'ar' ? 'دليل وسجل العملاء' : (lang === 'ur' ? 'کسٹمر ڈائریکٹری اور ہسٹری' : 'Customer Directory & History')}
+            <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: 0, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <LuUsers /> {lang === 'ar' ? 'دليل وسجل العملاء' : (lang === 'ur' ? 'کسٹمر ڈائریکٹری اور ہسٹری' : 'Customer Directory & History')}
             </h1>
           </div>
 
@@ -217,16 +220,6 @@ const AdminCustomers = () => {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px' }}>
-=======
-    <div className="dash-wrapper">
-      <AdminSidebar />
-      <main className="dash-main w-100" style={{ padding: '2rem' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px', letterSpacing: '-0.025em', color: '#0f172a' }}>
-          👥 Customer Directory &amp; History
-        </h1>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '30px' }}>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           
           {/* Left Column: Search & Customers list */}
           <div>
@@ -237,34 +230,20 @@ const AdminCustomers = () => {
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{
-<<<<<<< HEAD
                   width: '100%', padding: '12px 16px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '12px', color: '#1e293b', fontSize: '14px', outline: 'none'
-=======
-                  width: '100%', padding: '12px 16px', background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '12px', color: '#0f172a', fontSize: '14px', outline: 'none'
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                 }}
               />
             </div>
 
-<<<<<<< HEAD
             <h3 style={{ fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '16px', color: '#64748b' }}>
               {lang === 'ar' ? 'العملاء المسجلين' : (lang === 'ur' ? 'رجسٹرڈ کسٹمرز' : 'Registered Customers')} ({users.length})
-=======
-            <h3 style={{ fontSize: '16px', fontWeight: '700', marginBottom: '16px', color: '#64748b' }}>
-              Registered Customers ({users.length})
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
             </h3>
 
             {loading ? (
               <p style={{ color: '#64748b' }}>{t('loading')}</p>
             ) : users.length === 0 ? (
-<<<<<<< HEAD
               <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', textAlign: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
                 {lang === 'ar' ? 'لم يتم العثور على سجلات للعملاء.' : (lang === 'ur' ? 'کوئی کسٹمر ریکارڈ نہیں ملا۔' : 'No customer records found.')}
-=======
-              <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '32px', textAlign: 'center', color: '#64748b' }}>
-                No customer records found.
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '65vh', overflowY: 'auto' }}>
@@ -273,30 +252,18 @@ const AdminCustomers = () => {
                     key={u._id}
                     onClick={() => handleSelectUser(u)}
                     style={{
-<<<<<<< HEAD
                       background: selectedUser?._id === u._id ? '#fff4ef' : '#fff',
                       border: selectedUser?._id === u._id ? '1.5px solid #ff5c1a' : '1.5px solid #e2e8f0',
-=======
-                      background: selectedUser?._id === u._id ? 'rgba(249, 115, 22, 0.08)' : '#ffffff',
-                      border: selectedUser?._id === u._id ? '1.5px solid #f97316' : '1.5px solid #e2e8f0',
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                       borderRadius: '14px',
                       padding: '16px',
                       cursor: 'pointer',
                       transition: 'all 0.2s',
-<<<<<<< HEAD
                       color: '#1e293b'
                     }}
                   >
                     <h4 style={{ fontSize: '15px', fontWeight: '700', margin: '0 0 4px', color: selectedUser?._id === u._id ? '#ff5c1a' : '#1e293b' }}>{u.name}</h4>
-=======
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-                    }}
-                  >
-                    <h4 style={{ fontSize: '15px', fontWeight: '700', margin: '0 0 4px', color: '#0f172a' }}>{u.name}</h4>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
-                    <p style={{ color: '#64748b', fontSize: '12.5px', margin: '0 0 4px' }}>📧 {u.email}</p>
-                    <p style={{ color: '#64748b', fontSize: '12.5px', margin: 0 }}>📞 {u.phone}</p>
+                    <p style={{ color: '#64748b', fontSize: '12.5px', margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: '4px' }}><LuMail size={13} /> {u.email}</p>
+                    <p style={{ color: '#64748b', fontSize: '12.5px', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}><LuPhone size={13} /> {u.phone}</p>
                   </div>
                 ))}
               </div>
@@ -305,22 +272,12 @@ const AdminCustomers = () => {
 
           {/* Right Column: Customer Dossier */}
           <div style={{
-<<<<<<< HEAD
             background: '#fff',
             borderRadius: '20px',
             padding: '32px',
             border: '1px solid #e2e8f0',
             color: '#1e293b',
             alignSelf: 'start'
-=======
-            background: '#ffffff',
-            borderRadius: '20px',
-            padding: '32px',
-            border: '1.5px solid #e2e8f0',
-            alignSelf: 'start',
-            color: '#0f172a',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           }}>
             {selectedUser ? (
               <div>
@@ -328,11 +285,7 @@ const AdminCustomers = () => {
                   {selectedUser.name}
                 </h2>
                 <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
-<<<<<<< HEAD
                   {lang === 'ar' ? 'معرف العميل' : (lang === 'ur' ? 'کسٹمر آئی ڈی' : 'Customer ID')}: #{selectedUser._id} &nbsp;|&nbsp; {lang === 'ar' ? 'تاريخ الانضمام' : (lang === 'ur' ? 'شامل ہونے کی تاریخ' : 'Joined')}: {new Date(selectedUser.createdAt).toLocaleDateString()}
-=======
-                  Customer ID: #{selectedUser._id} &nbsp;|&nbsp; Joined: {new Date(selectedUser.createdAt).toLocaleDateString()}
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                 </p>
 
                 {detailsLoading ? (
@@ -341,8 +294,8 @@ const AdminCustomers = () => {
                   <div>
                     {/* Vehicles */}
                     <div style={{ marginBottom: '32px' }}>
-                      <h4 style={{ fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', color: '#ff5c1a', letterSpacing: '0.05em', marginBottom: '16px' }}>
-                        🚗 {lang === 'ar' ? 'المركبات المسجلة' : (lang === 'ur' ? 'رجسٹرڈ گاڑیاں' : 'Registered Vehicles')} ({userVehicles.length})
+                      <h4 style={{ fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', color: '#ff5c1a', letterSpacing: '0.05em', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <LuCar /> {lang === 'ar' ? 'المركبات المسجلة' : (lang === 'ur' ? 'رجسٹرڈ گاڑیاں' : 'Registered Vehicles')} ({userVehicles.length})
                       </h4>
                       {userVehicles.length === 0 ? (
                         <p style={{ color: '#64748b', fontSize: '13px' }}>{lang === 'ar' ? 'لا توجد مركبات مسجلة في هذا الملف الشخصي.' : (lang === 'ur' ? 'اس پروفائل کے تحت کوئی گاڑیاں رجسٹرڈ نہیں ہیں۔' : 'No vehicles registered under this profile.')}</p>
@@ -350,17 +303,10 @@ const AdminCustomers = () => {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
                           {userVehicles.map(v => (
                             <div key={v._id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-<<<<<<< HEAD
                               <strong style={{ fontSize: '14px', color: '#1e293b' }}>{v.make} {v.model}</strong>
                               <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '4px' }}>
                                 {lang === 'ar' ? 'السنة' : (lang === 'ur' ? 'سال' : 'Year')}: {v.year} <br />
                                 {lang === 'ar' ? 'اللوحة' : (lang === 'ur' ? 'پلیٹ نمبر' : 'Plate')}: {v.registrationNumber}
-=======
-                              <strong style={{ fontSize: '14px', color: '#0f172a' }}>{v.make} {v.model}</strong>
-                              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '4px' }}>
-                                Year: {v.year} <br />
-                                Plate: {v.registrationNumber}
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                               </div>
                             </div>
                           ))}
@@ -370,25 +316,18 @@ const AdminCustomers = () => {
 
                     {/* Request History */}
                     <div>
-                      <h4 style={{ fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', color: '#ff5c1a', letterSpacing: '0.05em', marginBottom: '16px' }}>
-                        📜 {lang === 'ar' ? 'سجل الطلبات والوظائف' : (lang === 'ur' ? 'درخواستوں اور جابز کا لاگ' : 'Service Request & Job Logs')} ({userRequests.length})
+                      <h4 style={{ fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', color: '#ff5c1a', letterSpacing: '0.05em', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <LuFileText /> {lang === 'ar' ? 'سجل الطلبات والوظائف' : (lang === 'ur' ? 'درخواستوں اور جابز کا لاگ' : 'Service Request & Job Logs')} ({userRequests.length})
                       </h4>
                       {userRequests.length === 0 ? (
                         <p style={{ color: '#64748b', fontSize: '13px' }}>{lang === 'ar' ? 'لا توجد طلبات مقدمة من هذا العميل.' : (lang === 'ur' ? 'اس گاہک کی طرف سے کوئی درخواست جمع نہیں کی گئی ہے۔' : 'No requests submitted by this customer.')}</p>
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                           {userRequests.map(r => (
-<<<<<<< HEAD
                             <div key={r._id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                               <div>
                                 <span style={{ fontSize: '11px', color: '#64748b' }}>#{r._id.slice(-6).toUpperCase()} — {new Date(r.createdAt).toLocaleDateString()}</span>
                                 <strong style={{ display: 'block', fontSize: '14px', marginTop: '2px', color: '#1e293b' }}>{(r.subCategory || r.serviceType)?.replace(/_/g, ' ').toUpperCase()}</strong>
-=======
-                            <div key={r._id} style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid #e2e8f0' }}>
-                              <div>
-                                <span style={{ fontSize: '11px', color: '#64748b' }}>#{r._id.slice(-6).toUpperCase()} — {new Date(r.createdAt).toLocaleDateString()}</span>
-                                <strong style={{ display: 'block', fontSize: '14px', marginTop: '2px', color: '#0f172a' }}>{(r.subCategory || r.serviceType)?.replace(/_/g, ' ').toUpperCase()}</strong>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                                 <span style={{ fontSize: '13px', color: '#475569' }}>{r.description}</span>
                               </div>
                               <span style={{
@@ -408,18 +347,13 @@ const AdminCustomers = () => {
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '120px 20px', color: '#64748b' }}>
-                <span style={{ fontSize: '56px', display: 'block', marginBottom: '16px' }}>👈</span>
+                <span style={{ fontSize: '48px', display: 'flex', justifyContent: 'center', marginBottom: '16px', color: '#ff5c1a' }}><LuUser /></span>
                 {lang === 'ar' ? 'اختر ملف تعريف العميل من اللوحة اليسرى لفحص ملفه ومركباته وسجلاته.' : (lang === 'ur' ? 'ان کی فائل، گاڑیوں اور لاگز کا معائنہ کرنے کے لیے بائیں پینل سے کسٹمر پروفائل منتخب کریں۔' : 'Select a customer profile from the left panel to inspect their dossier, vehicles, and logs.')}
               </div>
             )}
           </div>
 
-        </div>
-<<<<<<< HEAD
-
-=======
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
-      </main>
+        </div>      </main>
     </div>
   );
 };

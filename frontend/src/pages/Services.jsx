@@ -1,41 +1,24 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-<<<<<<< HEAD
   LuDroplets, LuSettings, LuWrench, LuPaintbrush, LuWind,
   LuCircle, LuBattery, LuSparkles, LuArrowRight, LuSearch, LuSlidersHorizontal
 } from 'react-icons/lu';
-
-const allServices = [
-  { name: 'Car Wash & Cleaning', icon: LuDroplets, color: '#3b82f6', price: 49, category: 'wash', desc: 'Premium exterior and interior cleaning services for a spotless finish.' },
-  { name: 'Regular Maintenance', icon: LuSettings, color: '#ff5c1a', price: 299, category: 'service', desc: 'Oil changes, filters, and full vehicle health checks by certified technicians.' },
-  { name: 'Mechanical Repairs', icon: LuWrench, color: '#8b5cf6', price: 150, category: 'repair', desc: 'Engine, suspension, brake repairs and comprehensive diagnostics.' },
-  { name: 'Painting & Denting', icon: LuPaintbrush, color: '#ec4899', price: 399, category: 'painting', desc: 'Scratch removal, panel beating, and full body painting services.' },
-  { name: 'A/C Service', icon: LuWind, color: '#06b6d4', price: 149, category: 'ac', desc: 'Gas top-up, cooling system repairs, and full A/C diagnostics.' },
-  { name: 'Tyre Services', icon: LuCircle, color: '#f59e0b', price: 99, category: 'tyre', desc: 'Wheel alignment, balancing, rotation, and new tyre fitting.' },
-  { name: 'Battery Change', icon: LuBattery, color: '#10b981', price: 250, category: 'battery', desc: 'On-site battery testing, jump-start, and same-day replacement.' },
-  { name: 'Car Detailing', icon: LuSparkles, color: '#ff5c1a', price: 499, category: 'detailing', desc: 'Ceramic coating, paint protection, and full interior detailing.' },
-];
-=======
-  Droplets, Settings, Wrench, Paintbrush, Wind,
-  Circle, Battery, Sparkles, ArrowRight, Search, SlidersHorizontal
-} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
 const Services = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const { t } = useLanguage();
 
   const allServices = [
-    { name: t('services_cat_wash'), icon: Droplets, color: '#3b82f6', price: 49, category: 'wash', desc: t('services_cat_wash_desc') },
-    { name: t('services_cat_maintenance'), icon: Settings, color: '#ff5c1a', price: 299, category: 'service', desc: t('services_cat_maintenance_desc') },
-    { name: t('services_cat_repair'), icon: Wrench, color: '#8b5cf6', price: 150, category: 'repair', desc: t('services_cat_repair_desc') },
-    { name: t('services_cat_painting'), icon: Paintbrush, color: '#ec4899', price: 399, category: 'painting', desc: t('services_cat_painting_desc') },
-    { name: t('services_cat_ac'), icon: Wind, color: '#06b6d4', price: 149, category: 'ac', desc: t('services_cat_ac_desc') },
-    { name: t('services_cat_tyre'), icon: Circle, color: '#f59e0b', price: 99, category: 'tyre', desc: t('services_cat_tyre_desc') },
-    { name: t('services_cat_battery'), icon: Battery, color: '#10b981', price: 250, category: 'battery', desc: t('services_cat_battery_desc') },
-    { name: t('services_cat_detailing'), icon: Sparkles, color: '#ff5c1a', price: 499, category: 'detailing', desc: t('services_cat_detailing_desc') },
+    { name: t('services_cat_wash'), icon: LuDroplets, color: '#3b82f6', price: 49, category: 'wash', desc: t('services_cat_wash_desc') },
+    { name: t('services_cat_maintenance'), icon: LuSettings, color: '#ff5c1a', price: 299, category: 'service', desc: t('services_cat_maintenance_desc') },
+    { name: t('services_cat_repair'), icon: LuWrench, color: '#8b5cf6', price: 150, category: 'repair', desc: t('services_cat_repair_desc') },
+    { name: t('services_cat_painting'), icon: LuPaintbrush, color: '#ec4899', price: 399, category: 'painting', desc: t('services_cat_painting_desc') },
+    { name: t('services_cat_ac'), icon: LuWind, color: '#06b6d4', price: 149, category: 'ac', desc: t('services_cat_ac_desc') },
+    { name: t('services_cat_tyre'), icon: LuCircle, color: '#f59e0b', price: 99, category: 'tyre', desc: t('services_cat_tyre_desc') },
+    { name: t('services_cat_battery'), icon: LuBattery, color: '#10b981', price: 250, category: 'battery', desc: t('services_cat_battery_desc') },
+    { name: t('services_cat_detailing'), icon: LuSparkles, color: '#ff5c1a', price: 499, category: 'detailing', desc: t('services_cat_detailing_desc') },
   ];
 
   const filtered = allServices.filter(s =>
@@ -60,11 +43,7 @@ const Services = () => {
             fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase',
             letterSpacing: '.08em', marginBottom: '20px'
           }}>
-<<<<<<< HEAD
             <LuSlidersHorizontal size={13} /> What We Offer
-=======
-            <SlidersHorizontal size={13} /> <span dir="auto">{t('services_what_we_offer')}</span>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           </div>
           <h1 style={{
             fontSize: 'clamp(2.2rem, 4.5vw, 3.2rem)', fontWeight: 900, color: '#0f172a',
@@ -102,13 +81,8 @@ const Services = () => {
         <div className="container">
           {filtered.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b', fontFamily: "'Poppins', sans-serif" }}>
-<<<<<<< HEAD
               <LuSearch size={40} style={{ marginBottom: '16px', opacity: 0.3 }} />
               <p style={{ fontSize: '15px' }}>No services found matching "<strong>{searchQuery}</strong>"</p>
-=======
-              <Search size={40} style={{ marginBottom: '16px', opacity: 0.3 }} />
-              <p dir="auto" style={{ fontSize: '15px' }}>{t('services_no_match')} "<strong>{searchQuery}</strong>"</p>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
               <button onClick={() => setSearchQuery('')} style={{ marginTop: '12px', background: '#ff5c1a', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Poppins', sans-serif" }}>
                 <span dir="auto">{t('services_clear_search')}</span>
               </button>
@@ -158,7 +132,6 @@ const Services = () => {
                       </div>
                       <Link to={`/service/${category}`} style={{
                         display: 'inline-flex', alignItems: 'center', gap: '6px',
-<<<<<<< HEAD
                         color, fontWeight: 700, fontSize: '13.5px',
                         textDecoration: 'none', fontFamily: "'Poppins', sans-serif",
                         transition: 'gap 0.2s'
@@ -168,19 +141,12 @@ const Services = () => {
                     >
                       View Details <LuArrowRight size={15} />
                     </Link>
-=======
-                        color: '#ff5c1a', fontWeight: 700, fontSize: '13.5px',
-                        textDecoration: 'none', fontFamily: "'Poppins', sans-serif"
-                      }}>
-                        <span dir="auto">{t('service_book_now')}</span> <ArrowRight size={16} />
-                      </Link>
-                    </div>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
+        )}
 
           {/* Bottom CTA */}
           <div style={{

@@ -9,7 +9,9 @@ import {
   LuGlobe,
   LuChevronLeft,
   LuChevronRight,
-  LuClipboardList
+  LuClipboardList,
+  LuWrench,
+  LuFileText
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -127,7 +129,6 @@ const AdminQuoteBuilder = () => {
   const total = parseFloat((subtotal + serviceFee + vat).toFixed(2));
 
   return (
-<<<<<<< HEAD
     <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
       {/* ── SIDEBAR ── */}
       <aside className="dash-sidebar">
@@ -144,14 +145,6 @@ const AdminQuoteBuilder = () => {
             <span className="link-text">{t('dashboard')}</span>
           </Link>
         </div>
-=======
-    <div className="dash-wrapper">
-      <AdminSidebar />
-      <main className="dash-main w-100" style={{ padding: '2rem' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px', letterSpacing: '-0.025em', color: '#0f172a' }}>
-          🛠_ Admin Quote Builder
-        </h1>
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
         <span className="sidebar-label">{t('operations')}</span>
         <div className="sidebar-section">
@@ -203,7 +196,6 @@ const AdminQuoteBuilder = () => {
       <main className="dash-main" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           
-<<<<<<< HEAD
           {/* Navigation */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <Link to="/admin" className="back" style={{ textDecoration: 'none', color: '#64748b', fontSize: '13.5px' }}>
@@ -237,109 +229,6 @@ const AdminQuoteBuilder = () => {
                         fontSize: '13px', fontWeight: lang === code ? 700 : 500,
                         cursor: 'pointer', display: 'flex', alignItems: 'center',
                         justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-=======
-          {/* Left: Pending Requests */}
-          <div>
-            <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px', color: '#0f172a' }}>
-              Pending Quote Actions
-            </h3>
-
-            {loading ? (
-              <p style={{ color: '#64748b' }}>Loading requests...</p>
-            ) : requests.length === 0 ? (
-              <div style={{ background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '16px', padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                No requests currently require quotes.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {requests.map(r => (
-                  <div
-                    key={r._id}
-                    onClick={() => {
-                      setSelectedReq(r);
-                      setSelectedGarageId(r.garageId?._id || r.garageId || '');
-                    }}
-                    style={{
-                      background: selectedReq?._id === r._id ? 'rgba(249, 115, 22, 0.08)' : '#ffffff',
-                      border: selectedReq?._id === r._id ? '1.5px solid #f97316' : '1.5px solid #e2e8f0',
-                      borderRadius: '16px',
-                      padding: '20px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontWeight: '700', fontSize: '14px', color: '#0f172a' }}>
-                        #{r._id.slice(-6).toUpperCase()}
-                      </span>
-                      <span style={{
-                        background: 'rgba(249, 115, 22, 0.1)', color: '#f97316', borderRadius: '6px', padding: '2px 6px', fontSize: '10px', fontWeight: '700'
-                      }}>
-                        {r.status.toUpperCase()}
-                      </span>
-                    </div>
-
-                    <p style={{ margin: '0 0 10px', fontSize: '14px', fontWeight: '600', color: '#475569' }}>
-                      {r.vehicleId ? `${r.vehicleId.make} ${r.vehicleId.model}` : 'Unknown Vehicle'}
-                    </p>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b' }}>
-                      <span>Client: {r.userId?.name || 'Customer'}</span>
-                      <span>{new Date(r.createdAt).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right: Build Form */}
-          <div style={{
-            background: '#ffffff',
-            borderRadius: '20px',
-            padding: '32px',
-            border: '1.5px solid #e2e8f0',
-            alignSelf: 'start',
-            color: '#0f172a',
-            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)'
-          }}>
-            {selectedReq ? (
-              <div>
-                <h3 style={{ fontSize: '22px', fontWeight: '800', marginBottom: '24px', color: '#0f172a' }}>
-                  Generate Quote for Request #{selectedReq._id.slice(-6).toUpperCase()}
-                </h3>
-
-                {/* Details grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '32px', borderBottom: '1.5px solid #e2e8f0', paddingBottom: '20px' }}>
-                  <div>
-                    <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Vehicle</h5>
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>
-                      {selectedReq.vehicleId ? `${selectedReq.vehicleId.make} ${selectedReq.vehicleId.model} (${selectedReq.vehicleId.year})` : 'N/A'}
-                    </p>
-                  </div>
-                  <div>
-                    <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>Customer</h5>
-                    <p style={{ margin: 0, fontSize: '14px', fontWeight: '600', color: '#0f172a' }}>
-                      {selectedReq.userId?.name || 'N/A'} ({selectedReq.userId?.phone || 'N/A'})
-                    </p>
-                  </div>
-                </div>
-
-                {/* Form */}
-                <form onSubmit={handleBuildQuote}>
-                  <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '13px', fontWeight: '600', color: '#475569' }}>
-                      Assign Partner Garage
-                    </label>
-                    <select
-                      value={selectedGarageId}
-                      onChange={(e) => setSelectedGarageId(e.target.value)}
-                      style={{
-                        width: '100%', padding: '12px 16px', borderRadius: '10px',
-                        background: '#ffffff', border: '1.5px solid #e2e8f0', color: '#0f172a',
-                        fontSize: '14px', outline: 'none'
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                       }}
                     >
                       <span>{label}</span>
@@ -350,8 +239,8 @@ const AdminQuoteBuilder = () => {
             </div>
           </div>
 
-          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px', color: '#1e293b', letterSpacing: '-0.025em' }}>
-            🛠️ {lang === 'ar' ? 'منشئ عروض الأسعار' : (lang === 'ur' ? 'ایڈمن کوٹ بلڈر' : 'Admin Quote Builder')}
+          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px', color: '#1e293b', letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <LuWrench /> {lang === 'ar' ? 'منشئ عروض الأسعار' : (lang === 'ur' ? 'ایڈمن کوٹ بلڈر' : 'Admin Quote Builder')}
           </h1>
 
           <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px' }}>
@@ -430,7 +319,6 @@ const AdminQuoteBuilder = () => {
                   {/* Details grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '32px', borderBottom: '1px solid #e2e8f0', paddingBottom: '20px' }}>
                     <div>
-<<<<<<< HEAD
                       <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>{lang === 'ar' ? 'المركبة' : (lang === 'ur' ? 'گاڑی' : 'Vehicle')}</h5>
                       <p style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>
                         {selectedReq.vehicleId ? `${selectedReq.vehicleId.make} ${selectedReq.vehicleId.model} (${selectedReq.vehicleId.year})` : 'N/A'}
@@ -449,36 +337,13 @@ const AdminQuoteBuilder = () => {
                     <div style={{ marginBottom: '20px' }}>
                       <label style={{ display: 'block', fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
                         {lang === 'ar' ? 'تعيين كراج شريك' : (lang === 'ur' ? 'پارٹنر گیراج تفویض کریں' : 'Assign Partner Garage')}
-=======
-                      <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px', fontWeight: '600' }}>
-                        Spare Parts Cost (AED)
-                      </label>
-                      <input
-                        type="number"
-                        value={partsCost}
-                        onChange={(e) => setPartsCost(e.target.value)}
-                        required
-                        placeholder="0.00"
-                        style={{
-                          width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '10px', color: '#0f172a'
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <label style={{ display: 'block', fontSize: '13px', color: '#475569', marginBottom: '8px', fontWeight: '600' }}>
-                        Labor / Repair Fee (AED)
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                       </label>
                       <select
                         value={selectedGarageId}
                         onChange={(e) => setSelectedGarageId(e.target.value)}
                         required
                         style={{
-<<<<<<< HEAD
                           width: '100%', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '10px', color: '#1e293b'
-=======
-                          width: '100%', padding: '12px', background: '#ffffff', border: '1.5px solid #e2e8f0', borderRadius: '10px', color: '#0f172a'
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
                         }}
                       >
                         <option value="">-- {lang === 'ar' ? 'اختر كراج شريك' : (lang === 'ur' ? 'پارٹنر گیراج منتخب کریں' : 'Choose Partner Garage')} --</option>
@@ -488,7 +353,6 @@ const AdminQuoteBuilder = () => {
                       </select>
                     </div>
 
-<<<<<<< HEAD
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
@@ -567,64 +431,12 @@ const AdminQuoteBuilder = () => {
                 </div>
               ) : (
                 <div style={{ textAlign: 'center', padding: '100px 20px', color: '#64748b' }}>
-                  <span style={{ fontSize: '56px', display: 'block', marginBottom: '16px' }}>👈</span>
+                  <span style={{ fontSize: '48px', display: 'flex', justifyContent: 'center', marginBottom: '16px', color: '#ff5c1a' }}><LuFileText /></span>
                   {lang === 'ar' ? 'اختر طلب عرض سعر معلق من اللوحة اليسرى لتكوين ورقة الفوترة الخاصة به.' : (lang === 'ur' ? 'اس کی بلنگ کوٹ شیٹ کو ترتیب دینے کے لیے بائیں پینل سے ایک معلق کوٹیشن درخواست منتخب کریں۔' : 'Select a pending quote request from the left panel to configure its billing quote sheet.')}
                 </div>
               )}
             </div>
 
-=======
-                  {/* Pricing Sheet Preview */}
-                  <div style={{ background: '#f8fafc', borderRadius: '16px', padding: '24px', border: '1.5px solid #e2e8f0' }}>
-                    <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#64748b', marginBottom: '14px' }}>
-                      Tax Invoice breakdown preview
-                    </h4>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '14px', color: '#64748b' }}>
-                      <span>Subtotal Parts + Labor</span>
-                      <span>AED {subtotal.toFixed(2)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '14px', color: '#64748b' }}>
-                      <span>Platform Service Fee (10%)</span>
-                      <span>AED {serviceFee.toFixed(2)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '14px', color: '#64748b', borderBottom: '1px dashed #cbd5e1', paddingBottom: '10px' }}>
-                      <span>VAT (5%)</span>
-                      <span>AED {vat.toFixed(2)}</span>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 0', fontSize: '18px', fontWeight: '800', color: '#0f172a' }}>
-                      <span>Total Customer Due</span>
-                      <span style={{ color: '#10b981' }}>AED {total.toFixed(2)}</span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    style={{
-                      marginTop: '20px',
-                      width: '100%',
-                      padding: '14px',
-                      background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                      border: 'none',
-                      borderRadius: '12px',
-                      color: 'white',
-                      fontSize: '15px',
-                      fontWeight: '700',
-                      cursor: submitting ? 'not-allowed' : 'pointer',
-                      opacity: submitting ? 0.7 : 1
-                    }}
-                  >
-                    {submitting ? 'Generating...' : 'Approve & Send Quote to Customer'}
-                  </button>
-                </form>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '100px 20px', color: '#64748b' }}>
-                <span style={{ fontSize: '56px', display: 'block', marginBottom: '16px' }}>👈</span>
-                Select a pending quote request from the left panel to configure its billing quote sheet.
-              </div>
-            )}
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
           </div>
 
         </div>

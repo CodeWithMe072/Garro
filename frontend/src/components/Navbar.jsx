@@ -153,7 +153,7 @@ const Navbar = () => {
               {['staff', 'manager', 'superadmin'].includes(user?.role) && (
                 <li>
                   <Link to={user?.role === 'staff' ? '/admin/staff' : '/admin'} className={location.pathname.includes('admin') ? 'active' : ''}>
-                    <Zap size={15} /> <span dir="auto">{t('dashboard')}</span>
+                    <LuZap size={15} /> <span dir="auto">{t('dashboard')}</span>
                   </Link>
                 </li>
               )}

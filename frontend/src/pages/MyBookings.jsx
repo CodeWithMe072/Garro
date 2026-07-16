@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
-<<<<<<< HEAD
+import AdminSidebar from '../components/AdminSidebar';
 import {
   LuClipboardList,
   LuTriangleAlert,
@@ -16,9 +16,6 @@ import {
   LuStore,
   LuCreditCard
 } from 'react-icons/lu';
-=======
-import AdminSidebar from '../components/AdminSidebar';
->>>>>>> f8e32b9393b7ad02ab508e5def03cb46614f49e1
 
   const MyBookings = () => {
   const { user } = useAuth();
