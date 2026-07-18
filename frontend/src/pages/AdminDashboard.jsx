@@ -21,10 +21,12 @@ import {
   LuHourglass,
   LuStar,
   LuMessageSquare,
+  LuMessageCircle,
   LuClock,
   LuCalendarDays,
   LuChevronLeft,
-  LuChevronRight
+  LuChevronRight,
+  LuTrendingUp
 } from 'react-icons/lu';
 
 const AdminDashboard = () => {
@@ -137,6 +139,10 @@ const AdminDashboard = () => {
   const [revenueHistory, setRevenueHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarRequests, setCalendarRequests] = useState([]);
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState(null);
+
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [garagesList, setGaragesList] = useState([]);
   const [availableHelpersList, setAvailableHelpersList] = useState([]);
@@ -224,6 +230,11 @@ const AdminDashboard = () => {
       });
       const revData = await revRes.json();
 
+      const calRes = await fetch(`${API_BASE}/api/requests?limit=100`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const calData = await calRes.json();
+
       if (statsRes.ok && statsData.success) {
         setDashboardStats(statsData);
       }
@@ -240,6 +251,9 @@ const AdminDashboard = () => {
       }
       if (revRes.ok && revData.success) {
         setRevenueHistory(revData.revenue || []);
+      }
+      if (calRes.ok && calData.success) {
+        setCalendarRequests(calData.requests || []);
       }
     } catch (err) {
       console.error('Failed to fetch admin data:', err);
@@ -469,6 +483,33 @@ const AdminDashboard = () => {
     };
   }, [dashboardStats, revenueHistory]);
 
+  // Calendar helper calculations
+  const getDaysInMonth = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDayIndex = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    
+    const days = [];
+    for (let i = 0; i < firstDayIndex; i++) {
+      days.push({ day: null, dateStr: null });
+    }
+    for (let d = 1; d <= totalDays; d++) {
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      days.push({ day: d, dateStr });
+    }
+    return days;
+  };
+
+  const getDayRequests = (dateStr) => {
+    if (!dateStr) return [];
+    return calendarRequests.filter(req => {
+      if (!req.preferredDate) return false;
+      const reqDateStr = new Date(req.preferredDate).toISOString().split('T')[0];
+      return reqDateStr === dateStr;
+    });
+  };
+
   // Mock static layout counts combined with backend counts
   const stats = {
     total_garages: garagesCount,
@@ -528,6 +569,14 @@ const AdminDashboard = () => {
           <Link to="/admin/complaints" className="sidebar-link">
             <span className="icon"><LuTriangleAlert /></span>
             <span className="link-text">{t('complaints')}</span>
+          </Link>
+          <Link to="/admin/support" className="sidebar-link">
+            <span className="icon"><LuMessageCircle /></span>
+            <span className="link-text">{t('support')}</span>
+          </Link>
+          <Link to="/admin/reports" className="sidebar-link">
+            <span className="icon"><LuTrendingUp /></span>
+            <span className="link-text">Reports & Analytics</span>
           </Link>
           <Link to="/admin/settings" className="sidebar-link">
             <span className="icon"><LuSettings /></span>
@@ -740,6 +789,104 @@ const AdminDashboard = () => {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Calendar Widget Card */}
+          <div className="data-card" style={{ background: '#ffffff', color: '#0f172a' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #f8fafc' }}>
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><LuCalendarDays /> Schedule Calendar</h4>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}><LuChevronLeft size={18} /></button>
+                <span className="fw-bold" style={{ fontSize: '13px', minWidth: '95px', textAlign: 'center', color: '#1e293b' }}>
+                  {calendarDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                </span>
+                <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}><LuChevronRight size={18} /></button>
+              </div>
+            </div>
+
+            <div style={{ padding: '20px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px' }}>
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((h, i) => <div key={i}>{h}</div>)}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                {getDaysInMonth(calendarDate).map((d, index) => {
+                  const reqs = getDayRequests(d.dateStr);
+                  const hasBooking = reqs.length > 0;
+                  const isSelected = selectedCalendarDay === d.dateStr;
+                  const isToday = d.dateStr === new Date().toISOString().split('T')[0];
+
+                  return (
+                    <div
+                      key={index}
+                      onClick={() => d.day && setSelectedCalendarDay(d.dateStr)}
+                      style={{
+                        height: '34px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '8px',
+                        cursor: d.day ? 'pointer' : 'default',
+                        position: 'relative',
+                        fontSize: '12px',
+                        fontWeight: isToday || isSelected ? 'bold' : 'normal',
+                        background: isSelected ? '#ff5c1a' : isToday ? '#eff6ff' : 'none',
+                        color: isSelected ? 'white' : isToday ? '#ff5c1a' : '#475569',
+                        border: isToday && !isSelected ? '1px solid #ff5c1a' : 'none',
+                        opacity: d.day ? 1 : 0
+                      }}
+                    >
+                      {d.day}
+                      {hasBooking && !isSelected && (
+                        <span style={{
+                          position: 'absolute',
+                          bottom: '3px',
+                          width: '4px',
+                          height: '4px',
+                          borderRadius: '50%',
+                          background: reqs.some(r => r.urgency === 'asap') ? '#ef4444' : '#10b981'
+                        }}></span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {selectedCalendarDay && (
+              <div style={{ padding: '0 20px 20px', borderTop: '1px solid #f8fafc', paddingTop: '15px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <span className="fw-bold text-slate-700" style={{ fontSize: '12px' }}>
+                    Schedule: {new Date(selectedCalendarDay).toLocaleDateString('en-AE', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  <button onClick={() => setSelectedCalendarDay(null)} className="btn p-0 text-secondary" style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '11px' }}>Clear</button>
+                </div>
+                {getDayRequests(selectedCalendarDay).length === 0 ? (
+                  <p className="text-muted small mb-0">No pickups or deliveries scheduled.</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {getDayRequests(selectedCalendarDay).map(req => {
+                      const time = new Date(req.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      return (
+                        <div key={req._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                          <div>
+                            <div className="fw-semibold text-slate-800" style={{ fontSize: '12px' }}>
+                              {req.vehicleId ? `${req.vehicleId.make} ${req.vehicleId.model}` : 'Vehicle'}
+                            </div>
+                            <div className="text-secondary" style={{ fontSize: '11px' }}>
+                              User: {req.userId?.name || 'User'} | Time: {time}
+                            </div>
+                          </div>
+                          <span className={`sbadge ${req.status}`} style={{ fontSize: '10px' }}>
+                            {req.status.replace(/_/g, ' ')}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

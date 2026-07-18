@@ -8,7 +8,8 @@ import {
   verifyOtp,
   updateProfile,
   requestPasswordChange,
-  verifyPasswordChange
+  verifyPasswordChange,
+  refresh
 } from '../controllers/auth.controller.js';
 import auth from '../middleware/auth.middleware.js';
 import { checkIpBlock } from '../middleware/ipBlock.middleware.js';
@@ -31,6 +32,7 @@ router.post('/login',      login);
 router.post('/logout',     auth, logout);
 router.post('/send-otp',   checkIpBlock, sendOtp);
 router.post('/verify-otp', checkIpBlock, verifyOtp);
+router.post('/refresh',    refresh);
 
 // Profile and Password endpoints (secured with auth middleware)
 router.put('/profile',                  auth, updateProfile);

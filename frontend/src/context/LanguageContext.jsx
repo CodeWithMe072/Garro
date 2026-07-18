@@ -673,7 +673,7 @@ export const LanguageProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem('lang', lang);
-    document.documentElement.dir = 'ltr'; // Always use LTR structural layout
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = lang;
   }, [lang]);
 

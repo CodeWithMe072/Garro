@@ -5,11 +5,20 @@ import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import CustomDropdown from '../components/CustomDropdown';
 
+const HIDDEN_ROLES   = ['helper', 'garage', 'staff'];
+const READONLY_ROLES = ['admin', 'superadmin', 'manager'];
+
 const GetQuote = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useNotification();
   const { t } = useLanguage();
+
+  const userRole   = user?.role || null;
+  const isHidden   = HIDDEN_ROLES.includes(userRole);
+  const isReadOnly = READONLY_ROLES.includes(userRole);
+  const isGuest    = !userRole;
+  const canSubmit  = userRole === 'customer';
 
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
@@ -76,6 +85,13 @@ const GetQuote = () => {
 
   const handleQuoteSubmit = async (e) => {
     e.preventDefault();
+
+    // Role guard — only customers may submit
+    if (isHidden) return;
+    if (isReadOnly) {
+      toast.warning('Admin accounts cannot place quote requests.');
+      return;
+    }
     if (!isAuthenticated) {
       toast.info("Please sign in or register first to submit a quote request.");
       navigate('/login');
@@ -211,6 +227,19 @@ const GetQuote = () => {
     }
   };
 
+  /* ── helper / garage / staff: hide entirely ── */
+  if (isHidden) {
+    return (
+      <div style={{ background: '#0f172a', minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', color: '#94a3b8', padding: '48px 24px' }}>
+          <span className="material-icons-round" style={{ fontSize: '56px', color: '#334155', display: 'block', marginBottom: '16px' }}>block</span>
+          <p style={{ fontWeight: 600, fontSize: '18px', color: '#64748b', margin: '0 0 8px' }}>Not available for your account type</p>
+          <p style={{ fontSize: '14px', color: '#475569', margin: 0 }}>Quote requests can only be placed by customers.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ background: '#0f172a', minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', alignItems: 'center', marginBottom: '-80px', paddingBottom: '80px' }}>
       <section className="quote-section" style={{ width: '100%', padding: '60px 0' }}>
@@ -335,8 +364,26 @@ const GetQuote = () => {
                   required
                 />
               </div>
-              <div className="col-md-2 d-flex align-items-end">
-                <button type="submit" className="btn-quote-submit" style={{ width: '100%', height: '44px' }}>{t('get_a_quote')}</button>
+              <div className="col-md-2 d-flex align-items-end flex-column justify-content-end" style={{ gap: '6px' }}>
+                {isGuest && (
+                  <p style={{ margin: 0, fontSize: '11px', color: '#93c5fd', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                    Log in as a customer to submit
+                  </p>
+                )}
+                {isReadOnly && (
+                  <p style={{ margin: 0, fontSize: '11px', color: '#fb923c', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                    Admin accounts cannot place requests
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  className="btn-quote-submit"
+                  disabled={!canSubmit}
+                  title={isGuest ? 'Log in as a customer to submit' : !canSubmit ? 'Your account type cannot place quote requests' : ''}
+                  style={{ width: '100%', height: '44px', ...(!canSubmit ? { opacity: 0.45, cursor: 'not-allowed', filter: 'grayscale(40%)', pointerEvents: 'none' } : {}) }}
+                >
+                  {t('get_a_quote')}
+                </button>
               </div>
             </div>
           </form>

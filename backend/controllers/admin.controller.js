@@ -594,3 +594,301 @@ export const exportGarageReport = async (req, res) => {
     error(res, err.message, 500);
   }
 };
+
+// POST /api/admin/reports/email
+export const emailReport = async (req, res) => {
+  try {
+    const { type, format, months, recipientEmail } = req.body;
+    if (!recipientEmail) {
+      return error(res, 'Recipient email is required.', 400);
+    }
+
+    const monthsParsed = parseInt(months) || 6;
+    const from = new Date();
+    from.setMonth(from.getMonth() - monthsParsed);
+
+    let buffer;
+    let filename = '';
+    let contentType = '';
+
+    const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    if (type === 'revenue') {
+      const revenue = await Invoice.aggregate([
+        { $match: { status: 'paid', createdAt: { $gte: from } } },
+        { $group: {
+            _id:   { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } },
+            total: { $sum: '$totalAmount' },
+            count: { $sum: 1 }
+        }},
+        { $sort: { '_id.year': 1, '_id.month': 1 } }
+      ]);
+
+      if (format === 'xlsx') {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Revenue Report');
+
+        worksheet.columns = [
+          { header: 'Year', key: 'year', width: 10 },
+          { header: 'Month', key: 'month', width: 20 },
+          { header: 'Invoices Count', key: 'count', width: 15 },
+          { header: 'Total Revenue (AED)', key: 'total', width: 25 }
+        ];
+
+        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+        worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '185FA5' } };
+
+        let grandTotal = 0;
+        let totalCount = 0;
+
+        revenue.forEach(item => {
+          grandTotal += item.total;
+          totalCount += item.count;
+          worksheet.addRow({
+            year: item._id.year,
+            month: monthNames[item._id.month],
+            count: item.count,
+            total: item.total
+          });
+        });
+
+        const totalRow = worksheet.addRow({
+          year: 'Total',
+          month: '',
+          count: totalCount,
+          total: grandTotal
+        });
+        totalRow.font = { bold: true };
+        
+        worksheet.getColumn('total').numFmt = 'AED #,##0.00';
+        worksheet.getColumn('count').alignment = { horizontal: 'right' };
+
+        buffer = await workbook.xlsx.writeBuffer();
+        filename = `revenue_report_${monthsParsed}_months.xlsx`;
+        contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      } else {
+        // PDF format
+        let totalRevenue = 0;
+        let totalInvoices = 0;
+        let tableRows = '';
+
+        revenue.forEach(item => {
+          totalRevenue += item.total;
+          totalInvoices += item.count;
+          tableRows += `
+            <tr>
+              <td>${item._id.year}</td>
+              <td>${monthNames[item._id.month]}</td>
+              <td style="text-align: right;">${item.count}</td>
+              <td style="text-align: right; font-weight: bold; color: #185FA5;">AED ${item.total.toFixed(2)}</td>
+            </tr>
+          `;
+        });
+
+        const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; color: #1a1a2e; padding: 40px; }
+              .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #185FA5; padding-bottom: 20px; }
+              .logo { font-size: 28px; font-weight: bold; color: #185FA5; }
+              h2 { color: #185FA5; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th { background: #185FA5; color: white; padding: 12px; text-align: left; }
+              td { padding: 12px; border-bottom: 1px solid #eee; }
+              .total-row { font-weight: bold; font-size: 16px; background: #f0f7ff; }
+              .footer { margin-top: 40px; font-size: 12px; color: #888; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <div class="logo">GARRO</div>
+                <div style="font-size: 12px; color: #888; margin-top: 4px;">UAE Car Service Marketplace</div>
+              </div>
+              <div style="text-align: right;">
+                <h2>Revenue Performance Report</h2>
+                <div style="font-size: 13px; color: #555;">Financial Analytics</div>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th>Month</th>
+                  <th style="text-align: right;">Invoices Count</th>
+                  <th style="text-align: right;">Total Revenue</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+                <tr class="total-row">
+                  <td>Total</td>
+                  <td></td>
+                  <td style="text-align: right;">${totalInvoices}</td>
+                  <td style="text-align: right; color: #185FA5;">AED ${totalRevenue.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="footer">
+              Garro Car Services UAE | Generated on ${new Date().toLocaleDateString('en-AE')}
+            </div>
+          </body>
+          </html>
+        `;
+
+        buffer = await generatePDF(html);
+        filename = `revenue_report_${monthsParsed}_months.pdf`;
+        contentType = 'application/pdf';
+      }
+    } else if (type === 'garage') {
+      const report = await Job.aggregate([
+        { $group: {
+            _id:          '$garageId',
+            totalJobs:    { $sum: 1 },
+            completedJobs:{ $sum: { $cond: [{ $eq: ['$status', 'closed'] }, 1, 0] } },
+            avgDuration:  { $avg: { $subtract: ['$actualEndDate', '$startDate'] } }
+        }},
+        { $lookup: { from: 'garages', localField: '_id', foreignField: '_id', as: 'garage' } },
+        { $unwind: '$garage' },
+        { $project: { garageName: '$garage.name', totalJobs: 1, completedJobs: 1, avgDuration: 1, rating: '$garage.rating' } },
+        { $sort: { completedJobs: -1 } }
+      ]);
+
+      if (format === 'xlsx') {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet('Garage Report');
+
+        worksheet.columns = [
+          { header: 'Garage Name', key: 'garageName', width: 25 },
+          { header: 'Total Jobs', key: 'totalJobs', width: 15 },
+          { header: 'Completed Jobs', key: 'completedJobs', width: 15 },
+          { header: 'Avg Duration (Hours)', key: 'avgDuration', width: 20 },
+          { header: 'Rating', key: 'rating', width: 15 }
+        ];
+
+        worksheet.getRow(1).font = { bold: true, color: { argb: 'FFFFFF' } };
+        worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '185FA5' } };
+
+        report.forEach(item => {
+          const durationHours = item.avgDuration ? (item.avgDuration / (1000 * 60 * 60)).toFixed(1) : 'N/A';
+          worksheet.addRow({
+            garageName: item.garageName,
+            totalJobs: item.totalJobs,
+            completedJobs: item.completedJobs,
+            avgDuration: durationHours,
+            rating: item.rating ? item.rating.toFixed(1) : '0.0'
+          });
+        });
+
+        buffer = await workbook.xlsx.writeBuffer();
+        filename = `garage_report.xlsx`;
+        contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      } else {
+        // PDF format
+        let tableRows = '';
+        report.forEach(item => {
+          const durationHours = item.avgDuration ? (item.avgDuration / (1000 * 60 * 60)).toFixed(1) : 'N/A';
+          tableRows += `
+            <tr>
+              <td style="font-weight: bold;">${item.garageName}</td>
+              <td style="text-align: right;">${item.totalJobs}</td>
+              <td style="text-align: right;">${item.completedJobs}</td>
+              <td style="text-align: right;">${durationHours}</td>
+              <td style="text-align: right; font-weight: bold; color: #e74c3c;">★ ${item.rating ? item.rating.toFixed(1) : '0.0'}</td>
+            </tr>
+          `;
+        });
+
+        const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; color: #1a1a2e; padding: 40px; }
+              .header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #185FA5; padding-bottom: 20px; }
+              .logo { font-size: 28px; font-weight: bold; color: #185FA5; }
+              h2 { color: #185FA5; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th { background: #185FA5; color: white; padding: 12px; text-align: left; }
+              td { padding: 12px; border-bottom: 1px solid #eee; }
+              .footer { margin-top: 40px; font-size: 12px; color: #888; text-align: center; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <div>
+                <div class="logo">GARRO</div>
+                <div style="font-size: 12px; color: #888; margin-top: 4px;">UAE Car Service Marketplace</div>
+              </div>
+              <div style="text-align: right;">
+                <h2>Garage Performance Report</h2>
+                <div style="font-size: 13px; color: #555;">Performance Analytics</div>
+              </div>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Garage Name</th>
+                  <th style="text-align: right;">Total Jobs</th>
+                  <th style="text-align: right;">Completed Jobs</th>
+                  <th style="text-align: right;">Avg Duration</th>
+                  <th style="text-align: right;">Rating</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+            <div class="footer">
+              Garro Car Services UAE | Generated on ${new Date().toLocaleDateString('en-AE')}
+            </div>
+          </body>
+          </html>
+        `;
+
+        buffer = await generatePDF(html);
+        filename = `garage_report.pdf`;
+        contentType = 'application/pdf';
+      }
+    } else {
+      return error(res, 'Invalid report type.', 400);
+    }
+
+    // Send email using Resend
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      console.log(`[Demo Report Email] Would send report ${filename} to ${recipientEmail}`);
+      return success(res, { message: `Demo: Report generated and would email to ${recipientEmail} (No API key)` });
+    }
+
+    const { Resend } = await import('resend');
+    const resend = new Resend(resendApiKey);
+
+    await resend.emails.send({
+      from: 'Garro Reports <official@backcrafter.shop>',
+      to: recipientEmail,
+      subject: `Garro — ${type.toUpperCase()} Report (${format.toUpperCase()})`,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; color: #334155;">
+          <h2 style="color: #1e3a8a;">Garro Admin Report Dispatch</h2>
+          <p>Hello,</p>
+          <p>Please find the requested <strong>${type}</strong> report attached as a <strong>${format.toUpperCase()}</strong> file.</p>
+          <p>Thank you,</p>
+          <p>Garro System Automations</p>
+        </div>
+      `,
+      attachments: [
+        {
+          content: buffer.toString('base64'),
+          filename
+        }
+      ]
+    });
+
+    success(res, { message: `Report successfully emailed to ${recipientEmail}` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};

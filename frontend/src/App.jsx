@@ -6,6 +6,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
+import SupportChatWidget from './components/SupportChatWidget';
 
 // Lazy load pages
 const Landing = React.lazy(() => import('./pages/Landing'));
@@ -54,6 +55,9 @@ const AdminQuoteBuilder = React.lazy(() => import('./pages/AdminQuoteBuilder'));
 const AdminCustomers = React.lazy(() => import('./pages/AdminCustomers'));
 const AdminComplaints = React.lazy(() => import('./pages/AdminComplaints'));
 const AdminSettings = React.lazy(() => import('./pages/AdminSettings'));
+const AdminReports = React.lazy(() => import('./pages/AdminReports'));
+const AdminSupportChat = React.lazy(() => import('./pages/AdminSupportChat'));
+const CustomerDashboard = React.lazy(() => import('./pages/CustomerDashboard'));
 
 // Wrapper for pages with Navbar and Footer
 const PageLayout = ({ children }) => (
@@ -67,12 +71,22 @@ const PageLayout = ({ children }) => (
 // Role-based redirect for "/dashboard" links/notifications
 const DashboardRedirect = () => {
   const { user } = useAuth();
-  if (user?.role === 'manager' || user?.role === 'superadmin') {
+  if (user?.role === 'manager' || user?.role === 'superadmin' || user?.role === 'admin') {
     return <Navigate to="/admin" replace />;
   } else if (user?.role === 'staff') {
     return <Navigate to="/admin/staff" replace />;
+  } else if (user?.role === 'customer') {
+    return <Navigate to="/customer/dashboard" replace />;
   }
   return <Navigate to="/home" replace />;
+};
+
+const CustomerSupportChatWrapper = () => {
+  const { isAuthenticated, user } = useAuth();
+  if (isAuthenticated && user?.role === 'customer') {
+    return <SupportChatWidget />;
+  }
+  return null;
 };
 
 const App = () => {
@@ -81,8 +95,9 @@ const App = () => {
       <NotificationProvider>
         <AuthProvider>
         <Router>
-        <Suspense fallback={<div className="container mt-5"><h4>Loading...</h4></div>}>
-          <Routes>
+          <CustomerSupportChatWrapper />
+          <Suspense fallback={<div className="container mt-5"><h4>Loading...</h4></div>}>
+            <Routes>
             {/* Standalone Route without Navbar/Footer */}
             <Route path="/" element={<Landing />} />
 
@@ -96,6 +111,7 @@ const App = () => {
 
             {/* Authenticated Routes with Layout */}
             <Route path="/home" element={<ProtectedRoute><PageLayout><Home /></PageLayout></ProtectedRoute>} />
+            <Route path="/customer/dashboard" element={<ProtectedRoute><PageLayout><CustomerDashboard /></PageLayout></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
             <Route path="/get-quote" element={<ProtectedRoute><PageLayout><GetQuote /></PageLayout></ProtectedRoute>} />
             <Route path="/request-submitted/:id" element={<ProtectedRoute><PageLayout><RequestSubmitted /></PageLayout></ProtectedRoute>} />
@@ -163,9 +179,19 @@ const App = () => {
                 <PageLayout><AdminComplaints /></PageLayout>
               </ProtectedRoute>
             } />
+            <Route path="/admin/support" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin', 'staff']}>
+                <PageLayout><AdminSupportChat /></PageLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/admin/settings" element={
               <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <AdminSettings />
+                <PageLayout><AdminSettings /></PageLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/reports" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <PageLayout><AdminReports /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/quote-builder" element={

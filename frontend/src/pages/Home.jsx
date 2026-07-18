@@ -5,11 +5,20 @@ import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import CustomDropdown from '../components/CustomDropdown';
 
+const HIDDEN_ROLES   = ['helper', 'garage', 'staff'];
+const READONLY_ROLES = ['admin', 'superadmin', 'manager'];
+
 const Home = () => {
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useNotification();
   const { t } = useLanguage();
+
+  const userRole   = user?.role || null;
+  const isHidden   = HIDDEN_ROLES.includes(userRole);
+  const isReadOnly = READONLY_ROLES.includes(userRole);
+  const isGuest    = !userRole;
+  const canSubmit  = userRole === 'customer';
 
   const [category, setCategory] = useState('');
   const [subCategory, setSubCategory] = useState('');
@@ -76,6 +85,13 @@ const Home = () => {
 
   const handleQuoteSubmit = async (e) => {
     e.preventDefault();
+
+    // Role guard — only customers may submit
+    if (isHidden) return;
+    if (isReadOnly) {
+      toast.warning('Admin accounts cannot place quote requests.');
+      return;
+    }
     if (!isAuthenticated) {
       toast.info("Please sign in or register first to submit a quote request.");
       navigate('/login');
@@ -350,8 +366,26 @@ const Home = () => {
                   required
                 />
               </div>
-              <div className="col-md-2 d-flex align-items-end">
-                <button type="submit" className="btn-quote-submit">{t('get_a_quote')}</button>
+              <div className="col-md-2 d-flex align-items-end flex-column justify-content-end" style={{ gap: '6px' }}>
+                {isGuest && (
+                  <p style={{ margin: 0, fontSize: '11px', color: '#93c5fd', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                    Log in as a customer to submit
+                  </p>
+                )}
+                {isReadOnly && (
+                  <p style={{ margin: 0, fontSize: '11px', color: '#fb923c', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                    Admin accounts cannot place requests
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  className="btn-quote-submit"
+                  disabled={!canSubmit}
+                  title={isGuest ? 'Log in as a customer to submit' : !canSubmit ? 'Your account type cannot place quote requests' : ''}
+                  style={!canSubmit ? { opacity: 0.45, cursor: 'not-allowed', filter: 'grayscale(40%)', pointerEvents: 'none' } : {}}
+                >
+                  {t('get_a_quote')}
+                </button>
               </div>
             </div>
           </form>

@@ -9,7 +9,11 @@ import {
   LuGlobe,
   LuChevronLeft,
   LuChevronRight,
-  LuClipboardList
+  LuClipboardList,
+  LuTriangleAlert,
+  LuMessageCircle,
+  LuDollarSign,
+  LuTrendingUp
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -126,6 +130,30 @@ const AdminSettings = () => {
           <Link to="/admin/catalog" className="sidebar-link">
             <span className="icon"><LuSettings /></span>
             <span className="link-text">{t('system_catalog')}</span>
+          </Link>
+          <Link to="/admin/quote-builder" className="sidebar-link">
+            <span className="icon"><LuDollarSign /></span>
+            <span className="link-text">{t('quote_builder')}</span>
+          </Link>
+          <Link to="/admin/customers" className="sidebar-link">
+            <span className="icon"><LuUsers /></span>
+            <span className="link-text">{t('customer_search')}</span>
+          </Link>
+          <Link to="/admin/complaints" className="sidebar-link">
+            <span className="icon"><LuTriangleAlert /></span>
+            <span className="link-text">{t('complaints')}</span>
+          </Link>
+          <Link to="/admin/support" className="sidebar-link">
+            <span className="icon"><LuMessageCircle /></span>
+            <span className="link-text">{t('support')}</span>
+          </Link>
+          <Link to="/admin/reports" className="sidebar-link">
+            <span className="icon"><LuTrendingUp /></span>
+            <span className="link-text">Reports & Analytics</span>
+          </Link>
+          <Link to="/admin/settings" className="sidebar-link active">
+            <span className="icon"><LuSettings /></span>
+            <span className="link-text">{t('system_settings')}</span>
           </Link>
           <Link to="/my-bookings" className="sidebar-link">
             <span className="icon"><LuClipboardList /></span>

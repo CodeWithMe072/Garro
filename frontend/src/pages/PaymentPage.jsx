@@ -65,27 +65,61 @@ const PaymentForm = ({ quoteId, breakdown, clientSecret }) => {
     setProcessing(true);
     setCardError('');
 
-    try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token    = localStorage.getItem('token');
+    // If clientSecret is a mock secret, bypass Stripe elements to allow local testing
+    if (clientSecret.startsWith('mock_secret_')) {
+      try {
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const token    = localStorage.getItem('token');
 
-      const res = await fetch(`${API_BASE}/api/payments/bypass-pay`, {
-        method:  'POST',
-        headers: {
-          'Content-Type':  'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ quoteId })
+        const res = await fetch(`${API_BASE}/api/payments/bypass-pay`, {
+          method:  'POST',
+          headers: {
+            'Content-Type':  'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ quoteId })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          handleSuccessRedirect();
+        } else {
+          setCardError(data.message || 'Payment processing failed.');
+        }
+      } catch (err) {
+        setCardError('Network error. Failed to process bypass payment.');
+      } finally {
+        setProcessing(false);
+      }
+      return;
+    }
+
+    // Real Stripe payment confirmation flow
+    if (!stripe || !elements) {
+      setCardError('Stripe has not initialized yet. Please try again.');
+      setProcessing(false);
+      return;
+    }
+
+    try {
+      const cardElement = elements.getElement(CardElement);
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: cardElement
+        }
       });
 
-      const data = await res.json();
-      if (res.ok && data.success) {
-        handleSuccessRedirect();
+      if (result.error) {
+        setCardError(result.error.message || 'Payment processing failed.');
       } else {
-        setCardError(data.message || 'Payment processing failed.');
+        if (result.paymentIntent.status === 'succeeded') {
+          handleSuccessRedirect();
+        } else {
+          setCardError('Stripe payment processing did not complete successfully.');
+        }
       }
     } catch (err) {
-      setCardError('Network error. Failed to process bypass payment.');
+      setCardError('Failed to process card payment with Stripe.');
     } finally {
       setProcessing(false);
     }

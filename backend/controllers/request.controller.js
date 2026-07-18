@@ -1,4 +1,5 @@
 import Request from '../models/Request.js';
+import Vehicle from '../models/Vehicle.js';
 import Helper from '../models/Helper.js';
 import Job from '../models/Job.js';
 import Quote from '../models/Quote.js';
@@ -391,6 +392,65 @@ export const respondToScheduleProposal = async (req, res) => {
     }
 
     success(res, { request, message: `Schedule change request ${action}ed successfully` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/requests/customer/dashboard-stats
+export const getCustomerDashboardStats = async (req, res) => {
+  try {
+    const now = new Date();
+    const userId = req.user.id;
+
+    // Get count of user's requests ids
+    const userRequestIds = await Request.find({ userId }).distinct('_id');
+
+    const [
+      totalVehicles,
+      activeRequests,
+      pendingQuotes,
+      totalServices,
+      recentActivity,
+      upcomingAppointments
+    ] = await Promise.all([
+      Vehicle.countDocuments({ userId }),
+      Request.countDocuments({
+        userId,
+        status: { $in: ['pending_payment', 'new', 'assigned', 'quote_pending', 'quote_sent', 'quote_approved', 'pickup_scheduled', 'picked_up', 'in_garage', 'repair_in_progress', 'work_complete', 'ready_for_delivery'] }
+      }),
+      Quote.countDocuments({
+        requestId: { $in: userRequestIds },
+        status: { $in: ['pending', 'sent'] }
+      }),
+      Request.countDocuments({
+        userId,
+        status: { $in: ['delivered', 'closed'] }
+      }),
+      Request.find({ userId })
+        .sort({ updatedAt: -1 })
+        .limit(3)
+        .populate('vehicleId'),
+      Request.find({
+        userId,
+        preferredDate: { $gte: now },
+        status: { $nin: ['closed', 'cancelled', 'delivered'] }
+      })
+        .sort({ preferredDate: 1 })
+        .limit(3)
+        .populate('vehicleId')
+    ]);
+
+    success(res, {
+      stats: {
+        totalVehicles,
+        activeRequests,
+        pendingQuotes,
+        totalServices
+      },
+      recentActivity,
+      upcomingAppointments
+    });
   } catch (err) {
     error(res, err.message, 500);
   }

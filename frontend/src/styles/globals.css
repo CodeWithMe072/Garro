@@ -16,6 +16,11 @@
   --nav-h: 68px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* Accessibility focus styles for WCAG 2.1 AA */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid #ff5c1a !important;
+  outline-offset: 2px !important;
+}
 body{font-family:'Poppins',sans-serif;color:var(--text);background:var(--white);line-height:1.6}
 h1,h2,h3,h4,h5,h6{font-family:'Poppins',sans-serif;font-weight:700;letter-spacing:-.02em}
 .material-icons-round{vertical-align:middle;font-size:inherit;line-height:1}
@@ -1677,5 +1682,49 @@ html[lang="ar"] .text-center *, html[lang="ur"] .text-center * {
   direction: ltr !important;
   text-align: left !important;
 }
+
+/* Support Chat System Styles */
+@keyframes supportFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.support-widget-launcher:hover {
+  transform: scale(1.05);
+}
+
+.support-widget-launcher:active {
+  transform: scale(0.95);
+}
+
+.support-widget-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.support-widget-header {
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.support-msg {
+  display: flex;
+  flex-direction: column;
+  animation: supportFadeIn 0.15s ease-out;
+}
+
+.support-msg.customer {
+  align-self: flex-end;
+}
+
+.support-msg.agent {
+  align-self: flex-start;
+}
+
 
 

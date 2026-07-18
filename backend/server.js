@@ -6,6 +6,7 @@ import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 import rateLimit from 'express-rate-limit';
+import cookieParser from 'cookie-parser';
 
 import connectDB from './config/db.js';
 import Helper from './models/Helper.js';
@@ -31,6 +32,9 @@ import paymentRoutes from './routes/payment.routes.js';
 import catalogRoutes from './routes/catalog.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
+import jwt from 'jsonwebtoken';
+import supportRoutes from './routes/support.routes.js';
+import SupportConversation from './models/SupportConversation.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -52,6 +56,8 @@ app.use(cors({
   ].filter(Boolean),
   credentials: true
 }));
+
+app.use(cookieParser());
 
 // Stripe payment routes (webhook requires raw body, must be before express.json)
 app.use('/api/payments', paymentRoutes);
@@ -88,6 +94,7 @@ app.use('/api/complaints', complaintRoutes);
 app.use('/api/admin/catalog', catalogRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/support', supportRoutes);
 
 // Time-slot based booking assignment
 app.post('/api/bookings/:bookingId/assign', auth, role('admin'), (req, res, next) => {
@@ -109,6 +116,16 @@ app.post('/api/test/auto-assign', async (req, res) => {
 // Socket.IO — real-time helper tracking
 io.on('connection', (socket) => {
   console.log('Socket connected:', socket.id);
+
+  // Authenticate socket using JWT
+  try {
+    const token = socket.handshake.auth?.token;
+    if (token) {
+      socket.user = jwt.verify(token, process.env.JWT_SECRET);
+    }
+  } catch (err) {
+    socket.user = null;
+  }
 
   // Customer or admin joins job room to receive updates
   socket.on('join:job', (jobId) => {
@@ -136,6 +153,49 @@ io.on('connection', (socket) => {
 
   socket.on('leave:job', (jobId) => {
     socket.leave(`job:${jobId}`);
+  });
+
+  // --- Support chat ---
+  const AGENT_ROLES = ['admin', 'staff', 'manager', 'superadmin'];
+
+  // Client joins a specific conversation room. Must be authenticated AND
+  // either the conversation's owning customer or an agent.
+  socket.on('support:join', async (conversationId) => {
+    if (!socket.user) return;
+    if (AGENT_ROLES.includes(socket.user.role)) {
+      socket.join(`support:${conversationId}`);
+      console.log(`Agent socket ${socket.id} joined support:${conversationId}`);
+      return;
+    }
+    if (socket.user.role === 'customer') {
+      try {
+        const convo = await SupportConversation.findById(conversationId).select('customerId');
+        if (convo && String(convo.customerId) === String(socket.user.id)) {
+          socket.join(`support:${conversationId}`);
+          console.log(`Customer socket ${socket.id} joined support:${conversationId}`);
+        }
+      } catch (err) {
+        console.error('Error in support:join:', err.message);
+      }
+    }
+  });
+
+  socket.on('support:leave', (conversationId) => {
+    socket.leave(`support:${conversationId}`);
+    console.log(`Socket ${socket.id} left support:${conversationId}`);
+  });
+
+  // Agents join a global room to get list/badge updates even when no thread is open.
+  socket.on('support:join:agent', () => {
+    if (socket.user && AGENT_ROLES.includes(socket.user.role)) {
+      socket.join('support:agents');
+      console.log(`Agent socket ${socket.id} joined support:agents`);
+    }
+  });
+
+  socket.on('support:leave:agent', () => {
+    socket.leave('support:agents');
+    console.log(`Agent socket ${socket.id} left support:agents`);
   });
 
   socket.on('disconnect', () => {

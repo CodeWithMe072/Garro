@@ -1,15 +1,37 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import Otp from '../models/Otp.js';
 import BlockedIp from '../models/BlockedIp.js';
+import RefreshToken from '../models/RefreshToken.js';
 import { logActivity } from '../utils/audit.js';
 
 const signToken = (user) => jwt.sign(
   { id: user._id, role: user.role },
   process.env.JWT_SECRET,
-  { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  { expiresIn: '15m' }
 );
+
+const generateAndSetRefreshToken = async (res, userId) => {
+  const tokenStr = crypto.randomBytes(40).toString('hex');
+  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+  await RefreshToken.create({
+    token: tokenStr,
+    userId,
+    expiresAt
+  });
+
+  res.cookie('refreshToken', tokenStr, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 30 * 24 * 60 * 60 * 1000
+  });
+
+  return tokenStr;
+};
 
 const sendEmailOtp = async (email, otp) => {
   const apiKey = process.env.RESEND_API_KEY;
@@ -80,6 +102,7 @@ export const register = async (req, res) => {
     await sendEmailOtp(email, code);
 
     const token = signToken(user);
+    await generateAndSetRefreshToken(res, user._id);
     res.status(201).json({
       success: true,
       token,
@@ -177,6 +200,7 @@ export const verifyOtp = async (req, res) => {
     );
 
     const token = signToken(user);
+    await generateAndSetRefreshToken(res, user._id);
 
     // Log Activity
     await logActivity(user._id, 'verify_otp', 'User', user._id, { email: user.email, phone: user.phone });
@@ -217,6 +241,7 @@ export const login = async (req, res) => {
     if (user.status !== 'active') return res.status(403).json({ success: false, message: 'Please verify your account first.' });
 
     const token = signToken(user);
+    await generateAndSetRefreshToken(res, user._id);
 
     // Log Activity
     await logActivity(user._id, 'login', 'User', user._id, { email: user.email });
@@ -227,9 +252,18 @@ export const login = async (req, res) => {
   }
 };
 
-// POST /api/auth/logout — stateless, client deletes token
-export const logout = (req, res) => {
-  res.json({ success: true, message: 'Logged out' });
+// POST /api/auth/logout
+export const logout = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+    if (refreshToken) {
+      await RefreshToken.deleteOne({ token: refreshToken });
+    }
+    res.clearCookie('refreshToken');
+    res.json({ success: true, message: 'Logged out' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
 };
 
 // PUT /api/auth/profile
@@ -344,6 +378,49 @@ export const verifyPasswordChange = async (req, res) => {
     await Otp.deleteOne({ _id: record._id });
 
     res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/refresh
+export const refresh = async (req, res) => {
+  try {
+    const { refreshToken } = req.cookies;
+    if (!refreshToken) {
+      return res.status(401).json({ success: false, message: 'Refresh token missing' });
+    }
+
+    const activeToken = await RefreshToken.findOne({ token: refreshToken });
+    if (!activeToken) {
+      return res.status(401).json({ success: false, message: 'Invalid refresh token' });
+    }
+
+    if (activeToken.expiresAt < new Date()) {
+      await RefreshToken.deleteOne({ _id: activeToken._id });
+      res.clearCookie('refreshToken');
+      return res.status(401).json({ success: false, message: 'Refresh token expired' });
+    }
+
+    const user = await User.findById(activeToken.userId);
+    if (!user || user.status !== 'active') {
+      await RefreshToken.deleteOne({ _id: activeToken._id });
+      res.clearCookie('refreshToken');
+      return res.status(401).json({ success: false, message: 'User not active or found' });
+    }
+
+    // Rotate token: delete old one
+    await RefreshToken.deleteOne({ _id: activeToken._id });
+
+    // Generate new ones
+    const newAccessToken = signToken(user);
+    await generateAndSetRefreshToken(res, user._id);
+
+    res.json({
+      success: true,
+      token: newAccessToken,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

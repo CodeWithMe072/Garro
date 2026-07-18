@@ -1,8 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+// Roles that cannot see the form at all
+const HIDDEN_ROLES = ['helper', 'garage', 'staff'];
+// Roles that can see the form but cannot submit
+const READONLY_ROLES = ['admin', 'superadmin', 'manager'];
 
 const ServiceSelection = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const userRole  = user?.role || null;
+  const isHidden  = HIDDEN_ROLES.includes(userRole);          // helper, garage, staff
+  const isReadOnly = READONLY_ROLES.includes(userRole);       // admin roles
+  const isGuest   = !userRole;                                 // not logged in
+  // Only logged-in customers can submit
+  const canSubmit = userRole === 'customer';
 
   const [catalogBrands, setCatalogBrands] = useState([]);
   const [catalogServices, setCatalogServices] = useState([]);
@@ -47,8 +61,35 @@ const ServiceSelection = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!canSubmit) return;
     navigate('/garages');
   };
+
+  /* ── helper / garage / staff: hide the form entirely ── */
+  if (isHidden) {
+    return (
+      <section className="gq-page">
+        <div className="container">
+          <h1 className="gq-title">Get Instant Quotes from <span>Top-Rated Garages</span></h1>
+          <p className="gq-sub">Transparent pricing <span>·</span> Verified garages <span>·</span> Instant quotes</p>
+          <div className="gq-form-wrap" style={{ textAlign: 'center', padding: '48px 24px' }}>
+            <div style={{
+              display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
+              gap: '12px', color: '#64748b'
+            }}>
+              <span className="material-icons-round" style={{ fontSize: '48px', color: '#cbd5e1' }}>block</span>
+              <p style={{ margin: 0, fontWeight: 600, fontSize: '16px', color: '#475569' }}>
+                Not available for your account type
+              </p>
+              <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>
+                Quote requests can only be placed by customers.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="gq-page">
@@ -156,8 +197,26 @@ const ServiceSelection = () => {
                   <option value="flexible">Flexible</option>
                 </select>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                <button type="submit" className="btn-gq-submit">Get a Quote</button>
+              <div style={{ display: 'flex', alignItems: 'flex-end', flexDirection: 'column', gap: '6px' }}>
+                {isGuest && (
+                  <p style={{ margin: 0, fontSize: '11px', color: '#3b82f6', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                    Please log in as a customer to submit
+                  </p>
+                )}
+                {isReadOnly && (
+                  <p style={{ margin: 0, fontSize: '11px', color: '#f97316', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                    Admin accounts cannot place quote requests
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  className="btn-gq-submit"
+                  disabled={!canSubmit}
+                  title={isGuest ? 'Log in as a customer to submit' : !canSubmit ? 'Your account type cannot place quote requests' : ''}
+                  style={!canSubmit ? { opacity: 0.45, cursor: 'not-allowed', filter: 'grayscale(40%)', pointerEvents: 'none' } : {}}
+                >
+                  Get a Quote
+                </button>
               </div>
             </div>
           </form>

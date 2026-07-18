@@ -12,7 +12,8 @@ import {
   LuClipboardList,
   LuUser,
   LuBriefcase,
-  LuGlobe
+  LuGlobe,
+  LuMessageCircle
 } from 'react-icons/lu';
 
 const AdminSidebar = ({ pendingBookings = 0 }) => {
@@ -53,6 +54,9 @@ const AdminSidebar = ({ pendingBookings = 0 }) => {
         </Link>
         <Link to="/admin/complaints" className={`sidebar-link ${isActive('/admin/complaints')}`}>
           <span className="icon"><LuTriangleAlert /></span><span dir="auto">{t('complaints')}</span>
+        </Link>
+        <Link to="/admin/support" className={`sidebar-link ${isActive('/admin/support')}`}>
+          <span className="icon"><LuMessageCircle /></span><span dir="auto">{t('support')}</span>
         </Link>
         <Link to="/my-bookings" className={`sidebar-link ${isActive('/my-bookings')}`}>
           <span className="icon"><LuClipboardList /></span><span dir="auto">{t('bookings')}</span>

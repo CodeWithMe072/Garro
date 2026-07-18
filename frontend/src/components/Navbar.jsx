@@ -131,6 +131,13 @@ const Navbar = () => {
                   <LuHouse size={15} /> Home
                 </Link>
               </li>
+              {user?.role === 'customer' && (
+                <li>
+                  <Link to="/customer/dashboard" className={isActive('/customer/dashboard')}>
+                    <LuLayoutDashboard size={15} /> Dashboard
+                  </Link>
+                </li>
+              )}
               <li>
                 <Link to="/insurance" className={isActive('/insurance')}>
                   <LuShield size={15} /> {t('insurance')}

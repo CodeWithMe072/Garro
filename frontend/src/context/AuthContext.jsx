@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { disconnectSocket } from '../utils/socket';
 
 const AuthContext = createContext();
 
@@ -9,23 +10,64 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check localStorage for existing session on mount
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('token');
-
-    if (storedUser && storedToken) {
-      try {
-        setUser(JSON.parse(storedUser));
+  const triggerRefresh = async () => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
         setIsAuthenticated(true);
-      } catch (err) {
-        console.error('Failed to parse stored user', err);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        return true;
       }
+    } catch (err) {
+      console.error('Failed to trigger background refresh:', err);
     }
-    setLoading(false);
+    return false;
+  };
+
+  useEffect(() => {
+    const checkRefreshOnMount = async () => {
+      const success = await triggerRefresh();
+      if (!success) {
+        const storedUser = localStorage.getItem('user');
+        const storedToken = localStorage.getItem('token');
+        if (storedUser && storedToken) {
+          try {
+            setUser(JSON.parse(storedUser));
+            setIsAuthenticated(true);
+          } catch (err) {
+            console.error('Failed to parse stored user', err);
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+          }
+        }
+      }
+      setLoading(false);
+    };
+
+    checkRefreshOnMount();
   }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Refresh token every 14 minutes
+    const interval = setInterval(async () => {
+      const success = await triggerRefresh();
+      if (!success) {
+        logout();
+      }
+    }, 14 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   const login = (userData, token) => {
     localStorage.setItem('user', JSON.stringify(userData));
@@ -34,11 +76,23 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(true);
   };
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    setUser(null);
-    setIsAuthenticated(false);
+  const logout = async () => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      await fetch(`${API_BASE}/api/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+    } catch (err) {
+      console.error('Failed to logout on server:', err);
+    } finally {
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      setUser(null);
+      setIsAuthenticated(false);
+      disconnectSocket();
+    }
   };
 
   if (loading) {
