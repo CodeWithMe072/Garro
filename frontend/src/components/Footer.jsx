@@ -70,7 +70,7 @@ const Footer = () => {
           {/* Brand */}
           <div className="col-lg-3">
             <div className="g-footer-logo">Ga<span>rro</span></div>
-            <p style={{ fontSize: '13.5px', lineHeight: '1.8', marginBottom: '16px', color: 'rgba(255,255,255,.5)' }}>
+            <p style={{ fontSize: '13.5px', lineHeight: '1.8', marginBottom: '16px' }}>
               {t('footer_desc')}
             </p>
             <div className="g-social">
@@ -139,16 +139,16 @@ const Footer = () => {
                 <Icon size={16} />
                 <div>
                   {label && (
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,.35)', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Poppins',sans-serif" }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '.06em', fontFamily: "'Poppins',sans-serif" }}>
                       {label}
                     </div>
                   )}
                   {href ? (
-                    <a href={href} style={{ color: 'rgba(255,255,255,.75)', textDecoration: 'none', fontSize: '13.5px', fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
+                    <a href={href} style={{ color: '#334155', textDecoration: 'none', fontSize: '13.5px', fontWeight: 600, fontFamily: "'Poppins',sans-serif" }}>
                       {value}
                     </a>
                   ) : (
-                    <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: '13.5px' }}>{value}</span>
+                    <span style={{ fontFamily: "'Poppins',sans-serif", fontSize: '13.5px', color: '#334155', fontWeight: 600 }}>{value}</span>
                   )}
                 </div>
               </div>
@@ -156,7 +156,7 @@ const Footer = () => {
 
             {/* Newsletter */}
             <div style={{ marginTop: '20px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,.5)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px', fontFamily: "'Poppins',sans-serif" }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#475569', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px', fontFamily: "'Poppins',sans-serif" }}>
                 {t('get_offers')}
               </div>
               <form style={{ display: 'flex', gap: '8px' }} onSubmit={handleSubscribe}>
@@ -165,7 +165,7 @@ const Footer = () => {
                   placeholder={t('your_email')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ flex: 1, background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '9px', padding: '9px 12px', color: 'white', fontSize: '13px', fontFamily: "'Poppins',sans-serif", outline: 'none' }}
+                  style={{ flex: 1, background: '#ffffff', border: '1px solid #ffd8c7', borderRadius: '9px', padding: '9px 12px', color: '#0f172a', fontSize: '13px', fontFamily: "'Poppins',sans-serif", outline: 'none' }}
                 />
                 <button type="submit" style={{ background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', border: 'none', borderRadius: '9px', padding: '9px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all .2s' }}>
                   <LuSend size={16} color="white" />
@@ -181,12 +181,14 @@ const Footer = () => {
 
         </div>
 
+        {/* Curved Divider Line */}
+        <hr style={{ border: 'none', height: '1px', background: '#ffe7dc', borderRadius: '9999px', margin: '40px 0 24px 0', opacity: 1 }} />
         {/* Bottom bar */}
         <div className="g-footer-bottom d-flex flex-wrap align-items-center justify-content-between gap-3">
           <span>{t('copyright')}</span>
           <div style={{ display: 'flex', gap: '16px' }}>
-            <a href="#" style={{ color: 'rgba(255,255,255,.3)', fontSize: '12px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", transition: 'color .15s' }}>{t('privacy')}</a>
-            <a href="#" style={{ color: 'rgba(255,255,255,.3)', fontSize: '12px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", transition: 'color .15s' }}>{t('terms')}</a>
+            <a href="#" style={{ color: '#64748b', fontSize: '12px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", transition: 'color .15s' }}>{t('privacy')}</a>
+            <a href="#" style={{ color: '#64748b', fontSize: '12px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", transition: 'color .15s' }}>{t('terms')}</a>
           </div>
         </div>
       </div>

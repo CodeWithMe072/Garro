@@ -12,7 +12,8 @@ import {
   LuChevronRight,
   LuPlus,
   LuList,
-  LuDollarSign
+  LuDollarSign,
+  LuHand
 } from 'react-icons/lu';
 
 const CustomerDashboard = () => {
@@ -94,19 +95,21 @@ const CustomerDashboard = () => {
   return (
     <div className="container py-4">
       {/* Welcome Hero */}
-      <div className="p-4 mb-4 rounded-4 text-white" style={{
-        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
-        border: '1px solid rgba(255,255,255,0.08)'
+      <div className="p-4 mb-4 rounded-4 shadow-sm" style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0'
       }}>
         <div className="d-flex align-items-center justify-content-between flex-wrap gap-3">
           <div>
-            <h2 className="fw-bold mb-1">Hi, {user?.name || 'Customer'} 👋</h2>
-            <p className="mb-0 opacity-80" style={{ fontSize: '0.95rem', color: '#e0e7ff' }}>
+            <h2 className="fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: '#0f172a', textTransform: 'capitalize' }}>
+              Hi, {user?.name || 'Customer'} <span className="waving-emoji" style={{ color: '#ff5c1a', display: 'inline-flex', alignItems: 'center' }}><LuHand size={24} /></span>
+            </h2>
+            <p className="mb-0" style={{ fontSize: '0.95rem', color: '#64748b' }}>
               Welcome back to your Garro portal. Manage your vehicles and service requests in one place.
             </p>
           </div>
           <div className="d-flex gap-2">
-            <Link to="/get-quote" className="btn btn-light d-flex align-items-center gap-2 rounded-3 fw-semibold px-3 py-2 shadow-sm">
+            <Link to="/get-quote" className="btn d-flex align-items-center gap-2 rounded-3 fw-semibold px-3 py-2 shadow-sm text-white" style={{ background: 'linear-gradient(135deg, #ff5c1a 0%, #ff8c42 100%)', border: 'none' }}>
               <LuPlus size={16} /> Schedule New Service
             </Link>
           </div>
@@ -119,7 +122,7 @@ const CustomerDashboard = () => {
         <div className="col-6 col-md-3">
           <div className="card h-100 border-0 rounded-4 shadow-sm p-3" style={{ background: '#ffffff' }}>
             <div className="d-flex align-items-center gap-3">
-              <div className="p-2 rounded-3" style={{ background: '#e0f2fe', color: '#0284c7' }}>
+              <div className="p-2 rounded-3" style={{ background: '#fff4ef', color: '#ff5c1a' }}>
                 <LuCar size={24} />
               </div>
               <div>
@@ -180,7 +183,7 @@ const CustomerDashboard = () => {
           <div className="card border-0 rounded-4 shadow-sm p-4 mb-4" style={{ background: '#ffffff' }}>
             <div className="d-flex align-items-center justify-content-between mb-3">
               <h5 className="fw-bold text-slate-800 mb-0">Upcoming Appointments</h5>
-              <span className="badge bg-primary text-white px-2.5 py-1 rounded-pill">Next up</span>
+              <span className="badge px-2.5 py-1 rounded-pill" style={{ background: '#fff4ef', color: '#ff5c1a', border: '1px solid #ffd8c7' }}>Next up</span>
             </div>
             {upcomingAppointments.length === 0 ? (
               <div className="text-center py-4 text-secondary">
@@ -192,17 +195,17 @@ const CustomerDashboard = () => {
                 {upcomingAppointments.map(app => (
                   <div key={app._id} className="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light border-0">
                     <div>
-                      <div className="fw-semibold text-slate-800" style={{ fontSize: '0.95rem' }}>
+                       <div className="fw-semibold text-slate-800" style={{ fontSize: '0.95rem' }}>
                         {app.subCategory || app.serviceType.replace(/_/g, ' ').toUpperCase()}
                       </div>
                       <div className="text-secondary" style={{ fontSize: '0.85rem' }}>
                         Vehicle: {app.vehicleId?.make} {app.vehicleId?.model} ({app.vehicleId?.year})
                       </div>
-                      <div className="text-indigo-600 fw-medium mt-1" style={{ fontSize: '0.85rem' }}>
+                      <div className="fw-medium mt-1" style={{ fontSize: '0.85rem', color: '#ff5c1a' }}>
                         Scheduled: {new Date(app.preferredDate).toLocaleDateString('en-AE', { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
-                    <Link to={`/track/${app._id}`} className="btn btn-outline-primary btn-sm rounded-2 px-3">
+                    <Link to={`/track/${app._id}`} className="btn btn-sm rounded-2 px-3" style={{ border: '1px solid #ff5c1a', color: '#ff5c1a', background: 'none', fontWeight: 600 }}>
                       Track
                     </Link>
                   </div>
@@ -215,7 +218,7 @@ const CustomerDashboard = () => {
           <div className="card border-0 rounded-4 shadow-sm p-4" style={{ background: '#ffffff' }}>
             <div className="d-flex align-items-center justify-content-between mb-3">
               <h5 className="fw-bold text-slate-800 mb-0">Recent Activity</h5>
-              <Link to="/my-requests" className="text-primary fw-semibold" style={{ fontSize: '0.9rem', textDecoration: 'none' }}>
+              <Link to="/my-requests" className="fw-semibold" style={{ fontSize: '0.9rem', color: '#ff5c1a', textDecoration: 'none' }}>
                 View All
               </Link>
             </div>
@@ -273,48 +276,56 @@ const CustomerDashboard = () => {
           <div className="card border-0 rounded-4 shadow-sm p-4" style={{ background: '#ffffff' }}>
             <h5 className="fw-bold text-slate-800 mb-3">Quick Actions</h5>
             <div className="d-flex flex-column gap-2">
-              <Link to="/get-quote" className="btn btn-outline-primary w-100 text-start d-flex align-items-center justify-content-between p-3 rounded-3 shadow-none" style={{ transition: 'all 0.2s' }}>
+              <Link to="/get-quote" className="g-quick-action-link">
                 <div className="d-flex align-items-center gap-3">
-                  <LuPlus size={20} />
+                  <div className="action-icon-box">
+                    <LuPlus size={20} />
+                  </div>
                   <div>
                     <div className="fw-semibold text-slate-800" style={{ fontSize: '0.9rem' }}>Schedule New Service</div>
                     <div className="text-secondary" style={{ fontSize: '0.75rem' }}>Request custom/emergency quotes</div>
                   </div>
                 </div>
-                <LuChevronRight size={16} className="text-secondary" />
+                <LuChevronRight size={16} className="chevron" />
               </Link>
 
-              <Link to="/my-requests" className="btn btn-outline-primary w-100 text-start d-flex align-items-center justify-content-between p-3 rounded-3 shadow-none" style={{ transition: 'all 0.2s' }}>
+              <Link to="/my-requests" className="g-quick-action-link">
                 <div className="d-flex align-items-center gap-3">
-                  <LuList size={20} />
+                  <div className="action-icon-box">
+                    <LuList size={20} />
+                  </div>
                   <div>
                     <div className="fw-semibold text-slate-800" style={{ fontSize: '0.9rem' }}>View All Requests</div>
                     <div className="text-secondary" style={{ fontSize: '0.75rem' }}>Track list of all bookings</div>
                   </div>
                 </div>
-                <LuChevronRight size={16} className="text-secondary" />
+                <LuChevronRight size={16} className="chevron" />
               </Link>
 
-              <Link to="/my-requests" state={{ activeTab: 'quotes' }} className="btn btn-outline-primary w-100 text-start d-flex align-items-center justify-content-between p-3 rounded-3 shadow-none" style={{ transition: 'all 0.2s' }}>
+              <Link to="/my-requests" state={{ activeTab: 'quotes' }} className="g-quick-action-link">
                 <div className="d-flex align-items-center gap-3">
-                  <LuFileText size={20} />
+                  <div className="action-icon-box">
+                    <LuFileText size={20} />
+                  </div>
                   <div>
                     <div className="fw-semibold text-slate-800" style={{ fontSize: '0.9rem' }}>Check My Quotes</div>
                     <div className="text-secondary" style={{ fontSize: '0.75rem' }}>Approve or review garage prices</div>
                   </div>
                 </div>
-                <LuChevronRight size={16} className="text-secondary" />
+                <LuChevronRight size={16} className="chevron" />
               </Link>
 
-              <Link to="/my-vehicles" className="btn btn-outline-primary w-100 text-start d-flex align-items-center justify-content-between p-3 rounded-3 shadow-none" style={{ transition: 'all 0.2s' }}>
+              <Link to="/my-vehicles" className="g-quick-action-link">
                 <div className="d-flex align-items-center gap-3">
-                  <LuCar size={20} />
+                  <div className="action-icon-box">
+                    <LuCar size={20} />
+                  </div>
                   <div>
                     <div className="fw-semibold text-slate-800" style={{ fontSize: '0.9rem' }}>Manage Vehicles</div>
                     <div className="text-secondary" style={{ fontSize: '0.75rem' }}>Add or update your garage assets</div>
                   </div>
                 </div>
-                <LuChevronRight size={16} className="text-secondary" />
+                <LuChevronRight size={16} className="chevron" />
               </Link>
             </div>
           </div>

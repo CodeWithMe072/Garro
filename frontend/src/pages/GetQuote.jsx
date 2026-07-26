@@ -241,8 +241,8 @@ const GetQuote = () => {
   }
 
   return (
-    <div style={{ background: '#0f172a', minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', alignItems: 'center', marginBottom: '-80px', paddingBottom: '80px' }}>
-      <section className="quote-section" style={{ width: '100%', padding: '60px 0' }}>
+    <div style={{ background: '#f8fafc', minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+      <section className="g-light-quote-section">
         <div className="container position-relative" style={{ zIndex: 2 }}>
           <h2 className="quote-title">{t('get_quotes_title')}</h2>
           <p className="quote-sub">{t('quotes_sub')}</p>
@@ -366,12 +366,12 @@ const GetQuote = () => {
               </div>
               <div className="col-md-2 d-flex align-items-end flex-column justify-content-end" style={{ gap: '6px' }}>
                 {isGuest && (
-                  <p style={{ margin: 0, fontSize: '11px', color: '#93c5fd', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                  <p style={{ margin: 0, fontSize: '11px', color: '#ff5c1a', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
                     Log in as a customer to submit
                   </p>
                 )}
                 {isReadOnly && (
-                  <p style={{ margin: 0, fontSize: '11px', color: '#fb923c', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                  <p style={{ margin: 0, fontSize: '11px', color: '#ea580c', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
                     Admin accounts cannot place requests
                   </p>
                 )}

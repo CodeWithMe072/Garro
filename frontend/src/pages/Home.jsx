@@ -456,11 +456,7 @@ const Home = () => {
             </div>
           </div>
 
-          <div style={{ textAlign: 'center', marginTop: '40px' }}>
-            <Link to="/services" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', color: '#fff', borderRadius: '50px', padding: '14px 36px', fontWeight: '800', fontSize: '15px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", boxShadow: '0 6px 22px rgba(255,92,26,.38)' }}>
-              {t('get_quote_now')} <span className="material-icons-round">arrow_forward</span>
-            </Link>
-          </div>
+
         </div>
       </section>
 
@@ -476,11 +472,6 @@ const Home = () => {
             <div className="col">
               <div className="dstat-num">50K+</div>
               <div className="dstat-lbl">{t('stat_happy_served')}</div>
-            </div>
-            <div className="col-auto dstat-divider d-none d-md-block">&nbsp;</div>
-            <div className="col">
-              <div className="dstat-num">12 Min</div>
-              <div className="dstat-lbl">{t('stat_avg_response')}</div>
             </div>
             <div className="col-auto dstat-divider d-none d-md-block">&nbsp;</div>
             <div className="col">

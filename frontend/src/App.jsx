@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -60,13 +60,17 @@ const AdminSupportChat = React.lazy(() => import('./pages/AdminSupportChat'));
 const CustomerDashboard = React.lazy(() => import('./pages/CustomerDashboard'));
 
 // Wrapper for pages with Navbar and Footer
-const PageLayout = ({ children }) => (
-  <>
-    <Navbar />
-    <main>{children}</main>
-    <Footer />
-  </>
-);
+const PageLayout = ({ children }) => {
+  const location = useLocation();
+  const isAdminLayout = location.pathname.startsWith('/admin') || location.pathname === '/my-bookings' || location.pathname === '/search';
+  return (
+    <div className={isAdminLayout ? "g-admin-layout" : ""}>
+      <Navbar />
+      <main>{children}</main>
+      <Footer />
+    </div>
+  );
+};
 
 // Role-based redirect for "/dashboard" links/notifications
 const DashboardRedirect = () => {
@@ -145,27 +149,27 @@ const App = () => {
 
             {/* Dashboard Routes with Layout */}
             <Route path="/admin" element={
-              <ProtectedRoute roles={['manager', 'superadmin']}>
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
                 <PageLayout><AdminDashboard /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/staff" element={
-              <ProtectedRoute roles={['staff', 'manager', 'superadmin']}>
+              <ProtectedRoute roles={['staff', 'manager', 'superadmin', 'admin']}>
                 <PageLayout><StaffDashboard /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/manage-staff" element={
-              <ProtectedRoute roles={['manager', 'superadmin']}>
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
                 <PageLayout><StaffManagement /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/manage-garages" element={
-              <ProtectedRoute roles={['manager', 'superadmin']}>
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
                 <PageLayout><GarageManagement /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/catalog" element={
-              <ProtectedRoute roles={['manager', 'superadmin']}>
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
                 <PageLayout><CatalogManagement /></PageLayout>
               </ProtectedRoute>
             } />

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
+import { LuCar, LuLock, LuShieldAlert, LuUser, LuLightbulb } from 'react-icons/lu';
 
 const Profile = () => {
   const { user, login, logout } = useAuth();
@@ -10,14 +11,40 @@ const Profile = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
+  // Helper to split user.name into first and last name if they are not defined
+  const getNameParts = () => {
+    const fullName = user?.name || '';
+    const parts = fullName.trim().split(' ');
+    const first = parts[0] || '';
+    const last = parts.slice(1).join(' ') || '';
+    return { first, last };
+  };
+
+  const initialNameParts = getNameParts();
+
   // Personal Info Form (Email and Phone are read-only)
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
+    firstName: user?.firstName || initialNameParts.first,
+    lastName: user?.lastName || initialNameParts.last,
     email: user?.email || '',
     phone: user?.phone || '',
   });
   const [profileSaving, setProfileSaving] = useState(false);
+
+  // Sync form state when user changes/loads
+  useEffect(() => {
+    if (user) {
+      const parts = (user.name || '').trim().split(' ');
+      const first = parts[0] || '';
+      const last = parts.slice(1).join(' ') || '';
+      setFormData({
+        firstName: user.firstName || first,
+        lastName: user.lastName || last,
+        email: user.email || '',
+        phone: user.phone || '',
+      });
+    }
+  }, [user]);
 
   // Password Change Step-by-Step State
   const [pwdStep, setPwdStep] = useState(1); // 1: Enter Current, 2: Enter OTP & New Password
@@ -170,9 +197,9 @@ const Profile = () => {
                 fontWeight: '700', margin: '0 auto 16px' 
               }}
             >
-              {(formData.firstName?.[0] || 'U')}{(formData.lastName?.[0] || 'U')}
+              {((formData.firstName?.[0] || 'U') + (formData.lastName?.[0] || 'U')).toUpperCase()}
             </div>
-            <h5 className="fw-bold mb-1 text-dark">{formData.firstName} {formData.lastName}</h5>
+            <h5 className="fw-bold mb-1 text-dark" style={{ textTransform: 'capitalize' }}>{formData.firstName} {formData.lastName}</h5>
             <p className="text-muted small mb-3">{formData.email}</p>
             <span className="badge bg-light text-dark border py-2 px-3">
               {user?.role ? user.role.toUpperCase() : 'CUSTOMER'}
@@ -181,7 +208,9 @@ const Profile = () => {
 
           {/* Quick Help Card */}
           <div className="card border-0 shadow-sm p-4 bg-light mb-4" style={{ borderRadius: '16px' }}>
-            <h6 className="fw-bold text-dark mb-2">{t('manage_fleet_title')}</h6>
+            <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+              <LuCar style={{ color: '#ff5c1a' }} size={18} /> {t('manage_fleet_title')}
+            </h6>
             <p className="text-muted small mb-0">
               {t('manage_fleet_desc')}
             </p>
@@ -189,7 +218,9 @@ const Profile = () => {
 
           {/* Security Alert Info */}
           <div className="card border-0 shadow-sm p-4 border-start border-warning" style={{ borderRadius: '16px', borderLeftWidth: '5px !important' }}>
-            <h6 className="fw-bold text-warning mb-2">{t('security_alert_title')}</h6>
+            <h6 className="fw-bold text-warning mb-2 d-flex align-items-center gap-2">
+              <LuShieldAlert size={18} /> {t('security_alert_title')}
+            </h6>
             <p className="text-muted small mb-0">
               {t('security_alert_desc')}
             </p>
@@ -264,7 +295,9 @@ const Profile = () => {
 
           {/* CHANGE PASSWORD SEPARATE FLOW */}
           <div className="card border-0 shadow-sm p-4 mb-4" style={{ borderRadius: '16px' }}>
-            <h5 className="fw-bold mb-1 text-dark">{t('change_pwd_title')}</h5>
+            <h5 className="fw-bold mb-1 text-dark d-flex align-items-center gap-2">
+              <LuLock size={20} style={{ color: '#ff5c1a' }} /> {t('change_pwd_title')}
+            </h5>
             <p className="text-muted small mb-4">{t('change_pwd_desc')}</p>
 
             {/* STEP 1: VERIFY CURRENT PASSWORD */}
@@ -293,8 +326,8 @@ const Profile = () => {
             {pwdStep === 2 && (
               <form onSubmit={handleVerifyPasswordChange}>
                 {demoCode && (
-                  <div className="alert alert-info py-2 small mb-3" style={{ borderRadius: '10px' }}>
-                    💡 <strong>{t('demo_mode')}:</strong> {t('use_code')} <strong>{demoCode}</strong> {t('to_verify')}.
+                  <div className="alert alert-info py-2 small mb-3" style={{ borderRadius: '10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <LuLightbulb size={16} /> <span><strong>{t('demo_mode')}:</strong> {t('use_code')} <strong>{demoCode}</strong> {t('to_verify')}.</span>
                   </div>
                 )}
                 

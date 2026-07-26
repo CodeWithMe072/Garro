@@ -86,14 +86,24 @@ const AdminSidebar = ({ pendingBookings }) => {
 
   return (
     <aside className="dash-sidebar" dir="ltr">
-      <div className="sidebar-toggle-container">
-        <button className="sidebar-toggle-btn" onClick={toggleSidebar} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
-          {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
-        </button>
-      </div>
+      {isCollapsed ? (
+        <div className="sidebar-toggle-container" style={{ display: 'flex', justifyContent: 'center', padding: '0 0 12px', borderBottom: '1px solid #e2e8f0', marginBottom: '8px' }}>
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} title="Expand Sidebar">
+            <LuChevronRight />
+          </button>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 12px 6px' }}>
+          <span className="sidebar-label" style={{ padding: 0, margin: 0, textTransform: 'uppercase', fontSize: '10px', fontWeight: '700', letterSpacing: '1.5px', color: '#94a3b8' }}>
+            {t('overview')}
+          </span>
+          <button className="sidebar-toggle-btn" onClick={toggleSidebar} title="Collapse Sidebar" style={{ margin: 0 }}>
+            <LuChevronLeft />
+          </button>
+        </div>
+      )}
 
-      <span className="sidebar-label">{t('overview')}</span>
-      <div className="sidebar-section">
+      <div className="sidebar-section" style={{ marginTop: isCollapsed ? '0' : '8px' }}>
         <Link to="/admin" className={`sidebar-link ${isActive('/admin')}`}>
           <span className="icon"><LuLayoutDashboard /></span>
           <span className="link-text">{t('dashboard')}</span>

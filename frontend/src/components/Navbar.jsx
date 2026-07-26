@@ -329,7 +329,7 @@ const Navbar = () => {
                     </Link>
                   )}
 
-                  {['manager', 'superadmin'].includes(user?.role) && (
+                  {['manager', 'superadmin', 'admin'].includes(user?.role) && (
                     <>
                       <Link to="/admin" className="g-dropdown-item">
                         <LuLayoutDashboard size={16} />Admin Dashboard

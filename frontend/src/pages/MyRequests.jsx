@@ -11,7 +11,11 @@ import {
   LuWrench,
   LuX,
   LuClipboardList,
-  LuSettings
+  LuSettings,
+  LuCar,
+  LuCreditCard,
+  LuSearch,
+  LuDownload
 } from 'react-icons/lu';
 
 const MyRequests = () => {
@@ -202,7 +206,7 @@ const MyRequests = () => {
     return (
       <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div className="text-center">
-          <div className="spinner-border" style={{ width: 48, height: 48, color: '#185FA5' }} role="status" />
+          <div className="spinner-border" style={{ width: 48, height: 48, color: '#ff5c1a' }} role="status" />
           <p style={{ marginTop: 16, color: '#64748b' }}>{t('loading')}</p>
         </div>
       </div>
@@ -210,36 +214,32 @@ const MyRequests = () => {
   }
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 80px)', background: '#f8fafc', paddingBottom: 60 }}>
+    <div style={{ minHeight: 'calc(100vh - 80px)', background: '#ffffff', paddingBottom: 60 }}>
 
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #185FA5 0%, #1a1a2e 100%)',
-        padding: '36px 24px 80px',
+        background: '#ffffff',
+        padding: '36px 24px',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: 'hidden',
+        borderBottom: '1px solid #e2e8f0'
       }}>
-        <div style={{
-          position: 'absolute', top: -40, right: -40,
-          width: 200, height: 200, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.04)'
-        }} />
         <div style={{ maxWidth: 900, margin: '0 auto', position: 'relative' }}>
-          <h1 style={{ color: 'white', fontSize: 28, fontWeight: 800, margin: '0 0 6px' }}>
+          <h1 style={{ color: '#0f172a', fontSize: 28, fontWeight: 800, margin: '0 0 6px' }}>
             {t('my_service_requests')}
           </h1>
-          <p style={{ color: '#a8d4f5', fontSize: 14, margin: 0 }}>
-            {t('welcome')}
+          <p style={{ color: '#64748b', fontSize: 14, margin: 0 }}>
+            {t('my_requests_sub')}
           </p>
         </div>
       </div>
 
-      <div style={{ maxWidth: 900, margin: '-50px auto 0', padding: '0 16px' }}>
+      <div style={{ maxWidth: 900, margin: '24px auto 0', padding: '0 16px' }}>
 
         {/* Stats row */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
           {[
-            { label: 'Total Requests', value: requests.length, icon: <LuClipboardList style={{ color: '#185FA5' }} />, color: '#185FA5' },
+            { label: 'Total Requests', value: requests.length, icon: <LuClipboardList style={{ color: '#ff5c1a' }} />, color: '#ff5c1a' },
             { label: 'Active',  value: requests.filter(r => activeStatuses.includes(r.status)).length, icon: <LuSettings style={{ color: '#f59e0b' }} />, color: '#f59e0b' },
             { label: 'Completed', value: requests.filter(r => ['completed','closed','paid'].includes(r.status)).length, icon: <LuCircleCheck style={{ color: '#10b981' }} />, color: '#10b981' },
             { label: 'Invoices', value: invoices.length, icon: <LuFileText style={{ color: '#8b5cf6' }} />, color: '#8b5cf6' }
@@ -266,7 +266,7 @@ const MyRequests = () => {
                 padding: '8px 18px',
                 borderRadius: 20,
                 border: 'none',
-                background: activeTab === tab.key ? '#185FA5' : 'white',
+                background: activeTab === tab.key ? '#ff5c1a' : 'white',
                 color:  activeTab === tab.key ? 'white' : '#64748b',
                 fontWeight: 600,
                 fontSize: 13,
@@ -287,8 +287,10 @@ const MyRequests = () => {
               background: 'white', borderRadius: 16, padding: 48, textAlign: 'center',
               boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
             }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>📄</div>
-              <h4 style={{ color: '#1a1a2e', marginBottom: 8 }}>No Invoices Yet</h4>
+              <div style={{ marginBottom: 16, color: '#ff5c1a', display: 'flex', justifyContent: 'center' }}>
+                <LuFileText size={48} />
+              </div>
+              <h4 style={{ color: '#0f172a', marginBottom: 8 }}>No Invoices Yet</h4>
               <p style={{ color: '#64748b', fontSize: 14 }}>Your invoices will appear here after payment</p>
             </div>
           ) : (
@@ -303,12 +305,14 @@ const MyRequests = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div style={{
                       width: 48, height: 48, borderRadius: 12,
-                      background: 'linear-gradient(135deg, #185FA5, #1e7bc2)',
+                      background: 'linear-gradient(135deg, #ff5c1a, #ff8c42)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 20, flexShrink: 0
-                    }}>📄</div>
+                      color: 'white', flexShrink: 0
+                    }}>
+                      <LuFileText size={20} />
+                    </div>
                     <div>
-                      <div style={{ fontWeight: 700, color: '#1a1a2e', fontSize: 15 }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a', fontSize: 15 }}>
                         {inv.invoiceNumber || `Invoice #${inv._id.slice(-6).toUpperCase()}`}
                       </div>
                       <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
@@ -320,7 +324,7 @@ const MyRequests = () => {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 18, fontWeight: 800, color: '#185FA5' }}>
+                      <div style={{ fontSize: 18, fontWeight: 800, color: '#ff5c1a' }}>
                         AED {Number(inv.totalAmount || inv.total || 0).toFixed(2)}
                       </div>
                       <div style={{ fontSize: 11, color: '#94a3b8' }}>
@@ -339,12 +343,12 @@ const MyRequests = () => {
                     <button
                       onClick={() => downloadInvoice(inv._id)}
                       style={{
-                        padding: '8px 16px', background: '#185FA5', color: 'white',
+                        padding: '8px 16px', background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)', color: 'white',
                         border: 'none', borderRadius: 8, cursor: 'pointer',
-                        fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 4
+                        fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6
                       }}
                     >
-                      📥 Download
+                      <LuDownload size={14} /> Download
                     </button>
                   </div>
                 </div>
@@ -482,13 +486,15 @@ const MyRequests = () => {
               background: 'white', borderRadius: 16, padding: 48, textAlign: 'center',
               boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
             }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🚗</div>
-              <h4 style={{ color: '#1a1a2e', marginBottom: 8 }}>No Requests Yet</h4>
+              <div style={{ marginBottom: 16, color: '#ff5c1a', display: 'flex', justifyContent: 'center' }}>
+                <LuCar size={48} />
+              </div>
+              <h4 style={{ color: '#0f172a', marginBottom: 8 }}>No Requests Yet</h4>
               <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
                 Book your first car service to get started
               </p>
               <Link to="/get-quote" style={{
-                background: '#185FA5', color: 'white', padding: '12px 28px',
+                background: 'linear-gradient(135deg, #ff5c1a, #ff8c42)', color: 'white', padding: '12px 28px',
                 borderRadius: 10, textDecoration: 'none', fontWeight: 700, fontSize: 14
               }}>
                 Get a Quote
@@ -508,15 +514,16 @@ const MyRequests = () => {
                   }}>
                     {/* Card header */}
                     <div style={{
-                      background: 'linear-gradient(135deg, #1a1a2e, #0f172a)',
+                      background: '#f8fafc',
+                      borderBottom: '1px solid #e2e8f0',
                       padding: '16px 20px',
                       display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                     }}>
                       <div>
-                        <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em' }}>
+                        <div style={{ color: '#64748b', fontSize: 11, fontWeight: 600, letterSpacing: '0.05em' }}>
                           BOOKING ID
                         </div>
-                        <div style={{ color: 'white', fontWeight: 700, fontSize: 14 }}>
+                        <div style={{ color: '#0f172a', fontWeight: 700, fontSize: 14 }}>
                           #{req._id.slice(-8).toUpperCase()}
                         </div>
                       </div>
@@ -615,13 +622,13 @@ const MyRequests = () => {
                             onClick={() => navigate(`/payment?quoteId=${req.quoteId || req._id}`)}
                             style={{
                               padding: '10px 18px',
-                              background: 'linear-gradient(135deg, #185FA5, #1e7bc2)',
+                              background: 'linear-gradient(135deg, #ff5c1a, #ff8c42)',
                               color: 'white', border: 'none', borderRadius: 8,
                               cursor: 'pointer', fontWeight: 700, fontSize: 13,
-                              whiteSpace: 'nowrap'
+                              whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: 6
                             }}
                           >
-                            💳 Pay Now
+                            <LuCreditCard size={14} /> Pay Now
                           </button>
                         </div>
                       )}
@@ -631,12 +638,12 @@ const MyRequests = () => {
                         <Link
                           to={`/track/${req._id}`}
                           style={{
-                            padding: '8px 16px', background: '#f1f5f9', color: '#185FA5',
+                            padding: '8px 16px', background: '#f1f5f9', color: '#ff5c1a',
                             border: '1px solid #e2e8f0', borderRadius: 8, textDecoration: 'none',
-                            fontWeight: 600, fontSize: 12
+                            fontWeight: 600, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6
                           }}
                         >
-                          🔍 Track Status
+                          <LuSearch size={13} /> Track Status
                         </Link>
                       </div>
                     </div>

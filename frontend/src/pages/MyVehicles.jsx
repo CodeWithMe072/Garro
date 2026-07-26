@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import CustomDropdown from '../components/CustomDropdown';
-import { LuTrash2, LuPencil, LuPlus } from 'react-icons/lu';
+import { LuTrash2, LuPencil, LuPlus, LuCar } from 'react-icons/lu';
 
 const MyVehicles = () => {
   const [vehicles, setVehicles] = useState([]);
@@ -181,9 +181,9 @@ const MyVehicles = () => {
 
   return (
     <div style={{
-      background: '#0f172a',
+      background: '#ffffff',
       minHeight: '100vh',
-      color: '#f8fafc',
+      color: '#0f172a',
       padding: '40px 20px',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
@@ -192,7 +192,7 @@ const MyVehicles = () => {
         {/* Navigation */}
         <div style={{ marginBottom: '24px' }}>
           <button onClick={() => navigate('/home')} style={{
-            background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline'
+            background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '14px', textDecoration: 'none', fontWeight: 600
           }}>
             ← Return Home
           </button>
@@ -201,10 +201,10 @@ const MyVehicles = () => {
         {/* Header Block */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
           <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', margin: '0 0 6px', letterSpacing: '-0.025em' }}>
-              My Registered Vehicles 🚙
+            <h1 style={{ fontSize: '28px', fontWeight: '800', margin: '0 0 6px', letterSpacing: '-0.025em', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <LuCar style={{ color: '#ff5c1a' }} size={32} /> My Registered Vehicles
             </h1>
-            <p style={{ color: '#94a3b8', fontSize: '14px', margin: 0 }}>
+            <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
               Add, edit, or deactivate your vehicles for service bookings
             </p>
           </div>
@@ -230,28 +230,20 @@ const MyVehicles = () => {
         {loading ? (
           <p style={{ color: '#64748b' }}>{t('loading')}</p>
         ) : vehicles.length === 0 ? (
-          <div style={{ background: '#1e293b', borderRadius: '16px', padding: '60px 40px', textAlign: 'center', color: '#64748b' }}>
-            <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>🚘</span>
+          <div style={{ background: '#f8fafc', borderRadius: '16px', padding: '60px 40px', textAlign: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
+            <div style={{ marginBottom: '16px', color: '#ff5c1a', display: 'flex', justifyContent: 'center' }}>
+              <LuCar size={48} />
+            </div>
             {t('no_vehicles')}
           </div>
         ) : (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: '24px' }}>
               {currentVehicles.map(v => (
-                <div key={v._id} style={{
-                  background: '#1e293b',
-                  borderRadius: '16px',
-                  padding: '24px',
-                  border: '1px solid rgba(255, 255, 255, 0.04)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '16px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                  position: 'relative'
-                }}>
+                <div key={v._id} className="g-vehicle-card">
                   {/* Card Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: '800', margin: 0, color: 'white' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '800', margin: 0, color: '#0f172a' }}>
                       {v.make} {v.model}
                     </h3>
                     <span style={{
@@ -270,14 +262,14 @@ const MyVehicles = () => {
 
                   {/* Card Body */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <p style={{ color: '#cbd5e1', fontSize: '14px', margin: 0 }}>
+                    <p style={{ color: '#475569', fontSize: '14px', margin: 0 }}>
                       Year: {v.year}
                     </p>
                     <div style={{ display: 'flex' }}>
                       <span style={{
-                        background: '#0f172a',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        color: '#f8fafc',
+                        background: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        color: '#0f172a',
                         padding: '4px 10px',
                         borderRadius: '6px',
                         fontFamily: 'monospace',
@@ -290,7 +282,7 @@ const MyVehicles = () => {
                   </div>
 
                   {/* Card Actions */}
-                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'end', marginTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'end', marginTop: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
                     <button
                       onClick={() => handleToggleActive(v)}
                       style={{
@@ -311,8 +303,8 @@ const MyVehicles = () => {
                       onClick={() => handleOpenEdit(v)}
                       style={{
                         background: 'none',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        color: '#f8fafc',
+                        border: '1px solid #cbd5e1',
+                        color: '#475569',
                         borderRadius: '8px',
                         padding: '6px 14px',
                         fontSize: '12px',
@@ -324,7 +316,7 @@ const MyVehicles = () => {
                         gap: '4px'
                       }}
                     >
-                      Edit 📝
+                      Edit <LuPencil size={13} />
                     </button>
                     <button
                       onClick={() => handleDeleteVehicle(v._id)}
@@ -343,7 +335,7 @@ const MyVehicles = () => {
                         gap: '4px'
                       }}
                     >
-                      Delete <LuTrash2 size={13} style={{ marginLeft: '4px' }} />
+                      Delete <LuTrash2 size={13} />
                     </button>
                   </div>
                 </div>
@@ -358,8 +350,8 @@ const MyVehicles = () => {
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
                     style={{
-                      background: currentPage === pageNum ? '#ff5c1a' : '#1e293b',
-                      color: 'white',
+                      background: currentPage === pageNum ? '#ff5c1a' : '#f1f5f9',
+                      color: currentPage === pageNum ? 'white' : '#475569',
                       border: 'none',
                       borderRadius: '8px',
                       width: '36px',
@@ -367,7 +359,7 @@ const MyVehicles = () => {
                       fontWeight: '700',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
                     }}
                   >
                     {pageNum}
@@ -401,24 +393,24 @@ const MyVehicles = () => {
         >
           <div 
             onClick={(e) => e.stopPropagation()} 
-            className="g-dark-form-card"
+            className="g-light-form-card"
             style={{
-              background: '#1e293b',
+              background: '#ffffff',
               borderRadius: '20px',
               padding: '28px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
+              border: '1px solid #e2e8f0',
               width: '100%',
               maxWidth: '480px',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.3)'
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
             }}
           >
-            <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '20px', color: 'white' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '20px', color: '#0f172a' }}>
               {editVehicleId ? <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuPencil /> Edit Registered Vehicle</span> : <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuPlus /> Add New Vehicle</span>}
             </h3>
             
             <form onSubmit={handleVehicleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>{t('brand_make')}</label>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>{t('brand_make')}</label>
                 <CustomDropdown
                   name="car_brand"
                   placeholder={t('select_make')}
@@ -433,7 +425,7 @@ const MyVehicles = () => {
               </div>
               
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>{t('model')}</label>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>{t('model')}</label>
                 <CustomDropdown
                   name="car_model"
                   placeholder={carBrand ? t('model_placeholder') : t('select_brand_first')}
@@ -445,7 +437,7 @@ const MyVehicles = () => {
               </div>
               
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>{t('year')}</label>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>{t('year')}</label>
                 <CustomDropdown
                   name="car_year"
                   placeholder={t('year_placeholder')}
@@ -457,7 +449,7 @@ const MyVehicles = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>{t('registration_plate')}</label>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>{t('registration_plate')}</label>
                 <input
                   type="text"
                   placeholder={t('plate_placeholder')}
@@ -465,11 +457,11 @@ const MyVehicles = () => {
                   onChange={(e) => setPlateNumber(e.target.value)}
                   style={{
                     width: '100%',
-                    background: '#0f172a',
-                    border: '1.5px solid rgba(255, 255, 255, 0.08)',
+                    background: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
                     borderRadius: '10px',
                     padding: '10px 14px',
-                    color: 'white',
+                    color: '#0f172a',
                     fontSize: '13.5px',
                     outline: 'none'
                   }}
@@ -478,7 +470,7 @@ const MyVehicles = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#94a3b8', marginBottom: '6px' }}>{t('vin_optional')}</label>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>{t('vin_optional')}</label>
                 <input
                   type="text"
                   value={vinNumber}
@@ -487,10 +479,10 @@ const MyVehicles = () => {
                   style={{
                     width: '100%',
                     padding: '10px 12px',
-                    background: '#0f172a',
-                    border: '1.5px solid rgba(255, 255, 255, 0.08)',
+                    background: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
                     borderRadius: '10px',
-                    color: 'white',
+                    color: '#0f172a',
                     fontSize: '13.5px',
                     outline: 'none'
                   }}
@@ -503,10 +495,10 @@ const MyVehicles = () => {
                   onClick={() => setVehicleModalOpen(false)}
                   style={{
                     background: 'none',
-                    border: '1px solid rgba(255,255,255,0.15)',
+                    border: '1px solid #cbd5e1',
                     borderRadius: '10px',
                     padding: '12px 20px',
-                    color: '#94a3b8',
+                    color: '#475569',
                     fontWeight: '700',
                     cursor: 'pointer'
                   }}
