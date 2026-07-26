@@ -311,30 +311,30 @@ const Navbar = () => {
 
                   {user?.role === 'customer' && (
                     <>
-                      <Link to="/customer/dashboard" className="g-dropdown-item">
-                        <LuLayoutDashboard size={16} />Dashboard
+                      <Link to="/customer/dashboard" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        <LuLayoutDashboard size={16} />Customer Portal
                       </Link>
-                      <Link to="/my-requests" className="g-dropdown-item">
+                      <Link to="/my-requests" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         <LuClipboardList size={16} />{t('requests')}
                       </Link>
-                      <Link to="/my-vehicles" className="g-dropdown-item">
+                      <Link to="/my-vehicles" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         <LuCar size={16} />{t('vehicles')}
                       </Link>
                     </>
                   )}
 
                   {user?.role === 'staff' && (
-                    <Link to="/admin/staff" className="g-dropdown-item">
+                    <Link to="/admin/staff" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                       <LuZap size={16} />Staff Dashboard
                     </Link>
                   )}
 
                   {['manager', 'superadmin', 'admin'].includes(user?.role) && (
                     <>
-                      <Link to="/admin" className="g-dropdown-item">
+                      <Link to="/admin" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         <LuLayoutDashboard size={16} />Admin Dashboard
                       </Link>
-                      <Link to="/admin/staff" className="g-dropdown-item">
+                      <Link to="/admin/staff" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         <LuUsers size={16} />Staff View
                       </Link>
                     </>
