@@ -67,7 +67,7 @@ const PageLayout = ({ children }) => {
     <div className={isAdminLayout ? "g-admin-layout" : ""}>
       <Navbar />
       <main>{children}</main>
-      <Footer />
+      {!isAdminLayout && <Footer />}
     </div>
   );
 };

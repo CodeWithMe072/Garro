@@ -16,7 +16,8 @@ import {
   LuMessageCircle,
   LuTrendingUp,
   LuChevronLeft,
-  LuChevronRight
+  LuChevronRight,
+  LuSlidersHorizontal
 } from 'react-icons/lu';
 
 const AdminSidebar = ({ pendingBookings }) => {
@@ -121,7 +122,7 @@ const AdminSidebar = ({ pendingBookings }) => {
           <span className="link-text">{t('find_garages')}</span>
         </Link>
         <Link to="/admin/catalog" className={`sidebar-link ${isActive('/admin/catalog')}`}>
-          <span className="icon"><LuSettings /></span>
+          <span className="icon"><LuSlidersHorizontal /></span>
           <span className="link-text">{t('system_catalog')}</span>
         </Link>
         <Link to="/admin/quote-builder" className={`sidebar-link ${isActive('/admin/quote-builder')}`}>
@@ -129,7 +130,7 @@ const AdminSidebar = ({ pendingBookings }) => {
           <span className="link-text">{t('quote_builder')}</span>
         </Link>
         <Link to="/admin/customers" className={`sidebar-link ${isActive('/admin/customers')}`}>
-          <span className="icon"><LuUsers /></span>
+          <span className="icon"><LuUser /></span>
           <span className="link-text">{t('customer_search')}</span>
         </Link>
         <Link to="/admin/complaints" className={`sidebar-link ${isActive('/admin/complaints')}`}>
@@ -159,7 +160,7 @@ const AdminSidebar = ({ pendingBookings }) => {
       <span className="sidebar-label" dir="auto">{t('people')}</span>
       <div className="sidebar-section">
         <Link to="/admin/manage-staff" className={`sidebar-link ${isActive('/admin/manage-staff')}`}>
-          <span className="icon"><LuUser /></span>
+          <span className="icon"><LuUsers /></span>
           <span className="link-text">{t('all_users')}</span>
         </Link>
         <Link to="/admin/staff" className={`sidebar-link ${isActive('/admin/staff')}`}>
@@ -167,7 +168,7 @@ const AdminSidebar = ({ pendingBookings }) => {
           <span className="link-text">{t('staff_view')}</span>
         </Link>
         <Link to="/admin/manage-staff" className={`sidebar-link ${isActive('/admin/manage-staff')}`}>
-          <span className="icon"><LuUsers /></span>
+          <span className="icon"><LuUser /></span>
           <span className="link-text">{t('manage_staff')}</span>
         </Link>
       </div>

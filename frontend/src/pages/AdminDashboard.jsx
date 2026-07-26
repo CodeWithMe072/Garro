@@ -27,7 +27,13 @@ import {
   LuCalendarDays,
   LuChevronLeft,
   LuChevronRight,
-  LuTrendingUp
+  LuTrendingUp,
+  LuFileSpreadsheet,
+  LuFileText,
+  LuArrowRight,
+  LuUserCheck,
+  LuX,
+  LuCircleCheck
 } from 'react-icons/lu';
 
 const AdminDashboard = () => {
@@ -529,7 +535,16 @@ const AdminDashboard = () => {
         <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div className="dash-title">
-              {lang === 'ar' ? 'صباح الخير' : (lang === 'ur' ? 'صبح بخیر' : 'Good Morning')}, {user?.firstName || 'Admin'} 👋
+              {(() => {
+                const hour = new Date().getHours();
+                if (hour < 12) {
+                  return lang === 'ar' ? 'صباح الخير' : (lang === 'ur' ? 'صبح بخیر' : 'Good Morning');
+                } else if (hour < 17) {
+                  return lang === 'ar' ? 'مساء الخير' : (lang === 'ur' ? 'سہ پہر بخیر' : 'Good Afternoon');
+                } else {
+                  return lang === 'ar' ? 'مساء الخير' : (lang === 'ur' ? 'شام بخیر' : 'Good Evening');
+                }
+              })()}, {user?.firstName || 'Admin'} 👋
             </div>
             <div className="dash-subtitle">
               {lang === 'ar' ? 'إليك ما يحدث في غارو اليوم' : (lang === 'ur' ? 'آج گارو میں کیا ہو رہا ہے' : "Here's what's happening at Garro today")}
@@ -539,30 +554,17 @@ const AdminDashboard = () => {
           <div style={{ position: 'relative' }}>
             <button 
               onClick={() => setIsLangOpen(!isLangOpen)}
-              className="btn btn-outline-secondary d-flex align-items-center gap-2"
-              style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
+              className="dash-lang-toggle"
             >
-              <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
+              <LuGlobe size={15} /> <span>{lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}</span>
             </button>
             {isLangOpen && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-                boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
-                minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
-              }}>
+              <div className="dash-lang-dropdown">
                 {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
                   <button
                     key={code}
                     onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                    style={{
-                      background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
-                      borderRadius: '8px', padding: '8px 12px',
-                      color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
-                      fontSize: '13px', fontWeight: lang === code ? 700 : 500,
-                      cursor: 'pointer', display: 'flex', alignItems: 'center',
-                      justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-                    }}
+                    className={`dash-lang-option ${lang === code ? 'active' : ''}`}
                   >
                     <span>{label}</span>
                   </button>
@@ -629,8 +631,12 @@ const AdminDashboard = () => {
                 <div className="chart-sub">{lang === 'ar' ? 'اتجاه إيرادات الحجوزات المكتملة' : (lang === 'ur' ? 'مکمل بکنگ کی آمدنی کا رجحان' : 'Completed bookings revenue trend')}</div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => downloadReport('revenue', 'xlsx')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>Excel 📊</button>
-                <button onClick={() => downloadReport('revenue', 'pdf')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>PDF 📄</button>
+                <button onClick={() => downloadReport('revenue', 'xlsx')} className="btn-export-dash">
+                  <LuFileSpreadsheet size={13} /> <span>Excel</span>
+                </button>
+                <button onClick={() => downloadReport('revenue', 'pdf')} className="btn-export-dash">
+                  <LuFileText size={13} /> <span>PDF</span>
+                </button>
               </div>
             </div>
             <div style={{ height: '200px', marginTop: '12px' }}>
@@ -644,8 +650,12 @@ const AdminDashboard = () => {
                 <div className="chart-sub">{lang === 'ar' ? 'التوزيع الحالي للحجوزات' : (lang === 'ur' ? 'بکنگ کی موجودہ تقسیم' : 'Current distribution')}</div>
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button onClick={() => downloadReport('garages', 'xlsx')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>Garages Excel 📊</button>
-                <button onClick={() => downloadReport('garages', 'pdf')} style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', color: '#94a3b8', cursor: 'pointer' }}>Garages PDF 📄</button>
+                <button onClick={() => downloadReport('garages', 'xlsx')} className="btn-export-dash">
+                  <LuFileSpreadsheet size={13} /> <span>Garages Excel</span>
+                </button>
+                <button onClick={() => downloadReport('garages', 'pdf')} className="btn-export-dash">
+                  <LuFileText size={13} /> <span>Garages PDF</span>
+                </button>
               </div>
             </div>
             <div style={{ height: '200px', marginTop: '12px' }}>
@@ -659,7 +669,9 @@ const AdminDashboard = () => {
           <div className="data-card">
             <div className="data-head">
               <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuClock /> Recent Bookings</h4>
-              <a href="#">View all →</a>
+              <Link to="/my-bookings" className="btn-view-all">
+                <span>View all</span> <LuArrowRight size={13} />
+              </Link>
             </div>
             <table className="g-table">
               <tbody>
@@ -685,10 +697,9 @@ const AdminDashboard = () => {
                         {b.status === 'new' && (
                           <button 
                             onClick={() => handleOpenAssignModal(b)} 
-                            className="btn btn-sm btn-outline-primary ms-2 py-0 px-2"
-                            style={{ fontSize: '10px', borderRadius: '4px', border: '1px solid #ff5c1a', color: '#ff5c1a', background: 'none', fontWeight: 'bold' }}
+                            className="btn-assign-action ms-2"
                           >
-                            Assign
+                            <LuUserCheck size={11} /> <span>Assign</span>
                           </button>
                         )}
                       </td>
@@ -832,40 +843,44 @@ const AdminDashboard = () => {
               <h4 className="fw-bold mb-0" style={{ color: '#0f172a' }}>Assign Garage &amp; Helper</h4>
               <button 
                 onClick={() => setSelectedRequest(null)}
-                className="btn-close"
-                style={{ border: 'none', background: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}
+                className="modal-close-btn"
               >
-                ✕
+                <LuX size={18} />
               </button>
             </div>
 
-            <div className="mb-3 p-3 rounded-3" style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+            <div className="mb-3 p-3 rounded-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
               <div className="small text-muted fw-semibold mb-2" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <LuClipboardList /> Request Details
+                <LuClipboardList size={14} className="text-slate-500" /> Request Details
               </div>
               <div className="fw-bold text-dark">{selectedRequest.userId?.name || 'Unknown User'}</div>
               <div className="small text-secondary">{selectedRequest.vehicleId ? `${selectedRequest.vehicleId.make} ${selectedRequest.vehicleId.model} (${selectedRequest.vehicleId.year})` : 'Unknown Vehicle'}</div>
               <div className="small text-secondary mt-1">Issue: {selectedRequest.description}</div>
-              <hr className="my-2" style={{ borderColor: '#bae6fd' }} />
+              <hr className="my-2" style={{ borderColor: '#e2e8f0' }} />
               <div className="d-flex gap-3 flex-wrap">
                 <div>
                   <div className="small text-muted">Customer Urgency</div>
-                  <span className={`badge mt-1 px-2 py-1 ${
-                    selectedRequest.urgency === 'asap' ? 'bg-danger' :
-                    selectedRequest.urgency === 'today' ? 'bg-warning text-dark' :
-                    selectedRequest.urgency === 'this_week' ? 'bg-info text-dark' : 'bg-secondary'
-                  }`} style={{ fontSize: '11px' }}>
-                    {selectedRequest.urgency === 'asap' ? '🚨 ASAP — Urgent' :
-                     selectedRequest.urgency === 'today' ? '📅 Today' :
-                     selectedRequest.urgency === 'this_week' ? '📆 This Week' : '⏳ Flexible'}
+                  <span className={`urgency-badge ${selectedRequest.urgency}`}>
+                    {selectedRequest.urgency === 'asap' ? (
+                      <><LuTriangleAlert size={12} /> <span>ASAP — Urgent</span></>
+                    ) : selectedRequest.urgency === 'today' ? (
+                      <><LuCalendar size={12} /> <span>Today</span></>
+                    ) : selectedRequest.urgency === 'this_week' ? (
+                      <><LuCalendarDays size={12} /> <span>This Week</span></>
+                    ) : (
+                      <><LuHourglass size={12} /> <span>Flexible</span></>
+                    )}
                   </span>
                 </div>
                 {selectedRequest.preferredDate && (
                   <div>
                     <div className="small text-muted">Preferred Date/Time</div>
-                    <div className="small fw-semibold text-dark mt-1">
-                      📅 {new Date(selectedRequest.preferredDate).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}{' '}
-                      🕐 {new Date(selectedRequest.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <div className="small fw-semibold text-dark mt-1" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <LuCalendar size={12} className="text-slate-500" />
+                      <span>
+                        {new Date(selectedRequest.preferredDate).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })}{' '}
+                        ({new Date(selectedRequest.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                      </span>
                     </div>
                   </div>
                 )}
@@ -891,8 +906,8 @@ const AdminDashboard = () => {
                   required
                 />
                 {selectedRequest && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
-                  <p className="text-danger small mt-1">
-                    ⚠️ No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.address || 'N/A'}"</strong>.
+                  <p className="text-danger small mt-1" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <LuTriangleAlert size={12} /> <span>No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.address || 'N/A'}"</strong>.</span>
                   </p>
                 )}
               </div>
@@ -906,7 +921,7 @@ const AdminDashboard = () => {
                     .filter(h => h.garageId?._id === assignGarageId)
                     .map(h => ({
                       value: h._id,
-                      label: `${h.name} (⭐ ${h.rating || 5}/5) ${!h.isAvailable ? '[⚠️ Shift Conflict]' : (h.upcomingSlots && h.upcomingSlots.length > 0 ? `[Job commitments: ${h.upcomingSlots.length}]` : '[Free]')}`
+                      label: `${h.name} (Rating: ${h.rating || 5}/5) ${!h.isAvailable ? '[Shift Conflict]' : (h.upcomingSlots && h.upcomingSlots.length > 0 ? `[Job commitments: ${h.upcomingSlots.length}]` : '[Free]')}`
                     }))
                   }
                   value={assignHelperId}
@@ -915,16 +930,22 @@ const AdminDashboard = () => {
                 />
                 {!assignGarageId && <p className="text-muted small mt-1">Please select a garage first to view available helpers.</p>}
                 {assignGarageId && availableHelpersList.filter(h => h.garageId?._id === assignGarageId).length === 0 && (
-                  <p className="text-danger small mt-1">No available helpers found for this garage.</p>
+                  <p className="text-danger small mt-1" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <LuTriangleAlert size={12} /> <span>No available helpers found for this garage.</span>
+                  </p>
                 )}
               </div>
 
               {/* ── Schedule time config ── */}
               <div className="p-3 mb-4 rounded-3" style={{ background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                 <div className="d-flex align-items-center justify-content-between mb-2">
-                  <div className="small fw-bold text-dark">🕐 Schedule Helper Visit</div>
+                  <div className="small fw-bold text-dark" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <LuClock size={14} className="text-slate-500" /> <span>Schedule Helper Visit</span>
+                  </div>
                   {hasConflict && (
-                    <span className="badge bg-danger px-2 py-1" style={{ fontSize: '11px' }}>⚠️ Time Conflict!</span>
+                    <span className="conflict-badge">
+                      <LuTriangleAlert size={11} /> <span>Time Conflict!</span>
+                    </span>
                   )}
                 </div>
 
@@ -1004,7 +1025,7 @@ const AdminDashboard = () => {
                         const lbl = min===0 ? `${h>12?h-12:h===0?12:h}${h>=12?'pm':'am'}` : '';
                         const bg = isConfl ? '#7f1d1d' : isBusy ? '#ef4444' : isProp ? '#f97316' : '#22c55e';
                         cells.push(
-                          <div key={m} title={isConfl?'⚠️ CONFLICT!':isBusy?`Busy`:isProp?`Your slot: ${assignTime} +${assignDuration}h`:'Free'}
+                          <div key={m} title={isConfl?'CONFLICT!':isBusy?`Busy`:isProp?`Your slot: ${assignTime} +${assignDuration}h`:'Free'}
                             style={{ flex:1, height:'28px', background:bg, borderRight:'1px solid rgba(255,255,255,0.25)', position:'relative', cursor:'default', opacity:0.9 }}>
                             {lbl && <span style={{ position:'absolute', top:'100%', left:0, fontSize:'9px', color:'#64748b', whiteSpace:'nowrap', marginTop:'2px' }}>{lbl}</span>}
                           </div>
@@ -1018,12 +1039,18 @@ const AdminDashboard = () => {
                       );
                     })()}
                     {hasConflict ? (
-                      <div className="alert alert-danger py-2 px-3 mb-0" style={{ fontSize:'12.5px', borderRadius:'8px' }}>
-                        ⚠️ <strong>Time conflict!</strong> This helper is already booked at this time. Please pick a different time or duration.
+                      <div className="modal-alert alert-danger">
+                        <LuTriangleAlert size={16} style={{ flexShrink: 0 }} />
+                        <div>
+                          <strong>Time conflict!</strong> This helper is already booked at this time. Please pick a different time or duration.
+                        </div>
                       </div>
                     ) : (
-                      <div className="alert alert-success py-2 px-3 mb-0" style={{ fontSize:'12.5px', borderRadius:'8px' }}>
-                        ✅ <strong>{assignTime}</strong> for <strong>{assignDuration} hr(s)</strong> — no conflicts detected.
+                      <div className="modal-alert alert-success">
+                        <LuCircleCheck size={16} style={{ flexShrink: 0 }} />
+                        <div>
+                          <strong>{assignTime}</strong> for <strong>{assignDuration} hr(s)</strong> — no conflicts detected.
+                        </div>
                       </div>
                     )}
                   </div>
@@ -1044,7 +1071,7 @@ const AdminDashboard = () => {
                   disabled={submittingAssign || !assignGarageId || !assignHelperId || hasConflict}
                   title={hasConflict ? 'Resolve the time conflict first' : ''}
                 >
-                  {submittingAssign ? 'Assigning...' : hasConflict ? '⚠️ Conflict — Change Time' : 'Confirm Assignment'}
+                  {submittingAssign ? 'Assigning...' : hasConflict ? 'Conflict — Change Time' : 'Confirm Assignment'}
                 </button>
               </div>
             </form>
