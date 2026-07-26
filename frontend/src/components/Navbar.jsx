@@ -13,6 +13,8 @@ const Navbar = () => {
   const { lang, changeLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
+  const isStaffView = location.pathname.startsWith('/admin/staff') || location.pathname.startsWith('/staff') || (location.pathname === '/my-bookings' && user?.role === 'staff');
+  const hideHomeInsurance = user?.role === 'staff' || isStaffView;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -130,18 +132,18 @@ const Navbar = () => {
           {/* Authenticated Links */}
           {isAuthenticated && (
             <>
-              <li>
-                <Link to="/home" className={isActive('/home')}>
-                  <LuHouse size={15} /> Home
-                </Link>
-              </li>
-              <li>
-                <Link to="/insurance" className={isActive('/insurance')}>
-                  <LuShield size={15} /> {t('insurance')}
-                </Link>
-              </li>
-              {user?.role === 'customer' && (
+              {!hideHomeInsurance && (
                 <>
+                  <li>
+                    <Link to="/home" className={isActive('/home')}>
+                      <LuHouse size={15} /> {t('home')}
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/insurance" className={isActive('/insurance')}>
+                      <LuShield size={15} /> {t('insurance')}
+                    </Link>
+                  </li>
                   <li>
                     <Link to="/roadside" className={isActive('/roadside')}>
                       <LuTruck size={15} /> {t('roadside')}
@@ -175,7 +177,7 @@ const Navbar = () => {
               )}
 
               {/* Emergency Pickup CTA */}
-              {user?.role === 'customer' && (
+              {!hideHomeInsurance && (
                 <Link
                   to="/emergency-pickup"
                   className="btn-nav-quote d-none d-md-inline-flex"
@@ -312,7 +314,7 @@ const Navbar = () => {
                   {user?.role === 'customer' && (
                     <>
                       <Link to="/customer/dashboard" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <LuLayoutDashboard size={16} />Customer Portal
+                        <LuLayoutDashboard size={16} />{t('customer_portal')}
                       </Link>
                       <Link to="/my-requests" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         <LuClipboardList size={16} />{t('requests')}
@@ -323,19 +325,13 @@ const Navbar = () => {
                     </>
                   )}
 
-                  {user?.role === 'staff' && (
-                    <Link to="/admin/staff" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                      <LuZap size={16} />Staff Dashboard
-                    </Link>
-                  )}
-
                   {['manager', 'superadmin', 'admin'].includes(user?.role) && (
                     <>
                       <Link to="/admin" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <LuLayoutDashboard size={16} />Admin Dashboard
+                        <LuLayoutDashboard size={16} />{t('admin_dashboard')}
                       </Link>
                       <Link to="/admin/staff" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <LuUsers size={16} />Staff View
+                        <LuUsers size={16} />{t('staff_view')}
                       </Link>
                     </>
                   )}
@@ -346,7 +342,7 @@ const Navbar = () => {
                     onClick={() => { logout(); navigate('/login'); }}
                     style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer' }}
                   >
-                    <LuLogOut size={16} />Sign Out
+                    <LuLogOut size={16} />{t('sign_out')}
                   </button>
                 </div>
               </div>

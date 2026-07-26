@@ -21,13 +21,86 @@ import {
   LuChevronLeft,
   LuChevronRight,
   LuTag,
-  LuWrench
+  LuWrench,
+  LuCar,
+  LuDownload,
+  LuUpload,
+  LuFileSpreadsheet
 } from 'react-icons/lu';
+const localT = {
+  en: {
+    bulk_csv: "Bulk CSV Operations",
+    bulk_csv_desc: "Import or export the active tab directory catalog using a CSV spreadsheet file",
+    download_csv: "Download template / CSV data",
+    upload_csv: "Upload CSV",
+    brands_makes: "Brands / Makes",
+    add_brand: "+ Add Brand",
+    no_brands: "No brands configured.",
+    models_in: "Models in: ",
+    add_model: "+ Add Model",
+    model_name: "Model Name",
+    status: "Status",
+    actions: "Actions",
+    no_models: "No models configured for this brand.",
+    select_brand_desc: "Select a Brand on the left to manage its models.",
+    sub_models: "sub-models",
+    active: "Active",
+    inactive: "Inactive",
+    edit: "Edit",
+    delete: "Delete",
+    toggle_status: "Toggle Status"
+  },
+  ar: {
+    bulk_csv: "عمليات ملفات CSV الجماعية",
+    bulk_csv_desc: "استيراد أو تصدير دليل علامة التبويب النشطة باستخدام ملف جدول بيانات CSV",
+    download_csv: "تحميل النموذج / بيانات CSV",
+    upload_csv: "رفع ملف CSV",
+    brands_makes: "الماركات / العلامات التجارية",
+    add_brand: "+ إضافة ماركة",
+    no_brands: "لم يتم تكوين أي ماركات بعد.",
+    models_in: "الموديلات في: ",
+    add_model: "+ إضافة موديل",
+    model_name: "اسم الموديل",
+    status: "الحالة",
+    actions: "الإجراءات",
+    no_models: "لا توجد موديلات مهيأة لهذه الماركة.",
+    select_brand_desc: "اختر ماركة من اليسار لإدارة الموديلات الخاصة بها.",
+    sub_models: "الموديلات الفرعية",
+    active: "نشط",
+    inactive: "غير نشط",
+    edit: "تعديل",
+    delete: "حذف",
+    toggle_status: "تغيير الحالة"
+  },
+  ur: {
+    bulk_csv: "بلک CSV آپریشنز",
+    bulk_csv_desc: "CSV اسپریڈ شیٹ فائل کا استعمال کرتے ہوئے فعال ٹیب ڈائریکٹری کیٹلاگ درآمد یا برآمد کریں",
+    download_csv: "ٹیمپلیٹ / CSV ڈیٹا ڈاؤن لوڈ کریں",
+    upload_csv: "CSV اپ لوڈ کریں",
+    brands_makes: "برانڈز / میکس",
+    add_brand: "+ برانڈ شامل کریں",
+    no_brands: "کوئی برانڈ کنفیگر نہیں کیا گیا۔",
+    models_in: "ماڈلز بشمول: ",
+    add_model: "+ ماڈل شامل کریں",
+    model_name: "ماڈل کا نام",
+    status: "حالت",
+    actions: "اقدامات",
+    no_models: "اس برانڈ کے لیے کوئی ماڈل ترتیب نہیں دیا گیا ہے۔",
+    select_brand_desc: "اس کے ماڈلز کو منظم کرنے کے لیے بائیں طرف سے ایک برانڈ منتخب کریں۔",
+    sub_models: "ذیلی ماڈلز",
+    active: "فعال",
+    inactive: "غیر فعال",
+    edit: "ترمیم",
+    delete: "حذف",
+    toggle_status: "حالت تبدیل کریں"
+  }
+};
 
 const CatalogManagement = () => {
   const { user } = useAuth();
   const { toast, confirm } = useNotification();
   const { t, lang, changeLanguage } = useLanguage();
+  const lt = (key) => localT[lang]?.[key] || localT['en']?.[key] || key;
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('brands');
 
@@ -357,98 +430,71 @@ const CatalogManagement = () => {
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">
-        <div className="dash-header mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="dash-header mb-4">
           <div>
-            <div className="dash-title">⚙️ {t('system_catalog_settings')}</div>
+            <div className="dash-title d-flex align-items-center gap-2">
+              <LuSettings className="text-primary-garro" />
+              <span>{t('system_catalog_settings')}</span>
+            </div>
             <div className="dash-subtitle">{t('manage_metadata_catalogs')}</div>
-          </div>
-          {/* Language Switcher */}
-          <div style={{ position: 'relative' }}>
-            <button 
-              onClick={() => setIsLangOpen(!isLangOpen)}
-              className="btn btn-outline-secondary d-flex align-items-center gap-2"
-              style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
-            >
-              <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
-            </button>
-            {isLangOpen && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-                boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
-                minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
-              }}>
-                {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
-                  <button
-                    key={code}
-                    onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                    style={{
-                      background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
-                      borderRadius: '8px', padding: '8px 12px',
-                      color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
-                      fontSize: '13px', fontWeight: lang === code ? 700 : 500,
-                      cursor: 'pointer', display: 'flex', alignItems: 'center',
-                      justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-                    }}
-                  >
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 
         {/* Tab Headers */}
         <div className="d-flex border-bottom mb-4 gap-2" style={{ overflowX: 'auto' }}>
           <button 
-            className={`btn py-2 px-4 fw-bold ${activeTab === 'brands' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
+            className={`btn py-2 px-4 fw-bold d-flex align-items-center gap-2 ${activeTab === 'brands' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
             style={{ borderRadius: '10px 10px 0 0', minWidth: '150px' }}
             onClick={() => setActiveTab('brands')}
           >
-            🏷️ {lang === 'ar' ? 'الماركات والموديلات' : (lang === 'ur' ? 'برانڈز اور ماڈلز' : 'Brands & Models')}
+            <LuTag size={14} /> {lang === 'ar' ? 'الماركات والموديلات' : (lang === 'ur' ? 'برانڈز اور ماڈلز' : 'Brands & Models')}
           </button>
           <button 
-            className={`btn py-2 px-4 fw-bold ${activeTab === 'services' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
+            className={`btn py-2 px-4 fw-bold d-flex align-items-center gap-2 ${activeTab === 'services' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
             style={{ borderRadius: '10px 10px 0 0', minWidth: '150px' }}
             onClick={() => setActiveTab('services')}
           >
-            🔧 {lang === 'ar' ? 'دليل الخدمات' : (lang === 'ur' ? 'سروس کیٹلاگ' : 'Service Catalog')}
+            <LuWrench size={14} /> {lang === 'ar' ? 'دليل الخدمات' : (lang === 'ur' ? 'سروس کیٹلاگ' : 'Service Catalog')}
           </button>
           <button 
-            className={`btn py-2 px-4 fw-bold ${activeTab === 'locations' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
+            className={`btn py-2 px-4 fw-bold d-flex align-items-center gap-2 ${activeTab === 'locations' ? 'btn-primary-garro text-white' : 'btn-light text-dark'}`}
             style={{ borderRadius: '10px 10px 0 0', minWidth: '150px' }}
             onClick={() => setActiveTab('locations')}
           >
-            📍 {lang === 'ar' ? 'المدن والمناطق' : (lang === 'ur' ? 'شہر اور علاقے' : 'Cities & Areas')}
+            <LuGlobe size={14} /> {lang === 'ar' ? 'المدن والمناطق' : (lang === 'ur' ? 'شہر اور علاقے' : 'Cities & Areas')}
           </button>
         </div>
 
         {/* Loading Spinner */}
         {loading ? (
           <div className="text-center py-5">
-            <div className="spinner-border text-primary" role="status"></div>
+            <div className="spinner-border text-primary-garro" role="status"></div>
             <div className="mt-2 text-muted">Loading tab contents...</div>
           </div>
         ) : (
           <div>
             {/* Bulk Operations Panel */}
-            <div className="card border-0 shadow-sm mb-4 bg-light" style={{ borderRadius: '12px', maxWidth: 'none' }}>
+            <div className="card border shadow-sm mb-4" style={{ borderRadius: '16px', borderColor: '#e2e8f0' }}>
               <div className="card-body py-3 px-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
-                <div>
-                  <div className="fw-bold text-dark">📦 Bulk CSV Operations</div>
-                  <div className="text-muted small">Import or export the active tab directory catalog using a CSV spreadsheet file</div>
+                <div className="d-flex align-items-center gap-3">
+                  <div className="bg-light p-2 rounded-3 text-primary-garro">
+                    <LuFileSpreadsheet size={20} />
+                  </div>
+                  <div>
+                    <div className="fw-bold text-dark">{lt('bulk_csv')}</div>
+                    <div className="text-muted small">{lt('bulk_csv_desc')}</div>
+                  </div>
                 </div>
                 <div className="d-flex gap-2 align-items-center">
                   <button 
                     onClick={() => handleCSVExport(activeTab === 'brands' ? 'brands' : activeTab === 'services' ? 'services' : 'locations')} 
                     className="btn btn-sm btn-outline-primary px-3 d-flex align-items-center gap-2"
                   >
-                    <span>📥</span> Download template / CSV data
+                    <LuDownload size={14} /> {lt('download_csv')}
                   </button>
                   
                   <label className="btn btn-sm btn-outline-success px-3 mb-0 d-flex align-items-center gap-2" style={{ cursor: 'pointer' }}>
-                    <span>📤</span> Upload CSV
+                    <LuUpload size={14} /> {lt('upload_csv')}
                     <input 
                       type="file" 
                       accept=".csv" 
@@ -469,16 +515,16 @@ const CatalogManagement = () => {
                     <div className="card-body p-4">
                       <div className="d-flex justify-content-between align-items-center mb-3">
                         <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                          <LuTag /> Brands / Makes
+                          <LuTag /> {lt('brands_makes')}
                         </h5>
                         <button onClick={() => handleOpenAddModal('brand')} className="btn btn-sm btn-primary-garro px-3 py-1">
-                          + Add Brand
+                          {lt('add_brand')}
                         </button>
                       </div>
                       
                       <div className="list-group" style={{ maxHeight: '550px', overflowY: 'auto' }}>
                         {brands.length === 0 ? (
-                          <div className="text-center py-4 text-muted">No brands found.</div>
+                          <div className="text-center py-4 text-muted">{lt('no_brands')}</div>
                         ) : (
                           brands.map(b => (
                             <div 
@@ -493,21 +539,21 @@ const CatalogManagement = () => {
                               <div>
                                 <div className="fw-bold">{b.name}</div>
                                 <div className={`small ${selectedBrand?._id === b._id ? 'text-white-50' : 'text-muted'}`}>
-                                  {b.models?.length || 0} sub-models
+                                  {b.models?.length || 0} {lt('sub_models')}
                                 </div>
                               </div>
                               
                               <div className="d-flex align-items-center gap-2" onClick={e => e.stopPropagation()}>
                                 <span className={`badge py-1 px-2 ${b.isActive ? 'bg-success text-white' : 'bg-warning text-dark'}`} style={{ fontSize: '10px' }}>
-                                  {b.isActive ? 'Active' : 'Inactive'}
+                                  {b.isActive ? lt('active') : lt('inactive')}
                                 </span>
-                                <button onClick={() => handleOpenEditModal('brand', b)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Edit">
+                                <button onClick={() => handleOpenEditModal('brand', b)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title={lt('edit')}>
                                   <LuPencil size={13} style={{ color: '#94a3b8' }} />
                                 </button>
-                                <button onClick={() => handleToggleStatus('brand', b)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Toggle Status">
+                                <button onClick={() => handleToggleStatus('brand', b)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title={lt('toggle_status')}>
                                   <LuRefreshCw size={13} style={{ color: '#94a3b8' }} />
                                 </button>
-                                <button onClick={() => handleDelete('brand', b._id, b.name)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title="Delete">
+                                <button onClick={() => handleDelete('brand', b._id, b.name)} className="btn btn-xs p-1 text-white border-0 bg-transparent" title={lt('delete')}>
                                   <LuTrash2 size={13} style={{ color: '#ef4444' }} />
                                 </button>
                               </div>
@@ -526,9 +572,12 @@ const CatalogManagement = () => {
                       {selectedBrand ? (
                         <>
                           <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h5 className="fw-bold text-dark mb-0">🚗 Models in: <span className="text-primary-garro">{selectedBrand.name}</span></h5>
+                            <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                              <LuCar className="text-primary-garro" />
+                              <span>{lt('models_in')}<span className="text-primary-garro">{selectedBrand.name}</span></span>
+                            </h5>
                             <button onClick={() => handleOpenAddModal('model')} className="btn btn-sm btn-primary-garro px-3 py-1">
-                              + Add Model
+                              {lt('add_model')}
                             </button>
                           </div>
 
@@ -536,15 +585,15 @@ const CatalogManagement = () => {
                             <table className="table align-middle">
                               <thead className="table-light">
                                 <tr>
-                                  <th className="py-2">Model Name</th>
-                                  <th className="py-2">Status</th>
-                                  <th className="py-2 text-end">Actions</th>
+                                  <th className="py-2">{lt('model_name')}</th>
+                                  <th className="py-2">{lt('status')}</th>
+                                  <th className="py-2 text-end">{lt('actions')}</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {!selectedBrand.models || selectedBrand.models.length === 0 ? (
                                   <tr>
-                                    <td colSpan="3" className="text-center py-4 text-muted">No models configured for this brand.</td>
+                                    <td colSpan="3" className="text-center py-4 text-muted">{lt('no_models')}</td>
                                   </tr>
                                 ) : (
                                   selectedBrand.models.map(m => (
@@ -552,18 +601,18 @@ const CatalogManagement = () => {
                                       <td className="fw-semibold text-dark">{m.name}</td>
                                       <td>
                                         <span className={`badge py-1 px-2 ${m.isActive ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
-                                          {m.isActive ? 'Active' : 'Inactive'}
+                                          {m.isActive ? lt('active') : lt('inactive')}
                                         </span>
                                       </td>
                                       <td className="text-end">
                                         <div className="d-flex justify-content-end gap-1">
-                                          <button onClick={() => handleOpenEditModal('model', m)} className="btn btn-xs btn-outline-secondary py-1 px-2" title="Edit">
+                                          <button onClick={() => handleOpenEditModal('model', m)} className="btn btn-xs btn-outline-secondary py-1 px-2" title={lt('edit')}>
                                             <LuPencil size={13} />
                                           </button>
-                                          <button onClick={() => handleToggleStatus('model', m)} className="btn btn-xs btn-outline-warning py-1 px-2" title="Toggle Status">
+                                          <button onClick={() => handleToggleStatus('model', m)} className="btn btn-xs btn-outline-warning py-1 px-2" title={lt('toggle_status')}>
                                             <LuRefreshCw size={13} />
                                           </button>
-                                          <button onClick={() => handleDelete('model', m._id, m.name)} className="btn btn-xs btn-outline-danger py-1 px-2" title="Delete">
+                                          <button onClick={() => handleDelete('model', m._id, m.name)} className="btn btn-xs btn-outline-danger py-1 px-2" title={lt('delete')}>
                                             <LuTrash2 size={13} />
                                           </button>
                                         </div>
@@ -577,7 +626,7 @@ const CatalogManagement = () => {
                         </>
                       ) : (
                         <div className="text-center py-5 text-muted h-100 d-flex align-items-center justify-content-center">
-                          Select a Brand on the left to manage its models.
+                          {lt('select_brand_desc')}
                         </div>
                       )}
                     </div>
@@ -777,7 +826,10 @@ const CatalogManagement = () => {
                       {selectedCity ? (
                         <>
                           <div className="d-flex justify-content-between align-items-center mb-3">
-                            <h5 className="fw-bold text-dark mb-0">📍 Neighborhood Areas in: <span className="text-primary-garro">{selectedCity.name}</span></h5>
+                            <h5 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                              <LuMapPin className="text-primary-garro" />
+                              <span>Neighborhood Areas in: <span className="text-primary-garro">{selectedCity.name}</span></span>
+                            </h5>
                             <button onClick={() => handleOpenAddModal('area')} className="btn btn-sm btn-primary-garro px-3 py-1">
                               + Add Area
                             </button>

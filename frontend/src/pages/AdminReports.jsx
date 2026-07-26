@@ -21,17 +21,15 @@ import {
   LuChevronLeft,
   LuDownload,
   LuMail,
-  LuTrendingUp
+  LuTrendingUp,
+  LuStar
 } from 'react-icons/lu';
 
 const AdminReports = () => {
   const { user } = useAuth();
   const { toast } = useNotification();
-  const { t } = useLanguage();
-
-
-
-  // State for report generation
+  const { t, lang, changeLanguage } = useLanguage();
+  const [isLangOpen, setIsLangOpen] = useState(false);  // State for report generation
   const [reportType, setReportType] = useState('revenue');
   const [format, setFormat] = useState('pdf');
   const [months, setMonths] = useState('6');
@@ -127,17 +125,18 @@ const AdminReports = () => {
       <AdminSidebar />
 
       {/* ── MAIN CONTENT ── */}
-      <main className="dash-main-content">
-        <header className="dash-header mb-4">
-          <div>
-            <h1 className="dash-title">Reports & Analytics</h1>
-            <p className="dash-subtitle">Generate, download, and email financial and operational reports</p>
+      <main className="dash-main">
+          <div className="dash-header mb-4" style={{ display: 'block' }}>
+            <div className="dash-title d-flex align-items-center gap-2">
+              <LuTrendingUp className="text-primary-garro" />
+              <span>{lang === 'ar' ? 'التقارير والتحليلات' : (lang === 'ur' ? 'رپورٹس اور تجزیات' : 'Reports & Analytics')}</span>
+            </div>
+            <div className="dash-subtitle">{lang === 'ar' ? 'إنشاء وتنزيل وإرسال تقارير الأداء المالي والتشغيلي بالبريد الإلكتروني' : (lang === 'ur' ? 'مالیاتی اور آپریشنل رپورٹس تیار کریں، ڈاؤن لوڈ کریں اور ای میل کریں' : 'Generate, download, and email financial and operational reports')}</div>
           </div>
-        </header>
 
         <div className="row g-4">
           {/* Controls Column */}
-          <div className="col-lg-4">
+          <div className="col-lg-6">
             <div className="card border-0 rounded-4 shadow-sm p-4 h-100" style={{ background: '#ffffff' }}>
               <h5 className="fw-bold mb-4 text-slate-800">Configure Report</h5>
               
@@ -170,7 +169,7 @@ const AdminReports = () => {
 
               <div className="mb-4">
                 <label className="form-label fw-semibold text-secondary">File Format</label>
-                <div className="d-flex gap-3">
+                <div className="d-flex flex-column gap-2">
                   <div className="form-check">
                     <input
                       className="form-check-input"
@@ -199,22 +198,22 @@ const AdminReports = () => {
               </div>
 
               <button
-                className="btn btn-primary w-100 rounded-3 py-2.5 d-flex align-items-center justify-content-center gap-2 mb-4"
+                className="btn-garro btn-primary-garro w-100 d-flex align-items-center justify-content-center gap-2 mb-4"
                 onClick={handleDownload}
+                style={{ height: '42px', fontSize: '13.5px' }}
               >
-                <LuDownload size={18} /> Download Report
+                <LuDownload size={16} /> Download Report
               </button>
 
               <hr className="my-4 text-slate-200" />
 
               {/* Email Report Section */}
-              <h5 className="fw-bold mb-3 text-slate-800">Email Report to Team</h5>
+              <h5 className="fw-bold mb-3 text-slate-800" style={{ fontSize: '14.5px' }}>Email Report to Team</h5>
               <form onSubmit={handleEmailReport}>
                 <div className="mb-3">
                   <input
                     type="email"
-                    className="form-select rounded-3 shadow-none border-slate-200 px-3 w-100"
-                    style={{ height: '42px', appearance: 'none' }}
+                    className="chat-search-input px-3 w-100"
                     placeholder="manager@garro.ae"
                     required
                     value={recipientEmail}
@@ -224,16 +223,17 @@ const AdminReports = () => {
                 <button
                   type="submit"
                   disabled={emailing}
-                  className="btn btn-outline-primary w-100 rounded-3 py-2 d-flex align-items-center justify-content-center gap-2"
+                  className="btn-garro btn-outline-garro w-100 d-flex align-items-center justify-content-center gap-2"
+                  style={{ height: '40px', fontSize: '13px' }}
                 >
-                  <LuMail size={18} /> {emailing ? 'Sending...' : 'Email Report'}
+                  <LuMail size={16} /> {emailing ? 'Sending...' : 'Email Report'}
                 </button>
               </form>
             </div>
           </div>
 
           {/* Preview Column */}
-          <div className="col-lg-8">
+          <div className="col-lg-6">
             <div className="card border-0 rounded-4 shadow-sm p-4 h-100" style={{ background: '#ffffff' }}>
               <div className="d-flex align-items-center justify-content-between mb-4">
                 <h5 className="fw-bold mb-0 text-slate-800">Data Preview</h5>
@@ -286,7 +286,10 @@ const AdminReports = () => {
                               <td className="fw-semibold text-slate-700">{row.garageName}</td>
                               <td className="text-end">{row.totalJobs}</td>
                               <td className="text-end">{row.completedJobs}</td>
-                              <td className="text-end text-warning fw-bold">★ {row.rating ? row.rating.toFixed(1) : '0.0'}</td>
+                              <td className="text-end text-warning fw-bold d-flex align-items-center justify-content-end gap-1">
+                                <LuStar size={13} style={{ fill: 'currentColor' }} />
+                                <span>{row.rating ? row.rating.toFixed(1) : '0.0'}</span>
+                              </td>
                             </tr>
                           ))}
                         </tbody>

@@ -233,82 +233,40 @@ const AdminSupportChat = () => {
       <AdminSidebar />
 
       {/* ── MAIN CONTENT ── */}
-      <main className="dash-main" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px' }}>
-        
-        {/* Navigation & Language */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <div>
-            <Link to="/admin" className="back" style={{ textDecoration: 'none', color: '#64748b', fontSize: '13.5px', display: 'inline-block', marginBottom: '4px' }}>
-              ← {t('dashboard_back')}
-            </Link>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#1e293b', margin: 0, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <LuMessageCircle /> Customer Support Inbox
-            </h1>
-          </div>
+      <main className="dash-main">
 
-          {/* Language Switcher */}
-          <div style={{ position: 'relative' }}>
-            <button 
-              onClick={() => setIsLangOpen(!isLangOpen)}
-              className="btn btn-outline-secondary d-flex align-items-center gap-2"
-              style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
-            >
-              <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
-            </button>
-            {isLangOpen && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-                boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
-                minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
-              }}>
-                {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
-                  <button
-                    key={code}
-                    onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                    style={{
-                      background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
-                      borderRadius: '8px', padding: '8px 12px',
-                      color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
-                      fontSize: '13px', fontWeight: lang === code ? 700 : 500,
-                      cursor: 'pointer', display: 'flex', alignItems: 'center',
-                      justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-                    }}
-                  >
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
+        <div className="dash-header mb-4" style={{ display: 'block' }}>
+          <div className="dash-title d-flex align-items-center gap-2">
+            <LuMessageCircle className="text-primary-garro" />
+            <span>{t('support_inbox')}</span>
           </div>
+          <div className="dash-subtitle">{t('support_inbox_desc')}</div>
         </div>
 
         {/* Double Pane Layout */}
-        <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px', height: 'calc(100vh - 160px)', minHeight: '500px' }}>
+        <div className="chat-panel-container">
           
           {/* Left Column: Search & Conversations list */}
-          <div style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '20px', padding: '20px', overflow: 'hidden' }}>
+          <div className="chat-sidebar-card">
             <div style={{ marginBottom: '16px' }}>
               <input
                 type="text"
-                placeholder="Search customer name or email..."
+                placeholder={t('search_customer_placeholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                style={{
-                  width: '100%', padding: '12px 16px', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', color: '#1e293b', fontSize: '14px', outline: 'none'
-                }}
+                className="chat-search-input"
               />
             </div>
 
-            <h3 style={{ fontSize: '13px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px', color: '#64748b' }}>
-              Conversations ({filteredConversations.length})
+            <h3 style={{ fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: '12px', color: '#64748b' }}>
+              {t('conversations_title')} ({filteredConversations.length})
             </h3>
 
             {loading ? (
-              <p style={{ color: '#64748b' }}>Loading conversations...</p>
+              <p style={{ color: '#64748b', fontSize: '13.5px' }}>{t('loading_conversations')}</p>
             ) : filteredConversations.length === 0 ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '14px' }}>
-                No support threads found.
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '13.5px' }}>
+                {t('no_support_threads')}
               </div>
             ) : (
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto' }}>
@@ -321,50 +279,25 @@ const AdminSupportChat = () => {
                     <div
                       key={c._id}
                       onClick={() => handleSelectConvo(c)}
-                      style={{
-                        display: 'flex',
-                        gap: '12px',
-                        background: isSelected ? '#fff4ef' : '#ffffff',
-                        border: isSelected ? '1.5px solid #ff5c1a' : '1.5px solid #e2e8f0',
-                        borderRadius: '14px',
-                        padding: '12px 14px',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        color: '#1e293b',
-                        alignItems: 'center'
-                      }}
+                      className={`chat-convo-item ${isSelected ? 'active' : ''}`}
                     >
                       {/* Avatar */}
-                      <div
-                        style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #ff5c1a, #ff8c42)',
-                          color: '#fff',
-                          fontWeight: '700',
-                          fontSize: '15px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0
-                        }}
-                      >
+                      <div className="chat-avatar">
                         {firstLetter}
                       </div>
 
                       {/* Info preview */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '2px' }}>
-                          <h4 style={{ fontSize: '14px', fontWeight: '700', margin: 0, color: isSelected ? '#ff5c1a' : '#1e293b', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          <h4 style={{ fontSize: '13.5px', fontWeight: '700', margin: 0, color: isSelected ? 'var(--brand)' : '#0f172a', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                             {customer.name || 'Unknown User'}
                           </h4>
-                          <span style={{ fontSize: '10px', color: '#94a3b8', flexShrink: 0 }}>
+                          <span style={{ fontSize: '10px', color: isSelected ? 'var(--brand)' : '#94a3b8', flexShrink: 0 }}>
                             {c.lastMessageAt ? new Date(c.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' }) : ''}
                           </span>
                         </div>
-                        <p style={{ color: '#64748b', fontSize: '12px', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                          {c.lastMessage || <i>No messages yet</i>}
+                        <p style={{ color: isSelected ? 'rgba(255, 92, 26, 0.8)' : '#64748b', fontSize: '11.5px', margin: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                          {c.lastMessage || <i>{t('no_messages_yet')}</i>}
                         </p>
                       </div>
 
@@ -397,13 +330,13 @@ const AdminSupportChat = () => {
           </div>
 
           {/* Right Column: Chat thread view */}
-          <div style={{ display: 'flex', flexDirection: 'column', background: '#fff', border: '1px solid #e2e8f0', borderRadius: '20px', overflow: 'hidden' }}>
+          <div className="chat-main-console">
             {selectedConvo ? (
               <>
                 {/* Header */}
                 <div style={{ padding: '16px 24px', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
                   <div>
-                    <h2 style={{ fontSize: '16px', fontWeight: '800', color: '#1e293b', margin: 0 }}>
+                    <h2 style={{ fontSize: '15px', fontWeight: '800', color: '#0f172a', margin: 0 }}>
                       {selectedConvo.customerId?.name || 'Customer'}
                     </h2>
                     <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#64748b', display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -422,17 +355,17 @@ const AdminSupportChat = () => {
                           background: 'none',
                           border: 'none',
                           color: '#64748b',
-                          fontSize: '12.5px',
+                          fontSize: '12px',
                           cursor: 'pointer',
                           textDecoration: 'underline',
                           fontWeight: '600',
                           padding: 0
                         }}
                       >
-                        Close conversation
+                        {t('close_conversation')}
                       </button>
                     ) : (
-                      <span style={{ fontSize: '12px', color: '#10b981', fontWeight: '700', textTransform: 'uppercase', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 10px', borderRadius: '6px' }}>
+                      <span style={{ fontSize: '11px', color: '#10b981', fontWeight: '700', textTransform: 'uppercase', background: 'rgba(16, 185, 129, 0.1)', padding: '4px 10px', borderRadius: '6px' }}>
                         Closed
                       </span>
                     )}
@@ -442,12 +375,12 @@ const AdminSupportChat = () => {
                 {/* Message Feed */}
                 <div ref={messageFeedRef} style={{ flex: 1, padding: '24px', overflowY: 'auto', background: '#f8fafc', display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {messagesLoading ? (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#64748b', fontSize: '14px' }}>
-                      Loading chat logs...
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#64748b', fontSize: '13.5px' }}>
+                      {t('loading_chat_logs')}
                     </div>
                   ) : messages.length === 0 ? (
-                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#94a3b8', fontSize: '14px' }}>
-                      No messages in this conversation.
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#94a3b8', fontSize: '13.5px' }}>
+                      {t('no_messages_in_convo')}
                     </div>
                   ) : (
                     messages.map((msg) => {
@@ -463,20 +396,7 @@ const AdminSupportChat = () => {
                             alignItems: isAgent ? 'flex-end' : 'flex-start'
                           }}
                         >
-                          <div
-                            style={{
-                              background: isAgent ? 'linear-gradient(135deg, #ff5c1a, #ff8c42)' : '#ffffff',
-                              color: isAgent ? 'white' : '#1e293b',
-                              padding: '12px 16px',
-                              borderRadius: isAgent ? '16px 16px 2px 16px' : '16px 16px 16px 2px',
-                              fontSize: '13.5px',
-                              lineHeight: '1.45',
-                              boxShadow: isAgent ? 'none' : '0 1px 2px rgba(0,0,0,0.05)',
-                              border: isAgent ? 'none' : '1px solid #e2e8f0',
-                              wordBreak: 'break-word',
-                              whiteSpace: 'pre-wrap'
-                            }}
-                          >
+                          <div className={isAgent ? 'chat-bubble-sent' : 'chat-bubble-received'}>
                             {msg.text}
                           </div>
                           <span style={{ fontSize: '10px', color: '#94a3b8', marginTop: '4px' }}>
@@ -502,50 +422,39 @@ const AdminSupportChat = () => {
                 >
                   <input
                     type="text"
-                    placeholder="Type a reply..."
+                    placeholder={t('type_reply_placeholder')}
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    style={{
-                      flex: 1,
-                      border: '1px solid #cbd5e1',
-                      borderRadius: '24px',
-                      padding: '10px 20px',
-                      fontSize: '14px',
-                      outline: 'none',
-                      color: '#1e293b',
-                      background: '#f8fafc',
-                      transition: 'border-color 0.2s'
-                    }}
-                    onFocus={(e) => e.target.style.borderColor = '#ff5c1a'}
-                    onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+                    className="chat-search-input"
+                    style={{ borderRadius: '24px', padding: '10px 20px' }}
                   />
                   <button
                     type="submit"
                     disabled={!inputText.trim()}
+                    className="chat-btn-send"
                     style={{
                       width: '42px',
                       height: '42px',
                       borderRadius: '50%',
-                      background: inputText.trim() ? 'linear-gradient(135deg, #ff5c1a, #ff8c42)' : '#e2e8f0',
-                      color: inputText.trim() ? 'white' : '#94a3b8',
-                      border: 'none',
-                      cursor: inputText.trim() ? 'pointer' : 'default',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      transition: 'all 0.2s',
-                      flexShrink: 0
+                      padding: 0,
+                      opacity: inputText.trim() ? 1 : 0.6,
+                      background: inputText.trim() ? 'var(--brand)' : '#cbd5e1',
+                      cursor: inputText.trim() ? 'pointer' : 'default'
                     }}
                   >
-                    <LuSend size={18} />
+                    <LuSend size={16} />
                   </button>
                 </form>
               </>
             ) : (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8' }}>
-                <LuMessageCircle size={64} style={{ color: '#cbd5e1', marginBottom: '16px' }} />
-                <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#64748b', margin: '0 0 4px' }}>Support Chat Room</h3>
-                <p style={{ fontSize: '13.5px', margin: 0 }}>Select a customer from the left to start replying in real-time.</p>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '32px' }}>
+                <div className="d-inline-flex align-items-center justify-content-center p-4 rounded-circle bg-white shadow-sm text-primary-garro mb-4" style={{ width: '80px', height: '80px' }}>
+                  <LuMessageCircle size={38} />
+                </div>
+                <h4 className="fw-bold text-dark mb-2" style={{ fontFamily: "'Poppins', sans-serif" }}>{t('support_chat_room')}</h4>
+                <p className="text-secondary small text-center mb-0" style={{ maxWidth: '320px', fontSize: '13px' }}>
+                  {t('select_thread_desc')}
+                </p>
               </div>
             )}
           </div>

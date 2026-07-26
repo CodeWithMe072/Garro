@@ -108,102 +108,54 @@ const AdminComplaints = () => {
       <AdminSidebar />
 
       {/* ── MAIN CONTENT ── */}
-      <main className="dash-main" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px' }}>
+      <main className="dash-main">
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
-          
-          {/* Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <Link to="/admin" className="back" style={{ textDecoration: 'none', color: '#64748b', fontSize: '13.5px' }}>
-              ← {t('dashboard_back')}
-            </Link>
 
-            {/* Language Switcher */}
-            <div style={{ position: 'relative' }}>
-              <button 
-                onClick={() => setIsLangOpen(!isLangOpen)}
-                className="btn btn-outline-secondary d-flex align-items-center gap-2"
-                style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
-              >
-                <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
-              </button>
-              {isLangOpen && (
-                <div style={{
-                  position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                  background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-                  boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
-                  minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
-                }}>
-                  {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
-                    <button
-                      key={code}
-                      onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                      style={{
-                        background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
-                        borderRadius: '8px', padding: '8px 12px',
-                        color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
-                        fontSize: '13px', fontWeight: lang === code ? 700 : 500,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center',
-                        justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-                      }}
-                    >
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+          <div className="dash-header mb-4" style={{ display: 'block' }}>
+            <div className="dash-title d-flex align-items-center gap-2">
+              <LuTriangleAlert className="text-primary-garro" />
+              <span>{lang === 'ar' ? 'سجل شكاوى العملاء' : (lang === 'ur' ? 'کسٹمر شکایات کا کھاتہ' : 'Customer Complaints Ledger')}</span>
             </div>
+            <div className="dash-subtitle">{lang === 'ar' ? 'تتبع وحل الشكاوى المقدمة من العملاء بخصوص المهام أو المساعدين.' : (lang === 'ur' ? 'کاموں یا مددگاروں کے بارے میں صارفین کی طرف سے اٹھائی گئی شکایات کو ٹریک اور حل کریں۔' : 'Track and resolve complaints raised by customers regarding jobs or helpers.')}</div>
           </div>
-
-          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', color: '#1e293b', letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <LuTriangleAlert /> {lang === 'ar' ? 'سجل شكاوى العملاء' : (lang === 'ur' ? 'کسٹمر شکایات کا کھاتہ' : 'Customer Complaints Ledger')}
-          </h1>
-          <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
-            {lang === 'ar' ? 'تتبع وحل الشكاوى المقدمة من العملاء بخصوص المهام أو المساعدين.' : (lang === 'ur' ? 'کاموں یا مددگاروں کے بارے میں صارفین کی طرف سے اٹھائی گئی شکایات کو ٹریک اور حل کریں۔' : 'Track and resolve complaints raised by customers regarding jobs or helpers.')}
-          </p>
 
           {loading ? (
             <p style={{ color: '#64748b' }}>{t('loading')}</p>
           ) : complaints.length === 0 ? (
-            <div style={{ background: '#fff', borderRadius: '16px', padding: '50px 20px', textAlign: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
-              <span style={{ fontSize: '48px', display: 'flex', justifyContent: 'center', marginBottom: '16px', color: '#10b981' }}><LuPartyPopper /></span>
-              {lang === 'ar' ? 'لم يتم تسجيل أي شكاوى من العملاء! عمليات عالية الجودة.' : (lang === 'ur' ? 'کوئی کسٹمر شکایت رجسٹرڈ نہیں ہے! اعلیٰ معیار کے آپریشنز۔' : 'No customer complaints registered! High-quality operations.')}
+            <div className="text-center py-5 bg-white rounded-4 border shadow-sm" style={{ borderColor: '#e2e8f0' }}>
+              <div className="d-inline-flex align-items-center justify-content-center p-3 rounded-circle bg-success-subtle text-success mb-3" style={{ background: 'rgba(16, 185, 129, 0.08)' }}>
+                <LuPartyPopper size={36} />
+              </div>
+              <h5 className="fw-bold text-dark mb-1">
+                {lang === 'ar' ? 'لم يتم تسجيل أي شكاوى!' : (lang === 'ur' ? 'کوئی شکایت رجسٹرڈ نہیں ہے!' : 'All Clear!')}
+              </h5>
+              <p className="text-muted small mb-0 px-3">
+                {lang === 'ar' ? 'لم يتم تسجيل أي شكاوى من العملاء! عمليات عالية الجودة.' : (lang === 'ur' ? 'کوئی کسٹمر شکایت رجسٹرڈ نہیں ہے! اعلیٰ معیار کے آپریشنز۔' : 'No customer complaints registered! High-quality operations.')}
+              </p>
             </div>
           ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {complaints.map(c => (
-              <div key={c._id} style={{
-                background: '#fff',
-                border: '1px solid #e2e8f0',
-                borderRadius: '16px',
-                padding: '24px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '16px',
-                color: '#1e293b'
-              }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {complaints.map(c => (
+              <div key={c._id} className="complaint-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                   <div style={{ flex: 1, marginRight: '24px' }}>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{
-                        background: c.status === 'resolved' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                        color: c.status === 'resolved' ? '#10b981' : '#f87171',
-                        borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase'
-                      }}>
+                      <span className={`sbadge ${c.status === 'resolved' ? 'completed' : 'cancelled'}`}>
                         {c.status}
                       </span>
                       <span style={{ fontSize: '12.5px', color: '#64748b' }}>
                         {lang === 'ar' ? 'تاريخ التقديم:' : (lang === 'ur' ? 'جمع کرایا گیا:' : 'Submitted:')}: {new Date(c.createdAt).toLocaleDateString()}
                       </span>
                     </div>
-
-                    <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 10px', color: '#1e293b' }}>
+ 
+                    <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 10px', color: '#0f172a' }}>
                       {c.title || 'Service Complaint'}
                     </h3>
                     
                     <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.5', margin: '0 0 16px' }}>
                       {c.description}
                     </p>
-
+ 
                     <div style={{ display: 'flex', gap: '20px', fontSize: '13px', color: '#64748b' }}>
                       <span>{lang === 'ar' ? 'العميل:' : (lang === 'ur' ? 'کلائنٹ:' : 'Client:')} <strong>{c.customerId?.name || 'Customer'}</strong> ({c.customerId?.email})</span>
                       {c.jobId && (
@@ -211,7 +163,7 @@ const AdminComplaints = () => {
                       )}
                     </div>
                   </div>
-
+ 
                   {c.status !== 'resolved' && showResolveForm !== c._id && (
                     <button
                       onClick={() => {
@@ -220,31 +172,22 @@ const AdminComplaints = () => {
                         setResolutionAmount('');
                         setResolutionNotes('');
                       }}
-                      style={{
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        border: 'none',
-                        borderRadius: '8px',
-                        padding: '8px 18px',
-                        color: 'white',
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        cursor: 'pointer',
-                        boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)'
-                      }}
+                      className="btn-garro btn-primary-garro btn-sm py-2 px-3"
+                      style={{ minWidth: '130px' }}
                     >
                       {lang === 'ar' ? 'حل الشكوى' : (lang === 'ur' ? 'شکایت حل کریں' : 'Resolve Complaint')}
                     </button>
                   )}
                 </div>
-
+ 
                 {/* Structured Resolution Display */}
                 {c.status === 'resolved' && c.resolution && (
-                  <div style={{
-                    background: 'rgba(16, 185, 129, 0.05)',
-                    border: '1px solid rgba(16, 185, 129, 0.2)',
-                    borderRadius: '8px',
+                  <div className="mt-3" style={{
+                    background: '#f8fafc',
+                    border: '1.5px solid #e2e8f0',
+                    borderRadius: '12px',
                     padding: '16px',
-                    fontSize: '14px'
+                    fontSize: '13.5px'
                   }}>
                     <div style={{ fontWeight: '700', color: '#10b981', marginBottom: '8px' }}>
                       {lang === 'ar' ? 'تفاصيل قرار الحل:' : (lang === 'ur' ? 'حل کی تفصیلات:' : 'Resolved Resolution Details:')}
@@ -265,34 +208,25 @@ const AdminComplaints = () => {
                     )}
                   </div>
                 )}
-
+ 
                 {/* Form to submit structured resolution */}
                 {showResolveForm === c._id && (
-                  <form onSubmit={(e) => handleResolveSubmit(e, c._id)} style={{
-                    background: '#f8fafc',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '16px',
-                    marginTop: '8px'
-                  }}>
-                    <div style={{ fontWeight: '700', fontSize: '14px', color: '#1e293b' }}>{lang === 'ar' ? 'تحديد قرار الشكوى:' : (lang === 'ur' ? 'شکایت کا حل متعین کریں:' : 'Specify Complaint Resolution:')}</div>
+                  <form onSubmit={(e) => handleResolveSubmit(e, c._id)} className="bg-light border rounded-3 p-4 mt-3" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div style={{ fontWeight: '700', fontSize: '14.5px', color: '#0f172a' }}>{lang === 'ar' ? 'تحديد قرار الشكوى:' : (lang === 'ur' ? 'شکایت کا حل متعین کریں:' : 'Specify Complaint Resolution:')}</div>
                     
                     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                       <div style={{ flex: 1, minWidth: '200px' }}>
-                        <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b' }}>{lang === 'ar' ? 'نوع القرار' : (lang === 'ur' ? 'حل کی قسم' : 'Resolution Type')}</label>
+                        <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b', fontWeight: '500' }}>{lang === 'ar' ? 'نوع القرار' : (lang === 'ur' ? 'حل کی قسم' : 'Resolution Type')}</label>
                         <select
                           value={resolutionType}
                           onChange={(e) => setResolutionType(e.target.value)}
+                          className="form-select text-dark"
                           style={{
-                            width: '100%',
                             background: '#fff',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '6px',
-                            padding: '8px',
-                            color: '#1e293b'
+                            border: '1.5px solid #cbd5e1',
+                            borderRadius: '10px',
+                            padding: '10px 14px',
+                            fontSize: '13.5px'
                           }}
                         >
                           <option value="refund">{lang === 'ar' ? 'إصدار استرداد (معاملة Stripe)' : (lang === 'ur' ? 'ریفنڈ جاری کریں (اسٹرائپ ٹرانزیکشن)' : 'Issue Refund (Stripe Transaction)')}</option>
@@ -302,79 +236,49 @@ const AdminComplaints = () => {
                           <option value="no_action">{lang === 'ar' ? 'إغلاق بدون إجراء' : (lang === 'ur' ? 'بغیر کسی اقدام کے بند کریں' : 'Close No Action')}</option>
                         </select>
                       </div>
-
+ 
                       {['refund', 'compensation'].includes(resolutionType) && (
                         <div style={{ flex: 1, minWidth: '200px' }}>
-                          <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b' }}>{lang === 'ar' ? 'المبلغ المسترد (AED)' : (lang === 'ur' ? 'رقم (AED)' : 'Refund Amount (AED)')} *</label>
+                          <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b', fontWeight: '500' }}>{lang === 'ar' ? 'المبلغ المسترد (AED)' : (lang === 'ur' ? 'رقم (AED)' : 'Refund Amount (AED)')} *</label>
                           <input
                             type="number"
                             min="0.01"
                             step="0.01"
                             value={resolutionAmount}
                             onChange={(e) => setResolutionAmount(e.target.value)}
-                            style={{
-                              width: '100%',
-                              background: '#fff',
-                              border: '1px solid #cbd5e1',
-                              borderRadius: '6px',
-                              padding: '8px',
-                              color: '#1e293b'
-                            }}
+                            className="chat-search-input py-2.5"
                             required
                           />
                         </div>
                       )}
                     </div>
-
+ 
                     <div>
-                      <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b' }}>{lang === 'ar' ? 'ملاحظات الحل / تفاصيل التسوية' : (lang === 'ur' ? 'حل کے نوٹس / تصفیہ کی تفصیلات' : 'Resolution Notes / Settlement Details')} *</label>
+                      <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b', fontWeight: '500' }}>{lang === 'ar' ? 'ملاحظات الحل / تفاصيل التسوية' : (lang === 'ur' ? 'حل کے نوٹس / تصفیہ کی تفصیلات' : 'Resolution Notes / Settlement Details')} *</label>
                       <textarea
                         rows="3"
                         value={resolutionNotes}
                         onChange={(e) => setResolutionNotes(e.target.value)}
-                        style={{
-                          width: '100%',
-                          background: '#fff',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '6px',
-                          padding: '8px',
-                          color: '#1e293b'
-                        }}
+                        className="chat-search-input"
                         placeholder={lang === 'ar' ? 'أدخل ملاحظات داخلية توضح التوافق مع العميل...' : (lang === 'ur' ? 'گاہک کے ساتھ تصفیہ کی وضاحت کرتے ہوئے اندرونی نوٹ درج کریں...' : 'Enter internal notes explaining the customer alignment...')}
                         required
                       />
                     </div>
-
+ 
                     <div style={{ display: 'flex', gap: '10px', justifyContent: 'end' }}>
                       <button
                         type="button"
                         onClick={() => setShowResolveForm(null)}
-                        style={{
-                          background: 'none',
-                          border: '1px solid #cbd5e1',
-                          borderRadius: '6px',
-                          padding: '6px 12px',
-                          color: '#475569',
-                          fontSize: '12.5px',
-                          cursor: 'pointer'
-                        }}
+                        className="btn-garro btn-outline-garro py-2 px-4"
+                        style={{ height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         {t('cancel')}
                       </button>
                       <button
                         type="submit"
                         disabled={resolvingId === c._id}
-                        style={{
-                          background: '#10b981',
-                          border: 'none',
-                          borderRadius: '6px',
-                          padding: '6px 16px',
-                          color: 'white',
-                          fontSize: '12.5px',
-                          fontWeight: '700',
-                          cursor: 'pointer',
-                          opacity: resolvingId === c._id ? 0.7 : 1
-                        }}
+                        className="btn-garro btn-primary-garro py-2 px-4"
+                        style={{ height: '38px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: resolvingId === c._id ? 0.7 : 1 }}
                       >
                         {resolvingId === c._id ? 'Saving...' : 'Confirm Resolve'}
                       </button>

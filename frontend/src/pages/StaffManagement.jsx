@@ -16,7 +16,8 @@ import {
   LuUsers, 
   LuGlobe,
   LuChevronLeft,
-  LuChevronRight
+  LuChevronRight,
+  LuPhone
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
 import AdminSidebar from '../components/AdminSidebar';
@@ -171,53 +172,19 @@ const StaffManagement = () => {
       <AdminSidebar />
 
       {/* ── MAIN CONTENT ── */}
-      <main className="dash-main" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px' }}>
-        <div className="ph" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+      <main className="dash-main">
+        <div className="dash-header mb-4 align-items-center">
           <div>
-            <h1 className="fs-3 fw-bold text-dark m-0 d-flex align-items-center gap-2">
-              <LuBriefcase /> {t('staff_management')}
-            </h1>
-            <p className="text-muted small m-0">{staffList.length} {t('staff_members_manage')}</p>
-          </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-            {/* Language Switcher */}
-            <div style={{ position: 'relative' }}>
-              <button 
-                onClick={() => setIsLangOpen(!isLangOpen)}
-                className="btn btn-outline-secondary d-flex align-items-center gap-2"
-                style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
-              >
-                <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
-              </button>
-              {isLangOpen && (
-                <div style={{
-                  position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                  background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-                  boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
-                  minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
-                }}>
-                  {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
-                    <button
-                      key={code}
-                      onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                      style={{
-                        background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
-                        borderRadius: '8px', padding: '8px 12px',
-                        color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
-                        fontSize: '13px', fontWeight: lang === code ? 700 : 500,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center',
-                        justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-                      }}
-                    >
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="dash-title d-flex align-items-center gap-2">
+              <LuBriefcase className="text-primary-garro" />
+              <span>{t('staff_management')}</span>
             </div>
-
-            <Link to="/admin/create-staff" className="btn-primary" style={{ borderRadius: '10px', textDecoration: 'none' }}>+ {t('create_account_directly')}</Link>
-            <Link to="/admin" className="btn-outline" style={{ borderRadius: '10px', textDecoration: 'none' }}>← {t('dashboard_back')}</Link>
+            <div className="dash-subtitle">{staffList.length} {t('staff_members_manage')}</div>
+          </div>
+          <div>
+            <Link to="/admin/create-staff" className="btn-garro btn-primary-garro text-decoration-none px-4" style={{ height: '42px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', borderRadius: '10px', fontSize: '13.5px', fontWeight: '700' }}>
+              + {t('create_account_directly')}
+            </Link>
           </div>
         </div>
 
@@ -232,7 +199,7 @@ const StaffManagement = () => {
               {staffList.map(s => (
                 <div key={s.id} className={`sc ${!s.is_active ? 'inactive' : ''}`}>
                   <div className="sc-top">
-                    <div className="sc-av" style={{ background: s.is_active ? '#3b82f6' : '#94a3b8' }}>
+                    <div className="sc-av" style={{ background: s.is_active ? 'var(--brand)' : '#94a3b8' }}>
                       {s.first_name[0]}{s.last_name[0]}
                       <div className={`sc-status ${s.is_active ? 'active' : 'inactive'}`}></div>
                     </div>
@@ -242,9 +209,9 @@ const StaffManagement = () => {
                     </div>
                   </div>
                   <div className="sc-info">
-                    {s.email && <span><span className="material-icons-round" style={{ fontSize: '14px', color: '#94a3b8' }}>email</span>{s.email}</span>}
-                    {s.phone && <span><span className="material-icons-round" style={{ fontSize: '14px', color: '#94a3b8' }}>phone</span>{s.phone}</span>}
-                    {s.department && <span><span className="material-icons-round" style={{ fontSize: '14px', color: '#94a3b8' }}>business</span>{s.department}</span>}
+                    {s.email && <span><LuMail size={13} className="text-secondary me-1" />{s.email}</span>}
+                    {s.phone && <span><LuPhone size={13} className="text-secondary me-1" />{s.phone}</span>}
+                    {s.department && <span><LuStore size={13} className="text-secondary me-1" />{s.department}</span>}
                   </div>
                   <div className="sc-actions">
                      <button onClick={() => handleOpenScheduleModal(s.raw)} className="sc-btn edit d-inline-flex align-items-center justify-content-center" style={{ flex: 1 }}>
@@ -282,15 +249,15 @@ const StaffManagement = () => {
                   <div className="fg">
                     <label>Role</label>
                     <select name="role" className="inp">
-                      <option value="staff">👤 Staff</option>
-                      <option value="manager">🌟 Manager</option>
+                      <option value="staff">Staff</option>
+                      <option value="manager">Manager</option>
                     </select>
                   </div>
                   <div className="fg">
                     <label>Department</label>
                     <input type="text" name="department" className="inp" placeholder="e.g. Operations, Service" />
                   </div>
-                  <button type="submit" className="btn-send">{t('send_invitation_link')}</button>
+                  <button type="submit" className="btn-garro btn-primary-garro w-100 py-2.5" style={{ fontSize: '13.5px', fontWeight: '700' }}>{t('send_invitation_link')}</button>
                 </form>
                 <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '10px', textAlign: 'center' }}>Link expires in 3 days · Only one active invite per email</p>
               </div>
@@ -315,7 +282,7 @@ const StaffManagement = () => {
                       &nbsp;{inv.role}
                     </div>
                   </div>
-                  {inv.status === 'pending' && <button className="revoke-btn" style={{ background: 'none', border: 'none' }}>Revoke</button>}
+                  {inv.status === 'pending' && <button className="text-danger small fw-bold border-0 bg-transparent p-0" style={{ transition: 'opacity 0.2s', outline: 'none' }} onMouseEnter={e => e.target.style.opacity = '0.7'} onMouseLeave={e => e.target.style.opacity = '1'}>Revoke</button>}
                 </div>
               ))}
             </div>
@@ -324,19 +291,25 @@ const StaffManagement = () => {
       </div>
       {/* ── Helper Schedule / Working Hours Modal ── */}
       {scheduleModalOpen && selectedHelper && (
-        <div className="custom-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050 }}>
-          <div className="custom-modal" style={{ background: '#1e293b', padding: '24px', borderRadius: '16px', maxWidth: '520px', width: '90%', color: 'white', maxHeight: '90vh', overflowY: 'auto' }}>
-            <h3 className="fw-bold mb-1 d-flex align-items-center gap-2">
-              <LuCalendarClock /> Edit Working Hours
-            </h3>
-            <p className="text-white-50 small mb-4">Set timezone and active days for <strong>{selectedHelper.name}</strong></p>
+        <div className="custom-modal-overlay" style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050, backdropFilter: 'blur(4px)' }}>
+          <div className="custom-modal" style={{ background: '#ffffff', padding: '30px', borderRadius: '16px', maxWidth: '520px', width: '90%', color: '#0f172a', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0' }}>
+            <h4 className="fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: '#0f172a' }}>
+              <LuCalendarClock className="text-primary-garro" /> Edit Working Hours
+            </h4>
+            <p className="text-muted small mb-4">Set timezone and active days for <strong>{selectedHelper.name}</strong></p>
 
             <form onSubmit={handleScheduleSubmit}>
               {/* Timezone */}
               <div className="mb-4">
-                <label className="form-label small fw-bold text-white-50">Local Timezone</label>
+                <label className="form-label small fw-bold text-secondary">Local Timezone</label>
                 <select 
-                  className="form-select text-white bg-dark border-secondary"
+                  className="form-select text-dark bg-white"
+                  style={{
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    fontSize: '13.5px'
+                  }}
                   value={scheduleFormData.timezone}
                   onChange={e => setScheduleFormData({ ...scheduleFormData, timezone: e.target.value })}
                   required
@@ -350,10 +323,10 @@ const StaffManagement = () => {
 
               {/* Weekly Schedule days list */}
               <div className="mb-4">
-                <label className="form-label small fw-bold text-white-50 mb-2">Weekly Schedule</label>
+                <label className="form-label small fw-bold text-secondary mb-2">Weekly Schedule</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {scheduleFormData.schedule.map((dayItem, idx) => (
-                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyBetween: 'space-between', gap: '12px', background: 'rgba(255,255,255,0.03)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', background: '#f8fafc', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '120px' }}>
                         <input 
                           type="checkbox"
@@ -361,8 +334,9 @@ const StaffManagement = () => {
                           id={`check-${dayItem.day}`}
                           checked={dayItem.isWorking}
                           onChange={e => handleDayCheckChange(dayItem.day, e.target.checked)}
+                          style={{ cursor: 'pointer' }}
                         />
-                        <label className="form-check-label small fw-semibold text-capitalize" htmlFor={`check-${dayItem.day}`}>
+                        <label className="form-check-label small fw-semibold text-capitalize text-dark" htmlFor={`check-${dayItem.day}`} style={{ cursor: 'pointer' }}>
                           {dayItem.day.slice(0, 3)}
                         </label>
                       </div>
@@ -371,22 +345,24 @@ const StaffManagement = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
                           <input 
                             type="time" 
-                            className="form-control form-control-sm bg-dark text-white border-secondary"
+                            className="form-control form-control-sm bg-white text-dark"
+                            style={{ border: '1.5px solid #cbd5e1', borderRadius: '6px' }}
                             value={dayItem.startTime}
                             onChange={e => handleDayTimeChange(dayItem.day, 'startTime', e.target.value)}
                             required
                           />
-                          <span className="small text-white-50">to</span>
+                          <span className="small text-muted">to</span>
                           <input 
                             type="time" 
-                            className="form-control form-control-sm bg-dark text-white border-secondary"
+                            className="form-control form-control-sm bg-white text-dark"
+                            style={{ border: '1.5px solid #cbd5e1', borderRadius: '6px' }}
                             value={dayItem.endTime}
                             onChange={e => handleDayTimeChange(dayItem.day, 'endTime', e.target.value)}
                             required
                           />
                         </div>
                       ) : (
-                        <div className="small text-white-50 text-center flex-grow-1" style={{ fontStyle: 'italic' }}>
+                        <div className="small text-muted text-center flex-grow-1" style={{ fontStyle: 'italic' }}>
                           Off Duty
                         </div>
                       )}
@@ -395,9 +371,9 @@ const StaffManagement = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'end', gap: '10px', marginTop: '20px' }}>
-                <button type="button" className="btn btn-sm btn-outline-light" onClick={() => setScheduleModalOpen(false)}>Cancel</button>
-                <button type="submit" className="btn btn-sm btn-primary" disabled={savingSchedule}>
+              <div style={{ display: 'flex', justifyContent: 'end', gap: '10px', marginTop: '24px' }}>
+                <button type="button" className="btn-garro btn-outline-garro btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px' }} onClick={() => setScheduleModalOpen(false)}>Cancel</button>
+                <button type="submit" className="btn-garro btn-primary-garro btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px' }} disabled={savingSchedule}>
                   {savingSchedule ? 'Saving...' : 'Save Schedule'}
                 </button>
               </div>

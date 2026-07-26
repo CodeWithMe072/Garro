@@ -86,7 +86,7 @@ const AdminSidebar = ({ pendingBookings }) => {
   }, [pendingBookings]);
 
   return (
-    <aside className="dash-sidebar" dir="ltr">
+    <aside className="dash-sidebar">
       {isCollapsed ? (
         <div className="sidebar-toggle-container" style={{ display: 'flex', justifyContent: 'center', padding: '0 0 12px', borderBottom: '1px solid #e2e8f0', marginBottom: '8px' }}>
           <button className="sidebar-toggle-btn" onClick={toggleSidebar} title="Expand Sidebar">
@@ -143,7 +143,7 @@ const AdminSidebar = ({ pendingBookings }) => {
         </Link>
         <Link to="/admin/reports" className={`sidebar-link ${isActive('/admin/reports')}`}>
           <span className="icon"><LuTrendingUp /></span>
-          <span className="link-text">Reports & Analytics</span>
+          <span className="link-text">{t('reports_analytics')}</span>
         </Link>
         <Link to="/admin/settings" className={`sidebar-link ${isActive('/admin/settings')}`}>
           <span className="icon"><LuSettings /></span>

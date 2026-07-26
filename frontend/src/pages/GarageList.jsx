@@ -3,6 +3,15 @@ import { Link } from 'react-router-dom';
 import CustomDropdown from '../components/CustomDropdown';
 import { useAuth } from '../context/AuthContext';
 import AdminSidebar from '../components/AdminSidebar';
+import {
+  LuStore,
+  LuStar,
+  LuMapPin,
+  LuWrench,
+  LuPhone,
+  LuSearch,
+  LuChevronRight
+} from 'react-icons/lu';
 
 const cityOptions = [
   { label: 'All Cities', value: '' },
@@ -110,144 +119,166 @@ const GarageList = () => {
   const isAdmin = ['manager', 'superadmin', 'admin'].includes(user?.role);
 
   const renderContent = () => (
-    <div className="container-fluid px-0">
-      <div className="row g-0">
-        {/* Sidebar Filters */}
-        <div className="col-lg-3 bg-white border-end" style={{ minHeight: 'calc(100vh - 60px)' }}>
-          <div className="p-4 sticky-top" style={{ top: '70px' }}>
-            <h6 className="fw-bold mb-4">🔍 Refine Search</h6>
+    <div className="container-fluid py-4 px-3" style={{ background: '#f8fafc', minHeight: 'calc(100vh - 68px)' }}>
+      {/* Page Header & Title */}
+      <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 mb-4">
+        <div>
+          <h4 className="fw-bold mb-1 text-dark" style={{ fontFamily: "'Poppins', sans-serif" }}>
+            Available Garages
+          </h4>
+          <p className="text-muted small mb-0">
+            {sortedGarages.length} verified partner garage{sortedGarages.length !== 1 ? 's' : ''} found
+          </p>
+        </div>
+      </div>
 
-            <form onSubmit={(e) => e.preventDefault()}>
-              {/* City */}
-              <div className="mb-3">
-                <label className="form-label small fw-medium">City</label>
-                <CustomDropdown
-                  options={cityOptions}
-                  value={filter.city}
-                  onChange={(val) => setFilter(prev => ({ ...prev, city: val }))}
-                  placeholder="All Cities"
-                  name="city"
-                />
-              </div>
+      {/* Filter panel */}
+      <div className="bg-white rounded-4 border p-4 mb-4 shadow-sm" style={{ borderColor: '#e2e8f0' }}>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div className="row g-3 align-items-end">
+            {/* City */}
+            <div className="col-12 col-md-3">
+              <label className="form-label small fw-semibold text-secondary mb-2 d-flex align-items-center gap-1">
+                <LuMapPin size={14} className="text-primary-garro" /> City
+              </label>
+              <CustomDropdown
+                options={cityOptions}
+                value={filter.city}
+                onChange={(val) => setFilter(prev => ({ ...prev, city: val }))}
+                placeholder="All Cities"
+                name="city"
+              />
+            </div>
 
-              {/* Service Type */}
-              <div className="mb-3">
-                <label className="form-label small fw-medium">Service Type</label>
-                <CustomDropdown
-                  options={serviceOptions}
-                  value={filter.service}
-                  onChange={(val) => setFilter(prev => ({ ...prev, service: val }))}
-                  placeholder="All Services"
-                  name="service"
-                />
-              </div>
+            {/* Service Type */}
+            <div className="col-12 col-md-3">
+              <label className="form-label small fw-semibold text-secondary mb-2 d-flex align-items-center gap-1">
+                <LuWrench size={14} className="text-primary-garro" /> Service Type
+              </label>
+              <CustomDropdown
+                options={serviceOptions}
+                value={filter.service}
+                onChange={(val) => setFilter(prev => ({ ...prev, service: val }))}
+                placeholder="All Services"
+                name="service"
+              />
+            </div>
 
-              {/* Pickup */}
-              <div className="mb-3">
-                <label className="form-label small fw-medium">Pickup Option</label>
-                <CustomDropdown
-                  options={pickupOptions}
-                  value={filter.pickup}
-                  onChange={(val) => setFilter(prev => ({ ...prev, pickup: val }))}
-                  placeholder="Any"
-                  name="pickup"
-                />
-              </div>
+            {/* Pickup */}
+            <div className="col-12 col-md-2">
+              <label className="form-label small fw-semibold text-secondary mb-2 d-flex align-items-center gap-1">
+                <LuStore size={14} className="text-primary-garro" /> Pickup Option
+              </label>
+              <CustomDropdown
+                options={pickupOptions}
+                value={filter.pickup}
+                onChange={(val) => setFilter(prev => ({ ...prev, pickup: val }))}
+                placeholder="Any"
+                name="pickup"
+              />
+            </div>
 
-              <button type="submit" className="btn-garro btn-primary-garro w-100 mt-3">Apply Filters</button>
+            {/* Sort by */}
+            <div className="col-12 col-md-2">
+              <label className="form-label small fw-semibold text-secondary mb-2 d-flex align-items-center gap-1">
+                <LuStar size={14} className="text-primary-garro" /> Sort by
+              </label>
+              <CustomDropdown
+                options={sortOptions}
+                value={sort}
+                onChange={(val) => setSort(val)}
+                placeholder="Sort by"
+                name="sort"
+              />
+            </div>
+
+            {/* Reset Actions */}
+            <div className="col-12 col-md-2">
               <button 
                 type="button" 
-                className="btn-garro btn-clear-garro w-100 mt-2"
+                className="btn-garro btn-outline-garro w-100 py-2 d-flex align-items-center justify-content-center gap-1"
+                style={{ height: '42px', fontSize: '13px', fontWeight: '600' }}
                 onClick={() => setFilter({ city: '', service: '', pickup: '' })}
               >
-                Clear All
+                Clear Filters
               </button>
-            </form>
+            </div>
           </div>
-        </div>
+        </form>
+      </div>
 
-        {/* Main Content */}
-        <div className="col-lg-9 bg-light">
-          <div className="p-4">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-              <div>
-                <h5 className="fw-bold mb-0">Available Garages</h5>
-                <span className="text-muted small">{sortedGarages.length} garage{sortedGarages.length !== 1 ? 's' : ''} found</span>
-              </div>
-              <div className="d-flex gap-2 align-items-center">
-                <label className="small text-muted">Sort by:</label>
-                <div style={{ width: '150px' }}>
-                  <CustomDropdown
-                    options={sortOptions}
-                    value={sort}
-                    onChange={(val) => setSort(val)}
-                    placeholder="Sort by"
-                    name="sort"
-                  />
+      {/* Garages List */}
+      {loading ? (
+        <div className="text-center py-5 bg-white rounded-4 border shadow-sm" style={{ borderColor: '#e2e8f0' }}>
+          <div className="spinner-border text-primary-garro" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <h6 className="mt-3 text-secondary">Loading verified garages...</h6>
+        </div>
+      ) : sortedGarages.length > 0 ? (
+        <div className="row g-4">
+          {sortedGarages.map(garage => (
+            <div key={garage._id} className="col-12 col-md-6 col-xl-4">
+              <div className="garage-list-card" style={{ background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden', height: '100%', transition: 'all 0.2s' }}>
+                <div className="row g-0 h-100">
+                  <div className="col-4">
+                    <div className="garage-list-img d-flex align-items-center justify-content-center h-100" style={{ background: 'rgba(255, 92, 26, 0.04)', color: 'var(--brand)', minHeight: '130px', borderRight: '1px solid #e2e8f0' }}>
+                      <LuStore size={38} />
+                    </div>
+                  </div>
+                  <div className="col-8 p-3 d-flex flex-column justify-content-between">
+                    <div>
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <h6 className="fw-bold mb-0 text-dark" style={{ fontSize: '13.5px', lineHeight: '1.3' }}>
+                          {garage.name}
+                        </h6>
+                        <span className="rating-badge flex-shrink-0 d-inline-flex align-items-center gap-1" style={{ background: 'var(--brand-light)', color: 'var(--brand)', padding: '2px 6px', borderRadius: '6px', fontSize: '11px', fontWeight: '700' }}>
+                          <LuStar size={11} style={{ fill: 'currentColor' }} /> {garage.rating || 0}
+                        </span>
+                      </div>
+                      
+                      <div className="d-flex align-items-center gap-1 text-muted mb-1" style={{ fontSize: '11.5px' }}>
+                        <LuMapPin size={13} className="text-secondary flex-shrink-0" />
+                        <span className="text-truncate">{garage.areas ? garage.areas.join(', ') : 'Dubai'}</span>
+                      </div>
+                      
+                      <div className="d-flex align-items-center gap-1 text-muted mb-1" style={{ fontSize: '11.5px' }}>
+                        <LuWrench size={13} className="text-secondary flex-shrink-0" />
+                        <span className="text-truncate" title={getServiceDisplay(garage.services)}>{getServiceDisplay(garage.services)}</span>
+                      </div>
+                      
+                      {garage.phone && (
+                        <div className="d-flex align-items-center gap-1 text-muted mb-3" style={{ fontSize: '11.5px' }}>
+                          <LuPhone size={13} className="text-secondary flex-shrink-0" />
+                          <span>{garage.phone}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="d-flex gap-2">
+                      <Link to={`/garage/${garage._id}`} className="btn-garro btn-outline-garro btn-sm py-2 flex-fill text-center" style={{ fontSize: '12px' }}>
+                        Details
+                      </Link>
+                      <Link to={`/garage/${garage._id}/book`} className="btn-garro btn-primary-garro btn-sm py-2 flex-fill text-center" style={{ fontSize: '12px' }}>
+                        Book Now
+                      </Link>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-
-            {loading ? (
-              <div className="text-center py-5">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
-                </div>
-                <h6 className="mt-3">Loading verified garages...</h6>
-              </div>
-            ) : sortedGarages.length > 0 ? (
-              <div className="row g-3">
-                {sortedGarages.map(garage => (
-                  <div key={garage._id} className="col-12 col-xl-6">
-                    <div className="garage-list-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden', height: '100%', transition: 'all 0.2s' }}>
-                      <div className="row g-0 h-100">
-                        <div className="col-4">
-                          <div className="garage-list-img d-flex align-items-center justify-content-center h-100" style={{ background: '#f8fafc', borderRight: '1px solid #e2e8f0' }}>
-                            <span style={{ fontSize: '3rem' }}>🏪</span>
-                          </div>
-                        </div>
-                        <div className="col-8 p-3">
-                          <div className="d-flex justify-content-between align-items-start mb-1">
-                            <h6 className="fw-bold mb-0 me-2" style={{ fontSize: '0.9rem' }}>{garage.name}</h6>
-                            <span className="rating-badge flex-shrink-0" style={{ background: 'var(--brand-light)', color: 'var(--brand)', padding: '2px 6px', borderRadius: '6px', fontSize: '11px', fontWeight: '700' }}>
-                              ★ {garage.rating || 0}
-                            </span>
-                          </div>
-                          <p className="text-muted mb-1" style={{ fontSize: '0.78rem' }}>
-                            <span className="material-icons-round" style={{ fontSize: '14px', verticalAlign: 'middle', marginRight: '4px' }}>location_on</span>
-                            {garage.areas ? garage.areas.join(', ') : 'Dubai'}
-                          </p>
-                          <p className="text-muted mb-2" style={{ fontSize: '0.75rem' }}>
-                            <span className="material-icons-round" style={{ fontSize: '14px', verticalAlign: 'middle', marginRight: '4px' }}>build</span>
-                            {getServiceDisplay(garage.services)}
-                          </p>
-                          {garage.phone && (
-                            <p className="text-muted mb-3" style={{ fontSize: '0.75rem' }}>
-                                <span className="material-icons-round" style={{ fontSize: '14px', verticalAlign: 'middle', marginRight: '4px' }}>phone</span>
-                                {garage.phone}
-                            </p>
-                          )}
-                          <div className="d-flex gap-2">
-                            <Link to={`/garage/${garage._id}`} className="btn-garro btn-primary-garro btn-sm py-2 px-3 flex-fill text-center">View Details</Link>
-                            <Link to={`/garage/${garage._id}/book`} className="btn-garro btn-outline-garro btn-sm py-2 px-3 flex-fill text-center">Book Now</Link>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-5">
-                <div style={{ fontSize: '4rem' }}>🔍</div>
-                <h5 className="fw-bold mt-3">No garages found</h5>
-                <p className="text-muted">Try adjusting your filters or selecting a different location.</p>
-                <button className="btn btn-primary-garro" onClick={() => setFilter({ city: '', service: '', pickup: '' })}>Clear Filters</button>
-              </div>
-            )}
-          </div>
+          ))}
         </div>
-      </div>
+      ) : (
+        <div className="text-center py-5 bg-white rounded-4 border shadow-sm" style={{ borderColor: '#e2e8f0' }}>
+          <LuSearch size={44} className="text-muted mb-3" />
+          <h5 className="fw-bold text-dark">No garages found</h5>
+          <p className="text-muted small">Try adjusting your filters or selecting a different location.</p>
+          <button className="btn-garro btn-primary-garro btn-sm px-4 py-2 mt-2" onClick={() => setFilter({ city: '', service: '', pickup: '' })}>
+            Reset Filters
+          </button>
+        </div>
+      )}
     </div>
   );
 

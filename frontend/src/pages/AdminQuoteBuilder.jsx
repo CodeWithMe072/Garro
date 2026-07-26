@@ -126,55 +126,14 @@ const AdminQuoteBuilder = () => {
       <AdminSidebar />
 
       {/* ── MAIN CONTENT ── */}
-      <main className="dash-main" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          
-          {/* Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <Link to="/admin" className="back" style={{ textDecoration: 'none', color: '#64748b', fontSize: '13.5px' }}>
-              ← {t('dashboard_back')}
-            </Link>
-
-            {/* Language Switcher */}
-            <div style={{ position: 'relative' }}>
-              <button 
-                onClick={() => setIsLangOpen(!isLangOpen)}
-                className="btn btn-outline-secondary d-flex align-items-center gap-2"
-                style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
-              >
-                <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
-              </button>
-              {isLangOpen && (
-                <div style={{
-                  position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                  background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-                  boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
-                  minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
-                }}>
-                  {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
-                    <button
-                      key={code}
-                      onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                      style={{
-                        background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
-                        borderRadius: '8px', padding: '8px 12px',
-                        color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
-                        fontSize: '13px', fontWeight: lang === code ? 700 : 500,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center',
-                        justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-                      }}
-                    >
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+      <main className="dash-main">
+          <div className="dash-header mb-4" style={{ display: 'block' }}>
+            <div className="dash-title d-flex align-items-center gap-2">
+              <LuWrench className="text-primary-garro" />
+              <span>{lang === 'ar' ? 'منشئ عروض الأسعار' : (lang === 'ur' ? 'ایڈمن کوٹ بلڈر' : 'Admin Quote Builder')}</span>
             </div>
+            <div className="dash-subtitle">Review active client service requests and issue detailed parts and labor quotes</div>
           </div>
-
-          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '32px', color: '#1e293b', letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <LuWrench /> {lang === 'ar' ? 'منشئ عروض الأسعار' : (lang === 'ur' ? 'ایڈمن کوٹ بلڈر' : 'Admin Quote Builder')}
-          </h1>
 
           <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px' }}>
             
@@ -371,8 +330,6 @@ const AdminQuoteBuilder = () => {
             </div>
 
           </div>
-
-        </div>
       </main>
     </div>
   );

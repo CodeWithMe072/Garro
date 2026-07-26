@@ -532,7 +532,7 @@ const AdminDashboard = () => {
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">
-        <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="dash-header mb-4" style={{ display: 'block' }}>
           <div>
             <div className="dash-title">
               {(() => {
@@ -549,28 +549,6 @@ const AdminDashboard = () => {
             <div className="dash-subtitle">
               {lang === 'ar' ? 'إليك ما يحدث في غارو اليوم' : (lang === 'ur' ? 'آج گارو میں کیا ہو رہا ہے' : "Here's what's happening at Garro today")}
             </div>
-          </div>
-          {/* Language Switcher */}
-          <div style={{ position: 'relative' }}>
-            <button 
-              onClick={() => setIsLangOpen(!isLangOpen)}
-              className="dash-lang-toggle"
-            >
-              <LuGlobe size={15} /> <span>{lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}</span>
-            </button>
-            {isLangOpen && (
-              <div className="dash-lang-dropdown">
-                {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
-                  <button
-                    key={code}
-                    onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                    className={`dash-lang-option ${lang === code ? 'active' : ''}`}
-                  >
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
         </div>
 

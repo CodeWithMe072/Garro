@@ -62,12 +62,14 @@ const CustomerDashboard = React.lazy(() => import('./pages/CustomerDashboard'));
 // Wrapper for pages with Navbar and Footer
 const PageLayout = ({ children }) => {
   const location = useLocation();
+  const { user } = useAuth();
   const isAdminLayout = location.pathname.startsWith('/admin') || location.pathname === '/my-bookings' || location.pathname === '/search';
+  const showFooter = !isAdminLayout && user?.role !== 'staff';
   return (
     <div className={isAdminLayout ? "g-admin-layout" : ""}>
       <Navbar />
       <main>{children}</main>
-      {!isAdminLayout && <Footer />}
+      {showFooter && <Footer />}
     </div>
   );
 };

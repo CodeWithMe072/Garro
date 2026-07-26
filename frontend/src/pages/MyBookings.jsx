@@ -5,6 +5,8 @@ import { useNotification } from '../context/NotificationContext';
 import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
 import AdminSidebar from '../components/AdminSidebar';
+import StaffSidebar from '../components/StaffSidebar';
+import { useLanguage } from '../context/LanguageContext';
 import {
   LuClipboardList,
   LuTriangleAlert,
@@ -14,12 +16,16 @@ import {
   LuClock,
   LuCircleCheck,
   LuStore,
-  LuCreditCard
+  LuCreditCard,
+  LuChevronLeft,
+  LuGlobe
 } from 'react-icons/lu';
 
   const MyBookings = () => {
   const { user } = useAuth();
   const { toast, confirm } = useNotification();
+  const { t, lang, changeLanguage } = useLanguage();
+  const [isLangOpen, setIsLangOpen] = useState(false);
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -386,8 +392,20 @@ import {
   const isAdmin = ['manager', 'superadmin', 'admin'].includes(user?.role);
 
   const renderContent = () => (
-    <div className="container py-5" style={{ minHeight: 'calc(100vh - 80px)', width: '100%' }}>
-      <h3 className="fw-bold mb-4">My Bookings</h3>
+    <div className={isAdmin ? "" : "container py-5"} style={{ minHeight: 'calc(100vh - 80px)', width: '100%', padding: isAdmin ? '0' : '24px 0' }}>
+      {isAdmin && (
+        <>
+          <div className="dash-header mb-4" style={{ display: 'block' }}>
+            <div className="dash-title d-flex align-items-center gap-2">
+              <LuClipboardList className="text-primary-garro" />
+              <span>{lang === 'ar' ? 'سجل الحجوزات والمهام' : (lang === 'ur' ? 'بکنگ اور کاموں کا کھاتہ' : 'Customer Bookings Ledger')}</span>
+            </div>
+            <div className="dash-subtitle">{lang === 'ar' ? 'مراقبة وإدارة جميع حجوزات ومهام العملاء النشطة.' : (lang === 'ur' ? 'تمام فعال کسٹمر بکنگز اور جابز کی نگرانی اور انتظام کریں۔' : 'Monitor and manage all active customer bookings and jobs.')}</div>
+          </div>
+        </>
+      )}
+
+      {!isAdmin && <h3 className="fw-bold mb-4">{t('my_bookings')}</h3>}
 
       {bookings.length > 0 ? (
         <div className="row g-4">
@@ -445,8 +463,7 @@ import {
                     <div className="d-flex gap-2">
                       <Link 
                         to={`/track/${booking._id}`}
-                        className="btn btn-outline-primary btn-sm w-100 py-2 fw-semibold"
-                        style={{ borderColor: 'var(--brand)', color: 'var(--brand)' }}
+                        className="btn-garro btn-outline-garro btn-sm w-100 py-2 fw-semibold"
                       >
                         View Details
                       </Link>
@@ -804,11 +821,24 @@ import {
     </div>
   );
 
+  const isStaff = user?.role === 'staff';
+
   if (isAdmin) {
     return (
       <div className="dash-wrapper">
         <AdminSidebar pendingBookings={bookings.filter(b => b.status === 'new').length} />
-        <main className="dash-main w-100" style={{ padding: '0 2rem' }}>
+        <main className="dash-main">
+          {renderContent()}
+        </main>
+      </div>
+    );
+  }
+
+  if (isStaff) {
+    return (
+      <div className="staff-wrapper">
+        <StaffSidebar pendingJobsCount={bookings.filter(b => b.status === 'pickup_scheduled' || b.status === 'picked_up' || b.status === 'ready_for_delivery').length} />
+        <main className="staff-main">
           {renderContent()}
         </main>
       </div>

@@ -96,75 +96,24 @@ const AdminSettings = () => {
     <div className="dash-wrapper">
       {/* ── SIDEBAR ── */}
       <AdminSidebar />
-
       {/* ── MAIN CONTENT ── */}
-      <main className="dash-main" style={{ background: '#f1f5f9', minHeight: '100vh', padding: '24px' }}>
+      <main className="dash-main">
         <div style={{ maxWidth: '640px', margin: '0 auto' }}>
-          
-          {/* Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <Link to="/admin" className="back" style={{ textDecoration: 'none', color: '#64748b', fontSize: '13.5px' }}>
-              ← {t('dashboard_back')}
-            </Link>
 
-            {/* Language Switcher */}
-            <div style={{ position: 'relative' }}>
-              <button 
-                onClick={() => setIsLangOpen(!isLangOpen)}
-                className="btn btn-outline-secondary d-flex align-items-center gap-2"
-                style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
-              >
-                <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
-              </button>
-              {isLangOpen && (
-                <div style={{
-                  position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                  background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-                  boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
-                  minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
-                }}>
-                  {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
-                    <button
-                      key={code}
-                      onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                      style={{
-                        background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
-                        borderRadius: '8px', padding: '8px 12px',
-                        color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
-                        fontSize: '13px', fontWeight: lang === code ? 700 : 500,
-                        cursor: 'pointer', display: 'flex', alignItems: 'center',
-                        justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-                      }}
-                    >
-                      <span>{label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
+          <div className="dash-header mb-4" style={{ display: 'block' }}>
+            <div className="dash-title d-flex align-items-center gap-2">
+              <LuSettings className="text-primary-garro" />
+              <span>{lang === 'ar' ? 'تهيئة النظام' : (lang === 'ur' ? 'سسٹم کنفیگریشن' : 'System Configuration')}</span>
             </div>
+            <div className="dash-subtitle">{lang === 'ar' ? 'إدارة رسوم السوق العالمية، معلمات الضرائب، وتكوينات تعيين المساعدين.' : (lang === 'ur' ? 'عالمی مارکیٹ پلیس کی فیس، ٹیکس کے پیرامیٹرز اور مددگاروں کے تفویض کی ترتیبات کا انتظام کریں۔' : 'Manage global marketplace fees, tax parameters, and helper assignment configurations.')}</div>
           </div>
-
-          <h1 style={{ fontSize: '28px', fontWeight: '800', marginBottom: '8px', color: '#1e293b', letterSpacing: '-0.025em' }}>
-            ⚙️ {lang === 'ar' ? 'تهيئة النظام' : (lang === 'ur' ? 'سسٹم کنفیگریشن' : 'System Configuration')}
-          </h1>
-          <p style={{ color: '#64748b', fontSize: '14px', marginBottom: '32px' }}>
-            {lang === 'ar' ? 'إدارة رسوم السوق العالمية، معلمات الضرائب، وتكوينات تعيين المساعدين.' : (lang === 'ur' ? 'عالمی مارکیٹ پلیس کی فیس، ٹیکس کے پیرامیٹرز اور مددگاروں کے تفویض کی ترتیبات کا انتظام کریں۔' : 'Manage global marketplace fees, tax parameters, and helper assignment configurations.')}
-          </p>
 
           {loading ? (
             <p style={{ color: '#64748b' }}>{t('loading')}</p>
           ) : (
-          <form onSubmit={handleSubmit} style={{
-            background: '#fff',
-            border: '1px solid #e2e8f0',
-            borderRadius: '16px',
-            padding: '32px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '24px'
-          }}>
+          <form onSubmit={handleSubmit} className="complaint-card" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
+              <label style={{ display: 'block', fontSize: '13.5px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
                 {lang === 'ar' ? 'ضريبة القيمة المضافة (VAT %)' : (lang === 'ur' ? 'ویلیو ایڈڈ ٹیکس (VAT %)' : 'Value Added Tax (VAT %)')}
               </label>
               <input
@@ -174,16 +123,7 @@ const AdminSettings = () => {
                 step="0.01"
                 value={vat}
                 onChange={(e) => setVat(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: '#fff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  color: '#1e293b',
-                  fontSize: '15px',
-                  boxSizing: 'border-box'
-                }}
+                className="chat-search-input"
                 required
               />
               <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '6px' }}>
@@ -192,7 +132,7 @@ const AdminSettings = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
+              <label style={{ display: 'block', fontSize: '13.5px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
                 {lang === 'ar' ? 'رسوم خدمة السوق (٪)' : (lang === 'ur' ? 'مارکیٹ پلیس سروس فیس (%)' : 'Marketplace Service Fee (%)')}
               </label>
               <input
@@ -202,16 +142,7 @@ const AdminSettings = () => {
                 step="0.01"
                 value={serviceFee}
                 onChange={(e) => setServiceFee(e.target.value)}
-                style={{
-                  width: '100%',
-                  background: '#fff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  color: '#1e293b',
-                  fontSize: '15px',
-                  boxSizing: 'border-box'
-                }}
+                className="chat-search-input"
                 required
               />
               <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '6px' }}>
@@ -220,21 +151,19 @@ const AdminSettings = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
+              <label style={{ display: 'block', fontSize: '13.5px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
                 {lang === 'ar' ? 'وضع تعيين المساعد' : (lang === 'ur' ? 'مددگار تفویض کا طریقہ' : 'Helper Assignment Mode')}
               </label>
               <select
                 value={assignMode}
                 onChange={(e) => setAssignMode(e.target.value)}
+                className="form-select text-dark"
                 style={{
-                  width: '100%',
                   background: '#fff',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  color: '#1e293b',
-                  fontSize: '15px',
-                  boxSizing: 'border-box'
+                  border: '1.5px solid #cbd5e1',
+                  borderRadius: '10px',
+                  padding: '10px 14px',
+                  fontSize: '13.5px'
                 }}
                 required
               >
@@ -248,16 +177,11 @@ const AdminSettings = () => {
             <button
               type="submit"
               disabled={saving}
+              className="btn-garro btn-primary-garro w-100 py-2.5"
               style={{
-                background: 'linear-gradient(135deg, #ff5c1a 0%, #e04a0e 100%)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '14px',
-                color: 'white',
-                fontSize: '15px',
+                height: '46px',
+                fontSize: '14.5px',
                 fontWeight: '700',
-                cursor: 'pointer',
-                transition: 'opacity 0.2s',
                 opacity: saving ? 0.7 : 1,
                 marginTop: '12px'
               }}

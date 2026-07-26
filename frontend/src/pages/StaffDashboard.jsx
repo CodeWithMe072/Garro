@@ -2,9 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-import { LuClipboardList, LuHourglass, LuCircleCheck, LuCalendar, LuMessageSquare, LuWrench, LuGlobe, LuChevronDown, LuCheck } from 'react-icons/lu';
+import {
+  LuClipboardList,
+  LuHourglass,
+  LuCircleCheck,
+  LuCalendar,
+  LuMessageSquare,
+  LuWrench,
+  LuGlobe,
+  LuChevronDown,
+  LuCheck,
+  LuStore,
+  LuCar,
+  LuTruck,
+  LuCalendarDays,
+  LuLayoutDashboard,
+  LuTrendingUp
+} from 'react-icons/lu';
 import { io } from 'socket.io-client';
 import { useLanguage } from '../context/LanguageContext';
+import StaffSidebar from '../components/StaffSidebar';
 
 const StaffDashboard = () => {
   const { user } = useAuth();
@@ -199,82 +216,13 @@ const StaffDashboard = () => {
   return (
     <div className="staff-wrapper">
       {/* ── SIDEBAR ── */}
-      <aside className="staff-sidebar">
-        <div className="sb-profile">
-          <div className="sb-profile-av">{user?.firstName?.[0] || 'S'}</div>
-          <div>
-            <div className="sb-profile-name">{user?.firstName || 'Staff'}</div>
-            <div className="sb-profile-role">{user?.role || 'staff'}</div>
-          </div>
-        </div>
-
-        <span className="sb-label">{t('my_work')}</span>
-        <Link to="/admin/staff" className="sb-link active">
-          <span className="si">⚡</span>{t('my_dashboard')}
-        </Link>
-        <Link to="/my-bookings" className="sb-link">
-          <span className="si"><LuClipboardList /></span>{t('all_bookings')}
-          {stats.my_pending > 0 && <span className="sb-badge">{stats.my_pending}</span>}
-        </Link>
-
-        {['manager', 'superadmin', 'admin'].includes(user?.role) && (
-          <>
-            <div className="sb-divider"></div>
-            <span className="sb-label">{lang === 'ar' ? 'وصول المسؤول' : (lang === 'ur' ? 'ایڈمن رسائی' : 'Admin Access')}</span>
-            <Link to="/admin" className="sb-link">
-              <span className="si">📊</span>{t('full_dashboard')}
-            </Link>
-          </>
-        )}
-
-        <div className="sb-divider"></div>
-        <Link to="/home" className="sb-link">
-          <span className="si"><LuGlobe /></span>{t('back_to_site')}
-        </Link>
-      </aside>
+      <StaffSidebar pendingJobsCount={stats.my_pending} />
 
       {/* ── MAIN ── */}
       <main className="staff-main">
-        <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div className="dash-title">{t('staff_dashboard')} ⚡</div>
-            <div className="dash-subtitle">{t('welcome_back')}, {user?.firstName || 'Staff'}!</div>
-          </div>
-          {/* Language Switcher */}
-          <div style={{ position: 'relative' }}>
-            <button 
-              onClick={() => setIsLangOpen(!isLangOpen)}
-              className="btn btn-outline-secondary d-flex align-items-center gap-2"
-              style={{ borderRadius: '10px', padding: '8px 16px', fontSize: '13.5px', background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', color: '#fff' }}
-            >
-              <LuGlobe size={14} /> {lang === 'en' ? 'English' : (lang === 'ar' ? 'العربية' : 'اردو')}
-            </button>
-            {isLangOpen && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
-                boxShadow: '0 10px 24px rgba(0,0,0,0.2)', zIndex: 1000,
-                minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
-              }}>
-                {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
-                  <button
-                    key={code}
-                    onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                    style={{
-                      background: lang === code ? 'rgba(255,92,26,0.15)' : 'none', border: 'none',
-                      borderRadius: '8px', padding: '8px 12px',
-                      color: lang === code ? '#ff8c5a' : 'rgba(255,255,255,0.6)',
-                      fontSize: '13px', fontWeight: lang === code ? 700 : 500,
-                      cursor: 'pointer', display: 'flex', alignItems: 'center',
-                      justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-                    }}
-                  >
-                    <span>{label}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="dash-header mb-4" style={{ display: 'block' }}>
+          <div className="dash-title">{t('staff_dashboard')}</div>
+          <div className="dash-subtitle">{t('welcome_back')}, {user?.firstName || 'Staff'}!</div>
         </div>
 
         {/* Stats */}
@@ -309,7 +257,7 @@ const StaffDashboard = () => {
         {/* Today's Schedule */}
         <div className="schedule-card">
           <div className="schedule-head">
-            <h4>📅 {t('todays_schedule')} <span className="today-badge">{t('active_jobs')}</span></h4>
+            <h4><LuCalendarDays className="text-primary-garro me-2" size={18} />{t('todays_schedule')} <span className="today-badge">{t('active_jobs')}</span></h4>
             <span style={{ fontSize: '13px', color: '#64748b' }}>{mappedBookings.length} {t('jobs_assigned')}</span>
           </div>
 
@@ -324,13 +272,13 @@ const StaffDashboard = () => {
                       <div className="tl-cust">{b.user.first_name} {b.user.last_name}</div>
                       <span className={`sbadge ${b.status}`}>{b.status_display}</span>
                     </div>
-                    <div className="tl-garage">🏪 {b.garage.name} &nbsp;·&nbsp; 🚗 {b.car_model}</div>
+                    <div className="tl-garage"><LuStore className="text-secondary me-1" size={13} /> {b.garage.name} &nbsp;·&nbsp; <LuCar className="text-secondary me-1" size={13} /> {b.car_model}</div>
                     <div className="tl-services">
                       {b.services.join(', ')}
                     </div>
                     {b.pickup_type === 'pickup_drop' && (
-                      <div style={{ fontSize: '11px', background: '#eff6ff', color: '#1d4ed8', display: 'inline-block', padding: '2px 8px', borderRadius: '6px', marginTop: '6px', fontWeight: '600' }}>
-                        🚗 {t('pickup_required')}
+                      <div style={{ fontSize: '11px', background: '#eff6ff', color: '#1d4ed8', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px', borderRadius: '6px', marginTop: '6px', fontWeight: '600' }}>
+                        <LuCar size={12} /> <span>{t('pickup_required')}</span>
                       </div>
                     )}
                     {b.notes && (
@@ -342,29 +290,29 @@ const StaffDashboard = () => {
                     <div className="tl-actions">
                       {b.status === 'pickup_scheduled' && (
                         <button 
-                          className="tl-btn" 
+                          className="tl-btn d-inline-flex align-items-center justify-content-center" 
                           onClick={() => handleUpdateStatus(b.id, 'picked_up')} 
                           style={{ background: '#ff5c1a', color: 'white' }}
                         >
-                          🚚 Mark Picked Up
+                          <LuTruck size={14} className="me-1" /> Mark Picked Up
                         </button>
                       )}
                       {b.status === 'picked_up' && (
                         <button 
-                          className="tl-btn" 
+                          className="tl-btn d-inline-flex align-items-center justify-content-center" 
                           onClick={() => handleOpenVcrModal(b.id)} 
                           style={{ background: '#10b981', color: 'white' }}
                         >
-                          📋 Check-in to Garage
+                          <LuClipboardList size={14} className="me-1" /> Check-in to Garage
                         </button>
                       )}
                       {b.status === 'ready_for_delivery' && (
                         <button 
-                          className="tl-btn" 
+                          className="tl-btn d-inline-flex align-items-center justify-content-center" 
                           onClick={() => handleUpdateStatus(b.id, 'delivered')} 
                           style={{ background: '#3b82f6', color: 'white' }}
                         >
-                          🏁 Mark Delivered
+                          <LuCheck size={14} className="me-1" /> Mark Delivered
                         </button>
                       )}
                       {['in_garage', 'inspection_done', 'repair_in_progress', 'work_complete'].includes(b.status) && (
@@ -384,8 +332,8 @@ const StaffDashboard = () => {
               ))}
             </div>
           ) : (
-            <div style={{ padding: '40px', textAlign: 'center' }}>
-              <div style={{ fontSize: '48px', marginBottom: '12px' }}>☀️</div>
+            <div className="d-flex flex-column align-items-center justify-content-center py-5">
+              <LuCalendarDays size={48} className="text-muted mb-3" />
               <div style={{ fontWeight: '700', fontSize: '15px', color: '#374151', marginBottom: '6px' }}>No bookings assigned</div>
               <div style={{ fontSize: '13px', color: '#94a3b8' }}>Enjoy your day — nothing scheduled for today.</div>
             </div>
@@ -395,19 +343,20 @@ const StaffDashboard = () => {
 
       {/* ── Vehicle Condition Report Form Modal ── */}
       {isVcrOpen && (
-        <div className="custom-modal-overlay" onClick={() => setIsVcrOpen(false)}>
-          <div className="custom-modal confirm" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px', textAlign: 'left' }}>
-            <div className="modal-icon" style={{ fontSize: '32px', marginBottom: '8px', justifyContent: 'flex-start' }}>📋</div>
-            <h3 className="modal-title" style={{ marginBottom: '4px' }}>Vehicle Check-in</h3>
-            <p className="modal-message" style={{ marginBottom: '20px' }}>Submit a vehicle condition report to check the car into the garage.</p>
+        <div className="custom-modal-overlay" onClick={() => setIsVcrOpen(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050, backdropFilter: 'blur(4px)' }}>
+          <div className="custom-modal confirm" onClick={(e) => e.stopPropagation()} style={{ background: '#ffffff', padding: '30px', borderRadius: '16px', maxWidth: '500px', width: '90%', color: '#0f172a', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0', textAlign: 'left' }}>
+            <h4 className="fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: '#0f172a' }}>
+              <LuClipboardList className="text-primary-garro" size={22} /> Vehicle Check-in
+            </h4>
+            <p className="text-muted small mb-4">Submit a vehicle condition report to check the car into the garage.</p>
 
             <form onSubmit={handleVcrSubmit}>
               <div className="mb-3">
-                <label className="form-label small fw-bold text-light">Odometer Reading (km)</label>
+                <label className="form-label small fw-bold text-secondary">Odometer Reading (km)</label>
                 <input 
                   type="number" 
-                  className="form-control" 
-                  style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                  className="form-control text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
                   placeholder="e.g. 45000"
                   value={vcrData.odometer}
                   onChange={(e) => setVcrData({ ...vcrData, odometer: e.target.value })}
@@ -416,10 +365,10 @@ const StaffDashboard = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-bold text-light">Fuel Level</label>
+                <label className="form-label small fw-bold text-secondary">Fuel Level</label>
                 <select 
-                  className="form-select" 
-                  style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                  className="form-select text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
                   value={vcrData.fuelLevel}
                   onChange={(e) => setVcrData({ ...vcrData, fuelLevel: e.target.value })}
                   required
@@ -433,10 +382,10 @@ const StaffDashboard = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-bold text-light">Damage/Inspection Notes</label>
+                <label className="form-label small fw-bold text-secondary">Damage/Inspection Notes</label>
                 <textarea 
-                  className="form-control" 
-                  style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                  className="form-control text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
                   rows="3" 
                   placeholder="e.g. Scratch on front left door, minor dent on rear bumper"
                   value={vcrData.damageNotes}
@@ -445,20 +394,20 @@ const StaffDashboard = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-bold text-light">Driver/Helper Name</label>
+                <label className="form-label small fw-bold text-secondary">Driver/Helper Name</label>
                 <input 
                   type="text" 
-                  className="form-control" 
-                  style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                  className="form-control text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
                   value={vcrData.driverName}
                   onChange={(e) => setVcrData({ ...vcrData, driverName: e.target.value })}
                   required
                 />
               </div>
 
-              <div className="modal-actions" style={{ justifyContent: 'flex-end', marginTop: '24px' }}>
-                <button type="button" className="modal-btn btn-cancel" onClick={() => setIsVcrOpen(false)}>Cancel</button>
-                <button type="submit" className="modal-btn btn-confirm btn-primary" disabled={submittingVcr}>
+              <div style={{ display: 'flex', justifyContent: 'end', gap: '10px', marginTop: '24px' }}>
+                <button type="button" className="btn-garro btn-outline-garro btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px' }} onClick={() => setIsVcrOpen(false)}>Cancel</button>
+                <button type="submit" className="btn-garro btn-primary-garro btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px' }} disabled={submittingVcr}>
                   {submittingVcr ? 'Submitting...' : 'Submit & Check-in'}
                 </button>
               </div>
