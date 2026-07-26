@@ -507,7 +507,7 @@ const Roadside = () => {
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#ff5c1a', marginBottom: '4px' }}>HELP</div>
                     <div style={{ fontSize: '24px', fontWeight: 900, color: '#1e293b', lineHeight: 1 }}>24/7</div>
                     <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff5c1a', margin: '14px auto 0' }}>
-                      <Clock size={16} />
+                      <LuClock size={16} />
                     </div>
                   </div>
                   <div style={{ width: '12px', height: '12px', border: '2px solid #cbd5e1', borderRadius: '50%', position: 'absolute', bottom: '8px' }}></div>
@@ -532,7 +532,7 @@ const Roadside = () => {
               <div className="col-6 col-md-3">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                   <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <Truck size={18} />
+                    <LuTruck size={18} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>500+</div>
@@ -544,7 +544,7 @@ const Roadside = () => {
               <div className="col-6 col-md-3">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                   <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <Users size={18} />
+                    <LuUsers size={18} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>50K+</div>
@@ -556,7 +556,7 @@ const Roadside = () => {
               <div className="col-6 col-md-3">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                   <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <ThumbsUp size={18} />
+                    <LuThumbsUp size={18} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>98%</div>
@@ -568,7 +568,7 @@ const Roadside = () => {
               <div className="col-6 col-md-3">
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
                   <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <Clock size={18} />
+                    <LuClock size={18} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>24x7</div>

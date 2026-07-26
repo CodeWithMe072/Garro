@@ -23,10 +23,20 @@ const MyRequests = () => {
 
   const [requests, setRequests]   = useState([]);
   const [invoices, setInvoices]   = useState([]);
+  const [quotes, setQuotes]       = useState([]);
   const [loading, setLoading]     = useState(true);
-  const [activeTab, setActiveTab] = useState('all');
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'all');
+  const [now, setNow]             = useState(Date.now());
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  useEffect(() => {
+    // Setup timer to tick every second for quote countdowns
+    const timer = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     // Show success toast if redirected from payment page
@@ -48,16 +58,21 @@ const MyRequests = () => {
     setLoading(true);
     const token = localStorage.getItem('token');
     try {
-      const [reqRes, invRes] = await Promise.all([
+      const [reqRes, invRes, quoteRes] = await Promise.all([
         fetch(`${API_BASE}/api/requests`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_BASE}/api/invoices/my`, { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${API_BASE}/api/invoices/my`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_BASE}/api/quotes`, { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
 
       const reqData = await reqRes.json();
       const invData = await invRes.json();
+      const quoteData = await quoteRes.json();
 
       if (reqData.success) setRequests(reqData.requests || []);
       if (invData.success) setInvoices(invData.invoices || []);
+      if (quoteData.success) {
+        setQuotes((quoteData.quotes || []).filter(q => q.status === 'sent'));
+      }
     } catch (err) {
       console.error('Failed to load requests:', err);
     } finally {
@@ -112,10 +127,61 @@ const MyRequests = () => {
     }
   };
 
+  const handleApproveQuote = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/quotes/${id}/approve`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Approval failed.');
+      }
+      toast.success('Quote approved! Repair booking confirmed.');
+      fetchData();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleRejectQuote = async (id) => {
+    if (!window.confirm('Warning: Rejecting this quote will cancel and delete your service request completely. Proceed?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/quotes/${id}/reject`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Rejection failed.');
+      }
+      toast.info('Quote rejected. Request deleted.');
+      fetchData();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const getRemainingTime = (validUntilStr) => {
+    const validUntil = new Date(validUntilStr).getTime();
+    const diff = validUntil - now;
+    if (diff <= 0) return 'Expired';
+
+    const secs = Math.floor((diff / 1000) % 60);
+    const mins = Math.floor((diff / (1000 * 60)) % 60);
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} remaining`;
+  };
+
   const tabs = [
     { key: 'all',       label: t('all_requests') },
     { key: 'active',    label: t('active_requests') },
-    { key: 'invoices',  label: `📄 ${t('invoices')}` }
+    { key: 'quotes',    label: `✉️ ${t('my_service_quotes') || 'Pending Quotes'} (${quotes.length})` },
+    { key: 'invoices',  label: `📄 ${t('invoices')} (${invoices.length})` }
   ];
 
   const activeStatuses   = [
@@ -287,8 +353,130 @@ const MyRequests = () => {
           )
         )}
 
+        {/* Quotes Tab */}
+        {activeTab === 'quotes' && (
+          quotes.length === 0 ? (
+            <div style={{
+              background: 'white', borderRadius: 16, padding: 48, textAlign: 'center',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
+            }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>✉️</div>
+              <h4 style={{ color: '#1a1a2e', marginBottom: 8 }}>No Pending Quotes</h4>
+              <p style={{ color: '#64748b', fontSize: 14 }}>You don't have any pending quotes requiring approval at the moment.</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {quotes.map(q => {
+                const timerText = getRemainingTime(q.validUntil);
+                const isExpired = timerText === 'Expired';
+
+                return (
+                  <div key={q._id} style={{
+                    background: 'white', borderRadius: 16, padding: '24px',
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: '4px solid #f97316',
+                    opacity: isExpired ? 0.6 : 1,
+                    pointerEvents: isExpired ? 'none' : 'auto'
+                  }}>
+                    {/* Card Header */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #f1f5f9', paddingBottom: 16 }}>
+                      <div>
+                        <span style={{ fontSize: '11px', color: '#f97316', fontWeight: '700', textTransform: 'uppercase' }}>
+                          {q.requestId?.serviceType?.replace(/_/g, ' ') || 'Car Repair'}
+                        </span>
+                        <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '4px 0 0', color: '#1a1a2e' }}>
+                          Quote from {q.garageId?.name || 'Partner Garage'}
+                        </h3>
+                      </div>
+                      <div style={{
+                        background: 'rgba(249, 115, 22, 0.1)',
+                        color: '#f97316',
+                        borderRadius: '30px',
+                        padding: '6px 14px',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                      }}>
+                        ⏱️ {timerText === 'Expired' ? 'Expired' : timerText}
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.5', margin: '0 0 20px' }}>
+                      <strong>Request Details:</strong> {q.requestId?.description || 'N/A'}
+                    </p>
+
+                    {/* Financial Table */}
+                    <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '16px 20px', marginBottom: 24, border: '1px solid #e2e8f0' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b' }}>
+                        <span>Spare Parts Cost</span>
+                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.partsCost?.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b', borderBottom: '1px dashed #e2e8f0', paddingBottom: 8 }}>
+                        <span>Labor Cost</span>
+                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.laborCost?.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b', paddingTop: 8 }}>
+                        <span>Subtotal</span>
+                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.subtotal?.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b' }}>
+                        <span>Service Fee</span>
+                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.serviceFee?.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b', borderBottom: '1px solid #e2e8f0', paddingBottom: 8 }}>
+                        <span>VAT (5%)</span>
+                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.vat?.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, fontSize: '16px', fontWeight: '800' }}>
+                        <span style={{ color: '#1e293b' }}>Total Due</span>
+                        <span style={{ color: '#10b981' }}>AED {q.customerTotal?.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    {!isExpired && (
+                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'end' }}>
+                        <button
+                          onClick={() => handleRejectQuote(q._id)}
+                          style={{
+                            background: 'none',
+                            border: '1.5px solid rgba(239, 68, 68, 0.4)',
+                            borderRadius: '10px',
+                            padding: '10px 20px',
+                            color: '#ef4444',
+                            fontWeight: '600',
+                            fontSize: '13px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Reject Quote
+                        </button>
+                        <button
+                          onClick={() => handleApproveQuote(q._id)}
+                          style={{
+                            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                            border: 'none',
+                            borderRadius: '10px',
+                            padding: '10px 24px',
+                            color: 'white',
+                            fontWeight: '700',
+                            fontSize: '13px',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(249, 115, 22, 0.2)'
+                          }}
+                        >
+                          Approve &amp; Confirm Repair
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
+        )}
+
         {/* Requests Tab (All / Active) */}
-        {activeTab !== 'invoices' && (
+        {activeTab !== 'invoices' && activeTab !== 'quotes' && (
           filteredRequests.length === 0 ? (
             <div style={{
               background: 'white', borderRadius: 16, padding: 48, textAlign: 'center',
@@ -364,6 +552,21 @@ const MyRequests = () => {
                           </div>
                         </div>
                       </div>
+
+                      {req.garageId && (
+                        <div style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '12px 16px', background: '#f8fafc',
+                          borderRadius: 10, border: '1px solid #e2e8f0',
+                          marginBottom: 14
+                        }}>
+                          <span style={{ fontSize: 18 }}>🏬</span>
+                          <div>
+                            <div style={{ fontSize: 10, color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Assigned Workshop</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{req.garageId.name}</div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* Invoice row — if paid */}
                       {inv && inv.status === 'paid' && (

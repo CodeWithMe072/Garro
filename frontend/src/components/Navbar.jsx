@@ -100,28 +100,32 @@ const Navbar = () => {
 
         {/* Nav Links */}
         <ul className={`g-nav-links ${isMobileMenuOpen ? 'open' : ''}`} id="navLinks">
-          {/* Public Links Always Visible */}
-          <li>
-            <Link to={isAuthenticated ? "/home" : "/"} className={isActive(isAuthenticated ? '/home' : '/')}>
-              {t('home')}
-            </Link>
-          </li>
-          <li>
-            <Link to="/services" className={isActive('/services')}>
-              <span dir="auto">{t('our_services')}</span>
-            </Link>
-          </li>
+          {/* Public Links Visible only when not logged in */}
+          {!isAuthenticated && (
+            <>
+              <li>
+                <Link to="/" className={isActive('/')}>
+                  {t('home')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/services" className={isActive('/services')}>
+                  <span dir="auto">{t('our_services')}</span>
+                </Link>
+              </li>
 
-          <li>
-            <Link to="/about" className={isActive('/about')}>
-              <span dir="auto">{t('nav_about') || 'About'}</span>
-            </Link>
-          </li>
-          <li>
-            <Link to="/contact" className={isActive('/contact')}>
-              <span dir="auto">{t('contact_us')}</span>
-            </Link>
-          </li>
+              <li>
+                <Link to="/about" className={isActive('/about')}>
+                  <span dir="auto">{t('nav_about') || 'About'}</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className={isActive('/contact')}>
+                  <span dir="auto">{t('contact_us')}</span>
+                </Link>
+              </li>
+            </>
+          )}
 
           {/* Authenticated Links */}
           {isAuthenticated && (
@@ -131,13 +135,6 @@ const Navbar = () => {
                   <LuHouse size={15} /> Home
                 </Link>
               </li>
-              {user?.role === 'customer' && (
-                <li>
-                  <Link to="/customer/dashboard" className={isActive('/customer/dashboard')}>
-                    <LuLayoutDashboard size={15} /> Dashboard
-                  </Link>
-                </li>
-              )}
               <li>
                 <Link to="/insurance" className={isActive('/insurance')}>
                   <LuShield size={15} /> {t('insurance')}
@@ -156,13 +153,6 @@ const Navbar = () => {
                     </Link>
                   </li>
                 </>
-              )}
-              {['staff', 'manager', 'superadmin'].includes(user?.role) && (
-                <li>
-                  <Link to={user?.role === 'staff' ? '/admin/staff' : '/admin'} className={location.pathname.includes('admin') ? 'active' : ''}>
-                    <LuZap size={15} /> <span dir="auto">{t('dashboard')}</span>
-                  </Link>
-                </li>
               )}
             </>
           )}
@@ -321,36 +311,14 @@ const Navbar = () => {
 
                   {user?.role === 'customer' && (
                     <>
+                      <Link to="/customer/dashboard" className="g-dropdown-item">
+                        <LuLayoutDashboard size={16} />Dashboard
+                      </Link>
                       <Link to="/my-requests" className="g-dropdown-item">
                         <LuClipboardList size={16} />{t('requests')}
                       </Link>
-                      <Link to="/my-bookings" className="g-dropdown-item">
-                        <LuFileCheck size={16} />My Bookings
-                      </Link>
                       <Link to="/my-vehicles" className="g-dropdown-item">
                         <LuCar size={16} />{t('vehicles')}
-                      </Link>
-                      <Link to="/my-invoices" className="g-dropdown-item">
-                        <LuReceipt size={16} />My Invoices
-                      </Link>
-                      <Link to="/my-quotes" className="g-dropdown-item">
-                        <LuFileText size={16} />My Quotes
-                      </Link>
-                      <div className="g-dropdown-divider"></div>
-                      <Link to="/get-quote" className="g-dropdown-item">
-                        <LuFileText size={16} />{t('get_quote')}
-                      </Link>
-                      <Link to="/insurance" className="g-dropdown-item">
-                        <LuShield size={16} />Insurance &amp; Protection
-                      </Link>
-                      <Link to="/roadside" className="g-dropdown-item">
-                        <LuTruck size={16} />Roadside Assistance
-                      </Link>
-                      <Link to="/emergency-pickup" className="g-dropdown-item" style={{ color: '#ef4444' }}>
-                        <LuSiren size={16} />Emergency Pickup
-                      </Link>
-                      <Link to="/end-of-life" className="g-dropdown-item">
-                        <LuRecycle size={16} />End-of-Life &amp; Scrap
                       </Link>
                     </>
                   )}

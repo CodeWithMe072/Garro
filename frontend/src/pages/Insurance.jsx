@@ -521,7 +521,7 @@ const Insurance = () => {
               <div className="col-6 col-md-3">
                 <div style={{ display: 'flex', alignItems: 'center', justifyXontent: 'center', gap: '12px' }}>
                   <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', justifyXontent: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <Shield size={18} />
+                    <LuShield size={18} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>500+</div>
@@ -533,7 +533,7 @@ const Insurance = () => {
               <div className="col-6 col-md-3">
                 <div style={{ display: 'flex', alignItems: 'center', justifyXontent: 'center', gap: '12px' }}>
                   <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', justifyXontent: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <Users size={18} />
+                    <LuUsers size={18} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>50K+</div>
@@ -545,7 +545,7 @@ const Insurance = () => {
               <div className="col-6 col-md-3">
                 <div style={{ display: 'flex', alignItems: 'center', justifyXontent: 'center', gap: '12px' }}>
                   <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', justifyXontent: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <ThumbsUp size={18} />
+                    <LuThumbsUp size={18} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>98%</div>
@@ -557,7 +557,7 @@ const Insurance = () => {
               <div className="col-6 col-md-3">
                 <div style={{ display: 'flex', alignItems: 'center', justifyXontent: 'center', gap: '12px' }}>
                   <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', justifyXontent: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <Clock size={18} />
+                    <LuClock size={18} />
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>24x7</div>

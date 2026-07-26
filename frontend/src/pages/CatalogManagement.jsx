@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
+import AdminSidebar from '../components/AdminSidebar';
 import {
   LuLayoutDashboard,
   LuStore,
@@ -30,15 +31,7 @@ const CatalogManagement = () => {
   const [isLangOpen, setIsLangOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('brands');
 
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    return localStorage.getItem('admin_sidebar_collapsed') === 'true';
-  });
 
-  const toggleSidebar = () => {
-    const nextState = !isCollapsed;
-    setIsCollapsed(nextState);
-    localStorage.setItem('admin_sidebar_collapsed', String(nextState));
-  };
 
   // Loading states
   const [loading, setLoading] = useState(true);
@@ -358,68 +351,9 @@ const CatalogManagement = () => {
   };
 
   return (
-    <div className={`dash-wrapper ${isCollapsed ? 'collapsed' : ''}`}>
+    <div className="dash-wrapper">
       {/* ── SIDEBAR ── */}
-      <aside className="dash-sidebar">
-        <div className="sidebar-toggle-container">
-          <button className="sidebar-toggle-btn" onClick={toggleSidebar} title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
-            {isCollapsed ? <LuChevronRight /> : <LuChevronLeft />}
-          </button>
-        </div>
-
-        <span className="sidebar-label">{t('overview')}</span>
-        <div className="sidebar-section">
-          <Link to="/admin" className="sidebar-link">
-            <span className="icon"><LuLayoutDashboard /></span>
-            <span className="link-text">{t('dashboard')}</span>
-          </Link>
-        </div>
-
-        <span className="sidebar-label">{t('operations')}</span>
-        <div className="sidebar-section">
-          <Link to="/admin/manage-garages" className="sidebar-link">
-            <span className="icon"><LuStore /></span>
-            <span className="link-text">{t('manage_garages')}</span>
-          </Link>
-          <Link to="/search" className="sidebar-link">
-            <span className="icon"><LuSearch /></span>
-            <span className="link-text">{t('find_garages')}</span>
-          </Link>
-          <Link to="/admin/catalog" className="sidebar-link active">
-            <span className="icon"><LuSettings /></span>
-            <span className="link-text">{t('system_catalog')}</span>
-          </Link>
-          <Link to="/my-bookings" className="sidebar-link">
-            <span className="icon"><LuClipboardList /></span>
-            <span className="link-text">{t('bookings')}</span>
-          </Link>
-        </div>
-
-        <div className="sidebar-divider"></div>
-        <span className="sidebar-label">{t('people')}</span>
-        <div className="sidebar-section">
-          <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon"><LuUser /></span>
-            <span className="link-text">{t('all_users')}</span>
-          </Link>
-          <Link to="/admin/staff" className="sidebar-link">
-            <span className="icon"><LuBriefcase /></span>
-            <span className="link-text">{t('staff_view')}</span>
-          </Link>
-          <Link to="/admin/manage-staff" className="sidebar-link">
-            <span className="icon"><LuUsers /></span>
-            <span className="link-text">{t('manage_staff')}</span>
-          </Link>
-        </div>
-
-        <div className="sidebar-divider"></div>
-        <div className="sidebar-section">
-          <Link to="/home" className="sidebar-link">
-            <span className="icon"><LuGlobe /></span>
-            <span className="link-text">{t('back_to_site')}</span>
-          </Link>
-        </div>
-      </aside>
+      <AdminSidebar />
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">

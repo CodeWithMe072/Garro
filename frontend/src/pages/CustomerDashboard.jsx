@@ -295,7 +295,7 @@ const CustomerDashboard = () => {
                 <LuChevronRight size={16} className="text-secondary" />
               </Link>
 
-              <Link to="/my-quotes" className="btn btn-outline-primary w-100 text-start d-flex align-items-center justify-content-between p-3 rounded-3 shadow-none" style={{ transition: 'all 0.2s' }}>
+              <Link to="/my-requests" state={{ activeTab: 'quotes' }} className="btn btn-outline-primary w-100 text-start d-flex align-items-center justify-content-between p-3 rounded-3 shadow-none" style={{ transition: 'all 0.2s' }}>
                 <div className="d-flex align-items-center gap-3">
                   <LuFileText size={20} />
                   <div>
