@@ -181,11 +181,42 @@ const MyRequests = () => {
     return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} remaining`;
   };
 
+  const mockTransactions = [
+    {
+      id: 'TXN-884920',
+      bookingId: '946A6687',
+      service: 'Minor Service (Deira Motors)',
+      date: '2026-07-01T14:30:00Z',
+      amount: 299.00,
+      method: 'Visa •••• 4242',
+      status: 'success'
+    },
+    {
+      id: 'TXN-773829',
+      bookingId: '946A6685',
+      service: 'Car Wash & Cleaning (Al Quoz Workshop)',
+      date: '2026-06-15T11:15:00Z',
+      amount: 49.00,
+      method: 'Apple Pay',
+      status: 'success'
+    },
+    {
+      id: 'TXN-664728',
+      bookingId: '946A6685',
+      service: 'Engine Diagnostic (Al Quoz Workshop)',
+      date: '2026-06-15T10:45:00Z',
+      amount: 150.00,
+      method: 'Visa •••• 4242',
+      status: 'refunded'
+    }
+  ];
+
   const tabs = [
     { key: 'all',       label: t('all_requests') },
     { key: 'active',    label: t('active_requests') },
     { key: 'quotes',    label: `✉️ ${t('my_service_quotes') || 'Pending Quotes'} (${quotes.length})` },
-    { key: 'invoices',  label: `📄 ${t('invoices')} (${invoices.length})` }
+    { key: 'invoices',  label: `📄 ${t('invoices')} (${invoices.length})` },
+    { key: 'transactions', label: `💳 Transaction History` }
   ];
 
   const activeStatuses   = [
@@ -479,8 +510,62 @@ const MyRequests = () => {
           )
         )}
 
+        {/* Transaction History Tab */}
+        {activeTab === 'transactions' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{
+              background: 'white', borderRadius: 16, padding: '24px',
+              boxShadow: '0 2px 12px rgba(0,0,0,0.06)', overflowX: 'auto'
+            }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 600 }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: 13, fontWeight: 600 }}>
+                    <th style={{ padding: '12px 16px' }}>Transaction ID</th>
+                    <th style={{ padding: '12px 16px' }}>Date</th>
+                    <th style={{ padding: '12px 16px' }}>Reference</th>
+                    <th style={{ padding: '12px 16px' }}>Payment Method</th>
+                    <th style={{ padding: '12px 16px' }}>Amount</th>
+                    <th style={{ padding: '12px 16px' }}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {mockTransactions.map(txn => (
+                    <tr key={txn.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: 13.5, color: '#334155' }}>
+                      <td style={{ padding: '16px 16px', fontWeight: 700, color: '#0f172a' }}>
+                        #{txn.id}
+                      </td>
+                      <td style={{ padding: '16px 16px' }}>
+                        {new Date(txn.date).toLocaleDateString('en-AE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td style={{ padding: '16px 16px' }}>
+                        <div style={{ fontWeight: 600, color: '#475569' }}>Booking #{txn.bookingId}</div>
+                        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{txn.service}</div>
+                      </td>
+                      <td style={{ padding: '16px 16px', color: '#64748b' }}>
+                        {txn.method}
+                      </td>
+                      <td style={{ padding: '16px 16px', fontWeight: 800, color: '#ff5c1a' }}>
+                        AED {txn.amount.toFixed(2)}
+                      </td>
+                      <td style={{ padding: '16px 16px' }}>
+                        <span style={{
+                          padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
+                          background: txn.status === 'success' ? '#dcfce7' : '#fee2e2',
+                          color:      txn.status === 'success' ? '#16a34a' : '#ef4444'
+                        }}>
+                          {txn.status === 'success' ? '✓ SUCCESS' : '✖ REFUNDED'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Requests Tab (All / Active) */}
-        {activeTab !== 'invoices' && activeTab !== 'quotes' && (
+        {activeTab !== 'invoices' && activeTab !== 'quotes' && activeTab !== 'transactions' && (
           filteredRequests.length === 0 ? (
             <div style={{
               background: 'white', borderRadius: 16, padding: 48, textAlign: 'center',
