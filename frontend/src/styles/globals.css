@@ -953,7 +953,7 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
   width: 100%;
   padding: 0 16px;
   background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #B5B5B5;
   border-radius: 12px;
   font-size: 14.5px;
   color: #0f172a;
@@ -963,7 +963,20 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
 }
 
 .c-dropdown-trigger.is-placeholder {
-  color: #94a3b8;
+  color: #64748b;
+}
+
+.c-dropdown-trigger.is-disabled {
+  background-color: #f8fafc !important;
+  color: #8898ae !important;
+  border-color: #B5B5B5 !important;
+  cursor: not-allowed !important;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.c-dropdown-trigger.is-disabled .c-dropdown-arrow {
+  opacity: 0.4;
 }
 
 .c-dropdown-trigger:hover {
@@ -973,8 +986,8 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
 /* Focused State */
 .c-dropdown-container.is-open .c-dropdown-trigger,
 .c-dropdown-trigger:focus-within {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px rgba(255, 92, 26, 0.15);
   outline: none;
 }
 
@@ -1013,7 +1026,7 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
 }
 
 .c-dropdown-container.is-open .c-dropdown-arrow {
-  color: #2563eb;
+  color: var(--brand);
 }
 
 /* Expanded Dropdown Menu */
@@ -1063,13 +1076,13 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
 
 /* Selected State */
 .c-dropdown-item.is-selected {
-  background-color: #2563eb;
+  background-color: var(--brand);
   color: #ffffff;
   font-weight: 500;
 }
 
 .c-dropdown-item.is-selected:hover {
-  background-color: #1d4ed8;
+  background-color: #e54e0e;
 }
 
 .c-dropdown-checkmark {
@@ -1857,48 +1870,72 @@ html[lang="ar"] .text-center *, html[lang="ur"] .text-center * {
 /* Light Quote Section Styles for /get-quote */
 .g-light-quote-section {
   background: #ffffff !important;
-  border-radius: 20px;
+  border-radius: 24px;
   border: 1.5px solid #e2e8f0;
-  padding: 48px 36px;
-  max-width: 960px;
+  padding: 48px 40px;
+  max-width: 980px;
   margin: 0 auto;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
-  transition: all 0.4s ease;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s ease;
 }
 
 .g-light-quote-section:hover {
-  border-color: var(--brand);
-  box-shadow: 0 12px 30px rgba(255, 92, 26, 0.05);
+  border-color: #ffd6c7;
+  box-shadow: 0 20px 40px rgba(255, 92, 26, 0.05), 0 2px 12px rgba(0,0,0,0.02);
 }
 
 .g-light-quote-section .quote-title {
   color: #0f172a !important;
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  margin-bottom: 8px !important;
 }
 
 .g-light-quote-section .quote-sub {
   color: #64748b !important;
+  font-size: 14.5px !important;
+  margin-bottom: 32px !important;
 }
 
 .g-light-quote-section .qform-label {
-  color: #475569 !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.8px !important;
+  color: #64748b !important;
+  margin-bottom: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
 }
 
-.g-light-quote-section .qform-input,
-.g-light-quote-section .qform-select {
+.g-light-quote-section .qform-label .material-icons-round {
+  font-size: 14px !important;
+  color: #ff5c1a !important;
+}
+
+.g-light-quote-section .qform-input {
   background: #ffffff !important;
-  border: 1.5px solid #cbd5e1 !important;
+  border: 1.5px solid #B5B5B5 !important;
   color: #0f172a !important;
   outline: none !important;
+  font-size: 14px !important;
+  padding: 0 16px !important;
+  font-family: inherit !important;
+  transition: all 0.2s ease-in-out !important;
 }
 
 .g-light-quote-section .qform-input::placeholder {
-  color: #94a3b8 !important;
+  color: #64748b !important;
 }
 
-.g-light-quote-section .qform-input:focus,
-.g-light-quote-section .qform-select:focus {
+.g-light-quote-section .qform-input:hover {
+  border-color: #cbd5e1 !important;
+}
+
+.g-light-quote-section .qform-input:focus {
   border-color: var(--brand) !important;
-  box-shadow: 0 0 10px rgba(255, 92, 26, 0.1) !important;
+  box-shadow: 0 0 0 4px rgba(255, 92, 26, 0.15) !important;
 }
 
 

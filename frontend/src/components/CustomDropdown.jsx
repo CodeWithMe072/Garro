@@ -39,6 +39,8 @@ const CustomDropdown = ({ options, value, onChange, placeholder, name, required 
     return '';
   };
 
+  const isDisabled = !options || options.length === 0;
+
   return (
     <div className={`c-dropdown-container ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
       {/* Hidden input for HTML form submissions */}
@@ -58,8 +60,8 @@ const CustomDropdown = ({ options, value, onChange, placeholder, name, required 
         </div>
       ) : (
         <div 
-          className={`c-dropdown-trigger ${value ? 'has-value' : 'is-placeholder'}`}
-          onClick={() => setIsOpen(true)}
+          className={`c-dropdown-trigger ${value ? 'has-value' : 'is-placeholder'} ${isDisabled ? 'is-disabled' : ''}`}
+          onClick={() => !isDisabled && setIsOpen(true)}
         >
           <span className="c-dropdown-text">{getSelectedLabel() || placeholder || 'Select option'}</span>
           <span className="c-dropdown-arrow">▼</span>

@@ -67,6 +67,13 @@ const GetQuote = () => {
     fetchCatalog();
   }, []);
 
+  useEffect(() => {
+    document.body.style.backgroundColor = '#fff9f6';
+    return () => {
+      document.body.style.backgroundColor = '';
+    };
+  }, []);
+
   // Compute dynamic lists based on parent selection
   const categoryOptions = catalogServices.map(c => ({ value: c.slug, label: c.name }));
   
@@ -241,14 +248,14 @@ const GetQuote = () => {
   }
 
   return (
-    <div style={{ background: '#f8fafc', minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
+    <div style={{ background: '#fff9f6', minHeight: 'calc(100vh - var(--nav-h))', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 20px' }}>
       <section className="g-light-quote-section">
         <div className="container position-relative" style={{ zIndex: 2 }}>
           <h2 className="quote-title">{t('get_quotes_title')}</h2>
           <p className="quote-sub">{t('quotes_sub')}</p>
 
           <form onSubmit={handleQuoteSubmit}>
-            <div className="row g-3">
+            <div className="row g-4">
               {/* Row 1: Category + Sub-category */}
               <div className="col-md-6">
                 <div className="qform-label"><span className="material-icons-round">category</span> {t('service_category')}</div>
@@ -276,8 +283,8 @@ const GetQuote = () => {
                 />
               </div>
 
-              {/* Row 2: Brand, Model, Year, City, Area */}
-              <div className="col-6 col-md-3">
+              {/* Row 2: Brand, Model, Year */}
+              <div className="col-md-4 col-sm-6">
                 <div className="qform-label"><span className="material-icons-round">directions_car</span> {t('brand')}</div>
                 <CustomDropdown
                   name="car_brand"
@@ -291,7 +298,7 @@ const GetQuote = () => {
                   required
                 />
               </div>
-              <div className="col-6 col-md-2">
+              <div className="col-md-4 col-sm-6">
                 <div className="qform-label"><span className="material-icons-round">tune</span> {t('model')}</div>
                 <CustomDropdown
                   name="car_model"
@@ -302,7 +309,7 @@ const GetQuote = () => {
                   required
                 />
               </div>
-              <div className="col-4 col-md-1">
+              <div className="col-md-4 col-sm-12">
                 <div className="qform-label"><span className="material-icons-round">calendar_today</span> {t('year')}</div>
                 <CustomDropdown
                   name="car_year"
@@ -313,7 +320,9 @@ const GetQuote = () => {
                   required
                 />
               </div>
-              <div className="col-4 col-md-3">
+
+              {/* Row 3: City, Area */}
+              <div className="col-md-6">
                 <div className="qform-label"><span className="material-icons-round">location_city</span> {t('city')}</div>
                 <CustomDropdown
                   name="city_name"
@@ -327,7 +336,7 @@ const GetQuote = () => {
                   required
                 />
               </div>
-              <div className="col-4 col-md-3">
+              <div className="col-md-6">
                 <div className="qform-label"><span className="material-icons-round">location_on</span> {t('area_label')}</div>
                 <CustomDropdown
                   name="area"
@@ -339,16 +348,19 @@ const GetQuote = () => {
                 />
               </div>
 
-              {/* Row 3: Issue, Contact, Time, Submit */}
-              <div className="col-md-4">
+              {/* Row 4: Describe Issue, Preferred Time, Contact Info */}
+              <div className="col-md-6">
                 <div className="qform-label"><span className="material-icons-round">description</span> {t('describe_issue')}</div>
-                <input type="text" name="problem_title" className="qform-input" placeholder={t('desc_placeholder')} required />
+                <input
+                  type="text"
+                  name="problem_title"
+                  className="qform-input"
+                  placeholder={t('desc_placeholder')}
+                  required
+                  style={{ height: '48px', borderRadius: '12px' }}
+                />
               </div>
-              <div className="col-md-3">
-                <div className="qform-label"><span className="material-icons-round">phone</span> {t('contact_info')}</div>
-                <input type="tel" name="phone" className="qform-input" placeholder={t('phone_placeholder')} required />
-              </div>
-              <div className="col-md-3">
+              <div className="col-md-3 col-sm-6">
                 <div className="qform-label"><span className="material-icons-round">access_time</span> {t('preferred_time')}</div>
                 <CustomDropdown
                   name="urgency"
@@ -364,14 +376,27 @@ const GetQuote = () => {
                   required
                 />
               </div>
-              <div className="col-md-2 d-flex align-items-end flex-column justify-content-end" style={{ gap: '6px' }}>
+              <div className="col-md-3 col-sm-6">
+                <div className="qform-label"><span className="material-icons-round">phone</span> {t('contact_info')}</div>
+                <input
+                  type="tel"
+                  name="phone"
+                  className="qform-input"
+                  placeholder={t('phone_placeholder')}
+                  required
+                  style={{ height: '48px', borderRadius: '12px' }}
+                />
+              </div>
+
+              {/* Row 5: Action Button & Info */}
+              <div className="col-12 d-flex flex-column align-items-center justify-content-center mt-4" style={{ gap: '10px' }}>
                 {isGuest && (
-                  <p style={{ margin: 0, fontSize: '11px', color: '#ff5c1a', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#ff5c1a', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
                     Log in as a customer to submit
                   </p>
                 )}
                 {isReadOnly && (
-                  <p style={{ margin: 0, fontSize: '11px', color: '#ea580c', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#ea580c', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
                     Admin accounts cannot place requests
                   </p>
                 )}
@@ -380,7 +405,17 @@ const GetQuote = () => {
                   className="btn-quote-submit"
                   disabled={!canSubmit}
                   title={isGuest ? 'Log in as a customer to submit' : !canSubmit ? 'Your account type cannot place quote requests' : ''}
-                  style={{ width: '100%', height: '44px', ...(!canSubmit ? { opacity: 0.45, cursor: 'not-allowed', filter: 'grayscale(40%)', pointerEvents: 'none' } : {}) }}
+                  style={{
+                    maxWidth: '340px',
+                    padding: '14px 48px',
+                    borderRadius: '12px',
+                    fontSize: '15px',
+                    height: 'auto',
+                    cursor: canSubmit ? 'pointer' : 'not-allowed',
+                    opacity: canSubmit ? 1 : 0.5,
+                    filter: canSubmit ? 'none' : 'grayscale(40%)',
+                    pointerEvents: canSubmit ? 'auto' : 'none'
+                  }}
                 >
                   {t('get_a_quote')}
                 </button>
