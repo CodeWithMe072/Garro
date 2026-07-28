@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -6,8 +7,7 @@ const RequestSubmitted = () => {
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+  
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchRequest = async () => {

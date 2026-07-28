@@ -10,6 +10,7 @@ router.get('/',                                                     ctrl.getJobs
 router.get('/request/:requestId',                                   ctrl.getJobByRequestId);
 router.get('/:id',                                                  ctrl.getJob);
 router.put('/:id/status',                                           ctrl.updateStatus);
+router.put('/:id/extend-time',                                      ctrl.extendJobTime);
 router.post('/:id/photos',    upload.array('photos', 10),           ctrl.uploadPhotos);
 router.post('/:id/condition-report', upload.array('photos', 5),    ctrl.submitConditionReport);
 

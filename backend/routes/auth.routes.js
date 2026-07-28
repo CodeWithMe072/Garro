@@ -9,7 +9,9 @@ import {
   updateProfile,
   requestPasswordChange,
   verifyPasswordChange,
-  refresh
+  refresh,
+  forgotPassword,
+  resetPassword
 } from '../controllers/auth.controller.js';
 import auth from '../middleware/auth.middleware.js';
 import { checkIpBlock } from '../middleware/ipBlock.middleware.js';
@@ -38,5 +40,8 @@ router.post('/refresh',    refresh);
 router.put('/profile',                  auth, updateProfile);
 router.post('/profile/password/request', auth, requestPasswordChange);
 router.post('/profile/password/verify',  auth, verifyPasswordChange);
+
+router.post('/forgot-password',         forgotPassword);
+router.post('/reset-password/:token',   resetPassword);
 
 export default router;

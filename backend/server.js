@@ -25,6 +25,7 @@ import jobRoutes from './routes/job.routes.js';
 import trackingRoutes from './routes/tracking.routes.js';
 import invoiceRoutes from './routes/invoice.routes.js';
 import complaintRoutes from './routes/complaint.routes.js';
+import userRoutes from './routes/user.routes.js';
 import auth from './middleware/auth.middleware.js';
 import role from './middleware/role.middleware.js';
 import { manualAssign } from './controllers/request.controller.js';
@@ -35,25 +36,35 @@ import notificationRoutes from './routes/notification.routes.js';
 import jwt from 'jsonwebtoken';
 import supportRoutes from './routes/support.routes.js';
 import SupportConversation from './models/SupportConversation.js';
+import logger from './utils/logger.js';
 
 const app = express();
+app.set('trust proxy', 1);
+
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: '*' } });
+
+// CORS configuration supporting localhost & production frontend url
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true
+  }
+});
 
 // Database Connection
 connectDB().then(() => {
   loadSettings();
 });
 
-// CORS configuration supporting localhost & production frontend url
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:3000',
-    'https://your-frontend.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: allowedOrigins,
   credentials: true
 }));
 
@@ -66,12 +77,40 @@ app.use('/api/payments', paymentRoutes);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 4. Rate limiterj
-// app.use('/api/', rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 100,
-//   message: { success: false, message: 'Too many requests, please try again later' }
-// }));
+// 4. Rate limiters
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: { success: false, message: 'Too many requests, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { success: false, message: 'Too many auth/OTP attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { success: false, message: 'Too many payment attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/send-otp', authLimiter);
+app.use('/api/auth/verify-otp', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/reset-password', authLimiter);
+app.use('/api/auth/profile/password', authLimiter);
+app.use('/api/payments/create-intent', paymentLimiter);
+app.use('/api/payments/bypass-pay', paymentLimiter);
+// app.use('/api/', generalLimiter);
 
 // Make io accessible in controllers
 app.set('io', io);
@@ -95,6 +134,7 @@ app.use('/api/admin/catalog', catalogRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/users', userRoutes);
 
 // Time-slot based booking assignment
 app.post('/api/bookings/:bookingId/assign', auth, role('admin'), (req, res, next) => {
@@ -103,7 +143,12 @@ app.post('/api/bookings/:bookingId/assign', auth, role('admin'), (req, res, next
 }, manualAssign);
 
 // Debug auto-assign route
-app.post('/api/test/auto-assign', async (req, res) => {
+app.post('/api/test/auto-assign', auth, role('admin'), (req, res, next) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ success: false, message: 'Not Found' });
+  }
+  next();
+}, async (req, res) => {
   try {
     const { runAutoAssign } = await import('./agents/autoAssignAgent.js');
     const result = await runAutoAssign(req.body);
@@ -115,7 +160,7 @@ app.post('/api/test/auto-assign', async (req, res) => {
 
 // Socket.IO — real-time helper tracking
 io.on('connection', (socket) => {
-  console.log('Socket connected:', socket.id);
+  logger.info(`Socket connected: ${socket.id}`);
 
   // Authenticate socket using JWT
   try {
@@ -130,7 +175,7 @@ io.on('connection', (socket) => {
   // Customer or admin joins job room to receive updates
   socket.on('join:job', (jobId) => {
     socket.join(`job:${jobId}`);
-    console.log(`Socket ${socket.id} joined room job:${jobId}`);
+    logger.info(`Socket ${socket.id} joined room job:${jobId}`);
   });
 
   // Helper emits location every 30 seconds
@@ -147,7 +192,7 @@ io.on('connection', (socket) => {
       // Broadcast to everyone in that job room
       io.to(`job:${jobId}`).emit('location:update', { jobId, lat, lng, timestamp: new Date() });
     } catch (err) {
-      console.error('Tracking error:', err.message);
+      logger.error(`Tracking error: ${err.message}`);
     }
   });
 
@@ -164,7 +209,7 @@ io.on('connection', (socket) => {
     if (!socket.user) return;
     if (AGENT_ROLES.includes(socket.user.role)) {
       socket.join(`support:${conversationId}`);
-      console.log(`Agent socket ${socket.id} joined support:${conversationId}`);
+      logger.info(`Agent socket ${socket.id} joined support:${conversationId}`);
       return;
     }
     if (socket.user.role === 'customer') {
@@ -172,43 +217,43 @@ io.on('connection', (socket) => {
         const convo = await SupportConversation.findById(conversationId).select('customerId');
         if (convo && String(convo.customerId) === String(socket.user.id)) {
           socket.join(`support:${conversationId}`);
-          console.log(`Customer socket ${socket.id} joined support:${conversationId}`);
+          logger.info(`Customer socket ${socket.id} joined support:${conversationId}`);
         }
       } catch (err) {
-        console.error('Error in support:join:', err.message);
+        logger.error(`Error in support:join: ${err.message}`);
       }
     }
   });
 
   socket.on('support:leave', (conversationId) => {
     socket.leave(`support:${conversationId}`);
-    console.log(`Socket ${socket.id} left support:${conversationId}`);
+    logger.info(`Socket ${socket.id} left support:${conversationId}`);
   });
 
   // Agents join a global room to get list/badge updates even when no thread is open.
   socket.on('support:join:agent', () => {
     if (socket.user && AGENT_ROLES.includes(socket.user.role)) {
       socket.join('support:agents');
-      console.log(`Agent socket ${socket.id} joined support:agents`);
+      logger.info(`Agent socket ${socket.id} joined support:agents`);
     }
   });
 
   socket.on('support:leave:agent', () => {
     socket.leave('support:agents');
-    console.log(`Agent socket ${socket.id} left support:agents`);
+    logger.info(`Agent socket ${socket.id} left support:agents`);
   });
 
+  // --- Disconnect ---
   socket.on('disconnect', () => {
-    console.log('Socket disconnected:', socket.id);
+    logger.info(`Socket disconnected: ${socket.id}`);
   });
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  logger.error(err.stack);
   res.status(500).json({ success: false, message: 'Server error' });
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
-// Trigger nodemon reload for schema updates
+server.listen(PORT, '0.0.0.0', () => logger.info(`Server running on port ${PORT}`));

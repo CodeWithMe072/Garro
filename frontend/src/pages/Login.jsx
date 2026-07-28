@@ -9,10 +9,19 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { login } = useAuth();
   const { toast } = useNotification();
   const navigate = useNavigate();
   const location = useLocation();
+
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem('remembered_email');
+    if (savedEmail) {
+      setIdentifier(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,6 +40,12 @@ const Login = () => {
       const data = await response.json();
       if (!response.ok || !data.success) {
         throw new Error(data.message || 'Invalid email or password.');
+      }
+
+      if (rememberMe) {
+        localStorage.setItem('remembered_email', identifier);
+      } else {
+        localStorage.removeItem('remembered_email');
       }
 
       // Parse name into firstName and lastName
@@ -165,7 +180,7 @@ const Login = () => {
           <div style={{ marginBottom: '18px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
               <label className="auth-label" style={{ marginBottom: 0 }}>Password</label>
-              <a href="#" style={{ fontSize: '12.5px', color: 'var(--brand)', fontWeight: '600', textDecoration: 'none' }}>Forgot password?</a>
+              <Link to="/forgot-password" style={{ fontSize: '12.5px', color: 'var(--brand)', fontWeight: '600', textDecoration: 'none' }}>Forgot password?</Link>
             </div>
             <div className="auth-iw">
               <span className="material-icons-round ic">lock</span>
@@ -184,6 +199,20 @@ const Login = () => {
               </button>
             </div>
           </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+            <input 
+              type="checkbox" 
+              id="rememberMe" 
+              checked={rememberMe} 
+              onChange={(e) => setRememberMe(e.target.checked)} 
+              style={{ marginRight: '8px', cursor: 'pointer', width: 'auto' }}
+            />
+            <label htmlFor="rememberMe" style={{ fontSize: '12.5px', color: 'var(--muted)', cursor: 'pointer', userSelect: 'none', margin: 0 }}>
+              Remember me
+            </label>
+          </div>
+
           <button type="submit" className="auth-btn" disabled={loading}>
             {loading ? 'Signing in...' : (
               <><span className="material-icons-round">login</span> Sign In</>

@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import { 
   LuLayoutDashboard, 
   LuStore, 
@@ -39,8 +40,7 @@ const AdminQuoteBuilder = () => {
   const [isLangOpen, setIsLangOpen] = useState(false);
 
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+  
   const fetchData = async () => {
     try {
       const token = localStorage.getItem('token');

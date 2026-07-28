@@ -1,12 +1,13 @@
 import mongoose from 'mongoose';
 
 const SERVICE_TYPES = ['minor_service', 'major_service', 'ac_repair', 'brake_repair',
-  'electrical', 'diagnostics', 'battery', 'other'];
+  'electrical', 'diagnostics', 'battery', 'emergency_pickup', 'roadside_assistance', 'other'];
 
 const STATUS_STEPS = [
   'pending_payment', 'new', 'assigned', 'quote_pending', 'quote_sent', 'quote_approved',
   'pickup_scheduled', 'picked_up', 'in_garage', 'repair_in_progress',
-  'work_complete', 'ready_for_delivery', 'delivered', 'closed', 'cancelled'
+  'work_complete', 'ready_for_delivery', 'delivered', 'closed', 'cancelled',
+  'cancellation_requested'
 ];
 
 const requestSchema = new mongoose.Schema({
@@ -16,6 +17,12 @@ const requestSchema = new mongoose.Schema({
   subCategory: { type: String },
   description: { type: String, required: true },
   status: { type: String, enum: STATUS_STEPS, default: 'pending_payment' },
+  previousStatus: { type: String, default: null },
+  cancellationReason: { type: String, default: '' },
+  cancellationRequestedAt: { type: Date, default: null },
+  refundStatus: { type: String, enum: ['none', 'requested', 'approved', 'processed', 'rejected'], default: 'none' },
+  refundAmount: { type: Number, default: 0 },
+  refundedAt: { type: Date, default: null },
   photos: [{ type: String }],
   preferredDate: { type: Date },
   urgency: { type: String, enum: ['asap', 'today', 'this_week', 'flexible'], default: 'flexible' },
@@ -23,8 +30,11 @@ const requestSchema = new mongoose.Schema({
   proposedDateStatus: { type: String, enum: ['none', 'pending', 'accepted', 'rejected'], default: 'none' },
   location: {
     address: { type: String },
+    city: { type: String, default: 'Dubai' },
+    area: { type: String, default: '' },
     lat: { type: Number },
-    lng: { type: Number }
+    lng: { type: Number },
+    isGpsUsed: { type: Boolean, default: false }
   },
   assignMode: { type: String, enum: ['auto', 'manual'], default: 'manual' },
   garageId: { type: mongoose.Schema.Types.ObjectId, ref: 'Garage', default: null },

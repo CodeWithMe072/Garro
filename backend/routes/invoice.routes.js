@@ -9,5 +9,6 @@ router.get('/my',              ctrl.getMyInvoices);       // customer: all their
 router.get('/',                ctrl.getInvoices);          // admin: all invoices
 router.get('/:id',             ctrl.getInvoice);           // single invoice
 router.get('/:id/download',    ctrl.downloadInvoicePDF);   // PDF redirect or on-the-fly
+router.get('/:id/pdf',         ctrl.downloadInvoicePDF);   // PDF alias route for /pdf
 
 export default router;

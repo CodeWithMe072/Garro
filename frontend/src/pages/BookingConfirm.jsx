@@ -1,30 +1,29 @@
+import { API_BASE } from '../config/api';
 import React, { useEffect, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import {
   LuCircleCheck, LuCalendar, LuClock, LuTruck, LuWrench,
-  LuMapPin, LuCreditCard, LuHouse, LuClipboardList, LuDownload,
+  LuMapPin, LuCreditCard, LuHouse, LuClipboardList,
   LuLoader
 } from 'react-icons/lu';
 
 const BookingConfirm = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchBooking = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await fetch(`${API_BASE}/api/bookings/${id}`, {
+        // Fixed: was /api/bookings/:id (non-existent route) — now uses the real requests endpoint
+        const res = await fetch(`${API_BASE}/api/requests/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
         if (res.ok && data.success) {
-          setBooking(data.booking);
+          setBooking(data.request); // Request controller returns { success, request }
         }
       } catch {
         // fall through — booking stays null, show fallback
@@ -47,30 +46,39 @@ const BookingConfirm = () => {
     );
   }
 
+  // Map Request schema fields to display values
   const displayId = booking?._id?.slice(-6)?.toUpperCase() || id?.slice(-6)?.toUpperCase() || 'N/A';
   const garageName = booking?.garageId?.name || 'Garro Partner Garage';
-  const garageArea = booking?.garageId?.area || 'Dubai';
-  const bookingDate = booking?.scheduledDate
-    ? new Date(booking.scheduledDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  const garageArea = booking?.garageId?.area || booking?.garageId?.city || 'Dubai';
+  const bookingDate = booking?.preferredDate
+    ? new Date(booking.preferredDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
     : 'TBC';
-  const bookingTime = booking?.scheduledTime || 'TBC';
-  const pickupType = booking?.pickupType || 'Self Drop';
-  const status = booking?.status || 'pending';
-  const total = booking?.totalCost || booking?.total || 0;
-  const services = booking?.services || [];
+  const bookingTime = booking?.preferredDate
+    ? new Date(booking.preferredDate).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    : 'TBC';
+  const pickupType = booking?.location?.address === 'Self Drop at Garage' ? 'Self Drop' : 'Pickup & Drop';
+  const status = booking?.status || 'pending_payment';
+  // Total from linked quote if available, else show pending
+  const total = booking?.quoteId?.customerTotal || booking?.quoteId?.totalAmount || null;
+  // Service from the serviceType / subCategory fields
+  const services = booking?.serviceType
+    ? [{ name: (booking.subCategory || booking.serviceType).replace(/_/g, ' ') }]
+    : [];
 
-  const statusColor = status === 'confirmed' ? '#10b981'
-    : status === 'pending' ? '#f59e0b'
-    : status === 'completed' ? '#3b82f6'
+  const statusColor = status === 'pending_payment' ? '#f59e0b'
+    : status === 'new' ? '#3b82f6'
+    : status === 'assigned' ? '#8b5cf6'
+    : status === 'closed' || status === 'delivered' ? '#10b981'
+    : status === 'cancelled' ? '#ef4444'
     : '#64748b';
-  const statusLabel = status.charAt(0).toUpperCase() + status.slice(1).replace(/_/g, ' ');
+  const statusLabel = status.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
   const details = [
-    { icon: LuMapPin, label: 'Garage', value: garageName, sub: garageArea },
-    { icon: LuCalendar, label: 'Date', value: bookingDate, sub: null },
-    { icon: LuClock, label: 'Time', value: bookingTime, sub: null },
-    { icon: LuTruck, label: 'Pickup Type', value: pickupType, sub: null },
-    { icon: LuCreditCard, label: 'Total Amount', value: `AED ${Number(total).toFixed(2)}`, sub: null, highlight: true },
+    { icon: LuMapPin,    label: 'Garage',       value: garageName,    sub: garageArea },
+    { icon: LuCalendar,  label: 'Date',          value: bookingDate,   sub: null },
+    { icon: LuClock,     label: 'Time',          value: bookingTime,   sub: null },
+    { icon: LuTruck,     label: 'Pickup Type',   value: pickupType,    sub: null },
+    { icon: LuCreditCard,label: 'Total Amount',  value: total ? `AED ${Number(total).toFixed(2)}` : 'Pending Quote', sub: null, highlight: true },
   ];
 
   return (
@@ -164,7 +172,7 @@ const BookingConfirm = () => {
                         fontSize: '13px', fontWeight: 600, color: '#ff5c1a',
                         fontFamily: "'Poppins', sans-serif"
                       }}>
-                        <Wrench size={13} />
+                        <LuWrench size={13} />
                         {s.name || s.service?.name || `Service ${idx + 1}`}
                       </div>
                     ))}
@@ -185,9 +193,9 @@ const BookingConfirm = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {[
                   'You will receive a booking confirmation via SMS and email.',
-                  'The garage will confirm your slot within 2 hours.',
+                  'Our team will review and assign a helper to your request within 2 hours.',
                   'Arrive at the scheduled time or our driver will pick up your car.',
-                  'Track your service status live from My Bookings.'
+                  'Track your service status live from My Requests.'
                 ].map((step, idx) => (
                   <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                     <div style={{
@@ -209,7 +217,7 @@ const BookingConfirm = () => {
             {/* Action buttons */}
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <Link
-                to="/my-bookings"
+                to="/my-requests"
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '8px',
                   background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)',
@@ -219,7 +227,7 @@ const BookingConfirm = () => {
                   boxShadow: '0 6px 20px rgba(255,92,26,0.3)'
                 }}
               >
-                <LuClipboardList size={18} /> View My Bookings
+                <LuClipboardList size={18} /> View My Requests
               </Link>
               <Link
                 to="/home"

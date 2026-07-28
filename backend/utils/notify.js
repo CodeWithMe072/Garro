@@ -16,6 +16,7 @@ const STATUS_MESSAGES = {
   quote_sent: (name, cost) => `Hi ${name}, your quote is ready. Total: AED ${cost}. Please login to approve or reject.`,
   quote_approved: (name) => `Hi ${name}, your quote is approved! Your helper is on the way. Expected in 4-5 hours.`,
   pickup_scheduled: (name, eta) => `Hi ${name}, your helper is scheduled for pickup at ${eta}. Track live in the app.`,
+  arrived_at_customer: (name) => `Hi ${name}, your Garro technician/helper has arrived at your location.`,
   picked_up: (name) => `Hi ${name}, your vehicle has been picked up and is on the way to the garage.`,
   in_garage: (name) => `Hi ${name}, your vehicle has arrived at the garage. Inspection will begin shortly.`,
   inspection_done: (name) => `Hi ${name}, vehicle inspection is complete. Repair work is about to begin.`,
@@ -23,6 +24,7 @@ const STATUS_MESSAGES = {
   work_complete: (name) => `Hi ${name}, all repair work is complete! Your vehicle is being prepared for delivery.`,
   ready_for_delivery: (name) => `Hi ${name}, your vehicle is ready for delivery. Our helper will bring it to you shortly.`,
   delivered: (name) => `Hi ${name}, your vehicle has been delivered! Please check and confirm everything is good.`,
+  time_extended: (name, hours) => `Hi ${name}, your service completion estimated time has been extended by ${hours} hour(s).`,
   closed: (name, total) => `Hi ${name}, your invoice of AED ${total} is ready. Thank you for choosing Garro!`,
   complaint_resolved: (name, action) => `Hi ${name}, your complaint has been resolved. Resolution action: ${action.replace(/_/g, ' ')}.`
 };
@@ -79,6 +81,7 @@ export const notifyCustomer = async (customer, eventType, data = {}) => {
     case 'assigned': message = msgFn(customer.name, data.helperName); break;
     case 'quote_sent': message = msgFn(customer.name, data.cost); break;
     case 'quote_approved': message = msgFn(customer.name); break;
+    case 'time_extended': message = msgFn(customer.name, data.additionalHours); break;
     case 'closed': message = msgFn(customer.name, data.total); break;
     case 'complaint_resolved': message = msgFn(customer.name, data.actionType); break;
     default: message = msgFn(customer.name);
@@ -219,3 +222,87 @@ export const notifyPayment = async (customer, invoice, pdfUrl) => {
   ]);
 };
 
+/**
+ * Notify garage when a new job is assigned to them
+ */
+export const notifyGarage = async (garage, job, request) => {
+  try {
+    if (!garage || !garage.email) {
+      console.log('[notifyGarage] No garage email — skipping notification');
+      return;
+    }
+
+    const customerName  = request?.userId?.name  || 'Customer';
+    const vehicleMake   = request?.vehicleId?.make  || '';
+    const vehicleModel  = request?.vehicleId?.model || '';
+    const vehicleYear   = request?.vehicleId?.year  || '';
+    const vehicleLabel  = [vehicleYear, vehicleMake, vehicleModel].filter(Boolean).join(' ') || 'Vehicle';
+    const serviceType   = (request?.serviceType || 'Service').replace(/_/g, ' ');
+    const jobId         = job?._id?.toString()?.slice(-6)?.toUpperCase() || 'N/A';
+    const scheduledDate = request?.scheduledArrivalDate
+      ? new Date(request.scheduledArrivalDate).toLocaleString('en-AE', { dateStyle: 'medium', timeStyle: 'short' })
+      : 'TBC';
+
+    const waMessage =
+      `🔧 New Job Assigned — Garro\n\n` +
+      `Job ID: #${jobId}\n` +
+      `Customer: ${customerName}\n` +
+      `Vehicle: ${vehicleLabel}\n` +
+      `Service: ${serviceType}\n` +
+      `Scheduled: ${scheduledDate}\n\n` +
+      `Log in to your Garro Garage Portal to view details.\n` +
+      `support@garro.ae`;
+
+    const emailHtml = `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;background:#f5f5f5">
+  <div style="background:#185FA5;padding:24px 28px;border-radius:10px 10px 0 0;text-align:center">
+    <h1 style="color:white;margin:0;font-size:28px;font-weight:900">GARRO</h1>
+    <p style="color:#a8d4f5;margin:4px 0 0;font-size:13px">UAE Car Service Marketplace</p>
+  </div>
+  <div style="background:#ffffff;padding:28px;border-radius:0 0 10px 10px;border:1px solid #e0e0e0">
+    <h2 style="color:#0f172a;margin:0 0 16px;font-size:18px">🔧 New Job Assigned</h2>
+    <p style="color:#555;font-size:14px;margin:0 0 20px">A new service job has been assigned to your garage.</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+      <tr style="background:#f8fafc">
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Job ID</td>
+        <td style="padding:10px 14px;font-weight:700;font-size:13px;border-bottom:1px solid #f0f0f0">#${jobId}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Customer</td>
+        <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #f0f0f0">${customerName}</td>
+      </tr>
+      <tr style="background:#f8fafc">
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Vehicle</td>
+        <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #f0f0f0">${vehicleLabel}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Service</td>
+        <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #f0f0f0">${serviceType}</td>
+      </tr>
+      <tr style="background:#f8fafc">
+        <td style="padding:10px 14px;color:#888;font-size:13px">Scheduled</td>
+        <td style="padding:10px 14px;font-size:13px">${scheduledDate}</td>
+      </tr>
+    </table>
+    <div style="text-align:center;margin:24px 0">
+      <a href="${process.env.FRONTEND_URL || 'https://garro.ae'}/garage-portal"
+         style="background:#185FA5;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block">
+        View in Garage Portal
+      </a>
+    </div>
+    <p style="font-size:11px;color:#aaa;text-align:center;margin:16px 0 0">
+      Garro UAE | support@garro.ae | www.garro.ae
+    </p>
+  </div>
+</div>`;
+
+    console.log(`[notifyGarage] Notifying garage ${garage.name || garage.email} of job #${jobId}`);
+    await Promise.allSettled([
+      sendEmail(garage.email, `Garro — New Job #${jobId} Assigned | ${vehicleLabel}`, emailHtml),
+      garage.phone ? sendWhatsApp(garage.phone, waMessage) : Promise.resolve()
+    ]);
+  } catch (err) {
+    console.error('[notifyGarage] Failed:', err.message);
+    // Never throw — notification failures must not break main flow
+  }
+};

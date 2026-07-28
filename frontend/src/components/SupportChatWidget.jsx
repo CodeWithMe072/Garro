@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { LuMessageCircle, LuX, LuSend } from 'react-icons/lu';
 import { getSocket } from '../utils/socket';
@@ -15,8 +16,7 @@ const SupportChatWidget = () => {
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+  
   // Scroll to bottom helper
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

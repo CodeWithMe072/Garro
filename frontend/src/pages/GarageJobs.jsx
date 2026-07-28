@@ -1,7 +1,9 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { getSocket } from '../utils/socket';
 
 const GarageJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -10,15 +12,13 @@ const GarageJobs = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [invoiceFile, setInvoiceFile] = useState(null);
-  
+
   // Quote building states
   const [partsCost, setPartsCost] = useState('');
   const [laborCost, setLaborCost] = useState('');
-  
+
   const { toast } = useNotification();
   const navigate = useNavigate();
-
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const fetchJobs = async () => {
     try {
@@ -46,6 +46,19 @@ const GarageJobs = () => {
   useEffect(() => {
     fetchJobs();
   }, [filterStatus]);
+
+  // Live update — when admin assigns a request to this garage, refresh the job list in real-time
+  useEffect(() => {
+    const socket = getSocket();
+    const handleNewAssignment = () => {
+      toast.info('📋 New job assigned to your garage!');
+      fetchJobs();
+    };
+    socket.on('request:assigned', handleNewAssignment);
+    return () => {
+      socket.off('request:assigned', handleNewAssignment);
+    };
+  }, []);
 
   const handleStatusUpdate = async (jobId, nextStatus) => {
     try {
@@ -155,7 +168,7 @@ const GarageJobs = () => {
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
+
         {/* Navigation */}
         <div style={{ marginBottom: '24px' }}>
           <button onClick={() => navigate('/garage-portal')} style={{
@@ -193,7 +206,7 @@ const GarageJobs = () => {
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '30px' }}>
-          
+
           {/* Left Column: Job Cards List */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {loading ? (
@@ -361,7 +374,7 @@ const GarageJobs = () => {
                   </div>
                 </div>
 
-                {/* Submit Quote Section (if in quote pending status or quote missing) */}
+                {/* Submit Quote Section */}
                 {selectedJob.status === 'quote_pending' && (
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '24px', marginBottom: '32px' }}>
                     <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '14px', color: '#fbbf24' }}>
@@ -403,7 +416,7 @@ const GarageJobs = () => {
                   </div>
                 )}
 
-                {/* Upload Invoice PDF Section (Allowed if status is in garage / repair / work complete) */}
+                {/* Upload Invoice PDF Section */}
                 {['in_garage', 'repair_in_progress', 'work_complete'].includes(selectedJob.status) && (
                   <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '24px' }}>
                     <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '14px', color: '#10b981' }}>

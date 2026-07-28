@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
@@ -11,8 +12,7 @@ const MyQuotes = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+  
   const fetchQuotes = async () => {
     try {
       const token = localStorage.getItem('token');

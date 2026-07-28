@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -34,8 +35,7 @@ import {
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${API_BASE}/api/vehicles/catalog/services`);
+                const res = await fetch(`${API_BASE}/api/vehicles/catalog/services`);
         const data = await res.json();
         if (data.success && data.categories) {
           setCatalogServices(data.categories);
@@ -140,8 +140,7 @@ import {
     const fetchSchedule = async () => {
       setScheduleLoading(true);
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const token = localStorage.getItem('token');
+                const token = localStorage.getItem('token');
         const res = await fetch(`${API_BASE}/api/admin/helpers/${assignHelperId}/schedule?date=${assignDate}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -203,8 +202,7 @@ import {
 
   const fetchBookings = async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE}/api/requests`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -223,8 +221,7 @@ import {
     fetchBookings();
 
     // Socket.IO Listeners
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    const socket = io(API_BASE);
+        const socket = io(API_BASE);
 
     socket.on('request:new', (data) => {
       console.log('Real-time new request received in Bookings:', data);
@@ -269,8 +266,7 @@ import {
     setAssignDuration(urgency === 'asap' ? '2' : '4');
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
       
       const garagesRes = await fetch(`${API_BASE}/api/garages`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -302,8 +298,7 @@ import {
 
     setSubmittingAssign(true);
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
       
       const response = await fetch(`${API_BASE}/api/admin/requests/${selectedRequest._id}/manual-assign`, {
         method: 'PATCH',
@@ -345,8 +340,7 @@ import {
       isDelete: true,
       onConfirm: async () => {
         try {
-          const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const token = localStorage.getItem('token');
+                    const token = localStorage.getItem('token');
           const response = await fetch(`${API_BASE}/api/requests/${id}/cancel`, {
             method: 'PATCH',
             headers: { 'Authorization': `Bearer ${token}` }

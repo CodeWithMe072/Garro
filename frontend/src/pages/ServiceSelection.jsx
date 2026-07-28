@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -26,8 +27,7 @@ const ServiceSelection = () => {
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+  
   useEffect(() => {
     const fetchCatalog = async () => {
       try {

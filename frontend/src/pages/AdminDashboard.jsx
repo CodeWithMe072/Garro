@@ -33,6 +33,7 @@ import {
   LuArrowRight,
   LuUserCheck,
   LuX,
+  LuCircleX,
   LuCircleCheck
 } from 'react-icons/lu';
 
@@ -199,6 +200,112 @@ const AdminDashboard = () => {
     fetchSchedule();
   }, [assignHelperId, assignDate, assignTime, assignDuration]);
 
+  const [cancellationRequests, setCancellationRequests] = useState([]);
+  const [payoutsList, setPayoutsList] = useState([]);
+
+  const handleProcessPayout = async (payoutId) => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/admin/payouts/${payoutId}/process`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ notes: 'Payout settled via bank transfer' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message || 'Payout marked as processed!');
+        refreshData();
+      } else {
+        toast.error(data.message || 'Failed to process payout');
+      }
+    } catch (err) {
+      toast.error('Error processing payout');
+    }
+  };
+
+  const [selectedRefundReq, setSelectedRefundReq] = useState(null);
+  const [refundInputAmount, setRefundInputAmount] = useState('');
+  const [refundAdminNotes, setRefundAdminNotes] = useState('');
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
+
+  const [selectedRejectReq, setSelectedRejectReq] = useState(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState('');
+  const [isSubmittingReject, setIsSubmittingReject] = useState(false);
+
+  const openApproveModal = (reqItem) => {
+    const defaultAmount = reqItem.refundAmount || reqItem.invoice?.totalAmount || 299;
+    setSelectedRefundReq(reqItem);
+    setRefundInputAmount(defaultAmount);
+    const isArrived = ['arrived_at_customer', 'picked_up', 'in_garage', 'repair_in_progress', 'work_complete', 'ready_for_delivery'].includes(reqItem.previousStatus || reqItem.status);
+    setRefundAdminNotes(isArrived ? 'Travel & cancellation fee deducted as technician arrived at location.' : '');
+  };
+
+  const submitApproveRefund = async (e) => {
+    e.preventDefault();
+    if (!selectedRefundReq) return;
+    setIsSubmittingRefund(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/admin/cancellations/${selectedRefundReq._id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          customRefundAmount: Number(refundInputAmount),
+          adminNotes: refundAdminNotes
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Refund approval failed.');
+      toast.success(data.message || 'Cancellation approved & refund processed!');
+      setSelectedRefundReq(null);
+      refreshData();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setIsSubmittingRefund(false);
+    }
+  };
+
+  const openRejectModal = (reqItem) => {
+    setSelectedRejectReq(reqItem);
+    setRejectReasonInput('Service is already underway.');
+  };
+
+  const submitRejectCancellation = async (e) => {
+    e.preventDefault();
+    if (!selectedRejectReq) return;
+    setIsSubmittingReject(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/admin/cancellations/${selectedRejectReq._id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ rejectionReason: rejectReasonInput })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Rejection failed.');
+      toast.info('Cancellation request rejected.');
+      setSelectedRejectReq(null);
+      refreshData();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setIsSubmittingReject(false);
+    }
+  };
+
   const refreshData = async () => {
     try {
       const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -234,6 +341,19 @@ const AdminDashboard = () => {
       });
       const calData = await calRes.json();
 
+      const cancelRes = await fetch(`${API_BASE}/api/admin/cancellations`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const cancelData = await cancelRes.json();
+
+      const payoutsRes = await fetch(`${API_BASE}/api/admin/payouts`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const payoutsData = await payoutsRes.json();
+      if (payoutsRes.ok && payoutsData.success) {
+        setPayoutsList(payoutsData.payouts || []);
+      }
+
       if (statsRes.ok && statsData.success) {
         setDashboardStats(statsData);
       }
@@ -253,6 +373,9 @@ const AdminDashboard = () => {
       }
       if (calRes.ok && calData.success) {
         setCalendarRequests(calData.requests || []);
+      }
+      if (cancelRes.ok && cancelData.success) {
+        setCancellationRequests(cancelData.requests || []);
       }
     } catch (err) {
       console.error('Failed to fetch admin data:', err);
@@ -304,6 +427,21 @@ const AdminDashboard = () => {
 
     socket.on('request:cancelled', (data) => {
       console.log('Real-time request cancelled received:', data);
+      if (selectedRequest && (data._id === selectedRequest._id || data.id === selectedRequest._id)) {
+        setSelectedRequest(null);
+        toast.error('Customer requested cancellation for this booking. Assignment modal revoked.');
+      }
+      refreshData();
+    });
+
+    socket.on('request:updated', (data) => {
+      console.log('Real-time request updated received:', data);
+      if (data && ['cancellation_requested', 'cancelled'].includes(data.status)) {
+        if (selectedRequest && (data._id === selectedRequest._id || data.id === selectedRequest._id)) {
+          setSelectedRequest(null);
+          toast.error('Customer requested cancellation & refund for this booking. Assignment revoked.');
+        }
+      }
       refreshData();
     });
 
@@ -315,9 +453,13 @@ const AdminDashboard = () => {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [selectedRequest]);
 
   const handleOpenAssignModal = async (req) => {
+    if (['cancellation_requested', 'cancelled'].includes(req.status)) {
+      toast.error('Cannot assign garage or staff to a booking with a pending cancellation or refund request.');
+      return;
+    }
     setSelectedRequest(req);
     setAssignGarageId('');
     setAssignHelperId('');
@@ -552,6 +694,86 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* 🚨 ACTIVE EMERGENCY PICKUP REQUESTS DISPATCH PANEL */}
+        {(() => {
+          const activeEmg = recentBookings.filter(r => (
+            r.serviceType === 'emergency_pickup' ||
+            r.serviceType === 'roadside_assistance' ||
+            r.urgency === 'asap'
+          ) && !['completed', 'closed', 'delivered', 'cancelled'].includes(r.status));
+
+          if (activeEmg.length === 0) return null;
+
+          return (
+            <div style={{
+              background: 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)',
+              color: 'white', borderRadius: '16px', padding: '20px', marginBottom: '24px',
+              border: '2px solid #ef4444', boxShadow: '0 10px 30px rgba(220, 38, 38, 0.4)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <span className="badge bg-danger px-3 py-1.5 fs-7 fw-bold" style={{ letterSpacing: '1px' }}>
+                    🚨 EMERGENCY DISPATCH REQUIRED ({activeEmg.length})
+                  </span>
+                  <h4 style={{ margin: '8px 0 4px', fontWeight: 800, color: 'white' }}>
+                    Active Roadside Emergency Pickups
+                  </h4>
+                  <div style={{ fontSize: '13px', opacity: 0.9 }}>
+                    Customers waiting for immediate tow truck / helper dispatch.
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
+                {activeEmg.map(r => (
+                  <div key={r._id} style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '12px', padding: '14px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <strong style={{ fontSize: '13px', color: '#fef08a' }}>#{r._id.slice(-8).toUpperCase()}</strong>
+                      <span className="badge bg-warning text-dark fw-bold">{r.status.toUpperCase()}</span>
+                    </div>
+                    <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '2px' }}>{r.userId?.name || 'Customer'}</div>
+                    <div style={{ fontSize: '12.5px', color: '#ffffff', fontWeight: 600, marginBottom: '8px' }}>
+                      📍 {r.location?.area ? `${r.location.area}, ` : ''}{r.location?.city || 'Dubai'} &nbsp;
+                      {r.location?.isGpsUsed ? (
+                        <span style={{ background: '#22c55e', color: 'white', fontSize: '10px', padding: '2px 7px', borderRadius: '10px', fontWeight: 800 }}>
+                          ✓ GPS DETECTED
+                        </span>
+                      ) : (
+                        <span style={{ background: '#3b82f6', color: 'white', fontSize: '10px', padding: '2px 7px', borderRadius: '10px', fontWeight: 800 }}>
+                          📋 DROPDOWN SELECTED
+                        </span>
+                      )}
+                      <div style={{ fontSize: '11.5px', opacity: 0.85, marginTop: '2px' }}>
+                        {r.location?.address}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        onClick={() => setSelectedRequest(r)}
+                        className="btn btn-sm btn-warning fw-bold px-3 py-1.5"
+                        style={{ borderRadius: '8px', fontSize: '12px' }}
+                      >
+                        ⚡ Fast-Assign Helper
+                      </button>
+                      {r.location?.lat && (
+                        <a
+                          href={`https://www.google.com/maps?q=${r.location.lat},${r.location.lng}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="btn btn-sm btn-outline-light fw-bold px-3 py-1.5"
+                          style={{ borderRadius: '8px', fontSize: '12px' }}
+                        >
+                          📍 Open Maps
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* ── STATS ── */}
         <div className="stats-grid">
           <div className="stat-card orange">
@@ -641,6 +863,153 @@ const AdminDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* ── CANCELLATION & REFUND APPROVAL QUEUE ── */}
+        {cancellationRequests.length > 0 && (
+          <div className="data-card mb-4" style={{ border: '1px solid #fee2e2', background: '#fff5f5', borderRadius: '16px', padding: '20px' }}>
+            <div className="data-head" style={{ borderBottom: '1px solid #fecdd3', paddingBottom: '12px', marginBottom: '16px' }}>
+              <h4 style={{ color: '#dc2626', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, fontWeight: 800 }}>
+                <LuCircleX size={20} /> Cancellation &amp; Refund Approval Queue ({cancellationRequests.length})
+              </h4>
+            </div>
+            <div className="table-responsive">
+              <table className="g-table align-middle">
+                <thead>
+                  <tr style={{ background: '#fef2f2' }}>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>BOOKING ID</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>CUSTOMER</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>SERVICE</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>REFUND AMOUNT</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>REASON</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>STATUS</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px', textAlign: 'right' }}>ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cancellationRequests.map(r => (
+                    <tr key={r._id} style={{ borderBottom: '1px solid #fee2e2' }}>
+                      <td style={{ padding: '12px' }}><strong>#{r._id.toString().slice(-8).toUpperCase()}</strong></td>
+                      <td style={{ padding: '12px' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{r.userId?.name || 'Customer'}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>{r.userId?.email || r.userId?.phone}</div>
+                      </td>
+                      <td style={{ padding: '12px', fontWeight: 600, color: '#1e293b' }}>
+                        {r.subCategory || r.serviceType?.replace(/_/g, ' ')}
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <strong style={{ color: '#16a34a', fontSize: '14px' }}>AED {r.refundAmount || r.invoice?.totalAmount || 299}</strong>
+                      </td>
+                      <td style={{ padding: '12px', maxWidth: '220px' }}>
+                        <span style={{ fontSize: '12px', fontStyle: 'italic', color: '#991b1b', display: 'block', lineHeight: 1.3 }}>
+                          "{r.cancellationReason || 'Customer requested refund'}"
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <span className={`badge ${r.status === 'cancelled' ? 'bg-secondary' : 'bg-danger'}`} style={{ padding: '5px 10px', fontSize: '11px' }}>
+                          {r.status.replace(/_/g, ' ').toUpperCase()}
+                        </span>
+                        {['arrived_at_customer', 'picked_up', 'in_garage', 'repair_in_progress'].includes(r.previousStatus) && (
+                          <div style={{ fontSize: '10.5px', color: '#b45309', background: '#fef3c7', padding: '2px 6px', borderRadius: '4px', marginTop: '4px', fontWeight: 700 }}>
+                            📍 Staff Arrived (Fine May Apply)
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right' }}>
+                        {r.status === 'cancellation_requested' ? (
+                          <div style={{ display: 'inline-flex', gap: '8px' }}>
+                            <button
+                              onClick={() => openApproveModal(r)}
+                              className="btn btn-sm btn-success fw-bold px-3 py-1.5"
+                              style={{ borderRadius: '8px', fontSize: '12px', boxShadow: '0 2px 8px rgba(22,163,74,0.3)' }}
+                            >
+                              ✓ Approve &amp; Refund
+                            </button>
+                            <button
+                              onClick={() => openRejectModal(r)}
+                              className="btn btn-sm btn-outline-danger fw-bold px-3 py-1.5"
+                              style={{ borderRadius: '8px', fontSize: '12px' }}
+                            >
+                              ✕ Reject
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-muted small fw-semibold">Processed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ── GARAGE & STAFF PAYOUT SETTLEMENTS QUEUE ── */}
+        {payoutsList.length > 0 && (
+          <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '16px', border: '1.5px solid #cbd5e1', background: '#ffffff', overflow: 'hidden' }}>
+            <div className="card-header bg-white py-3 px-4" style={{ borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h5 className="fw-extrabold mb-1" style={{ color: '#0f172a', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <LuDollarSign className="text-success" /> Garage &amp; Staff Payout Settlements
+                </h5>
+                <p className="text-muted small mb-0">Platform Commission Fee (10%) &amp; VAT (5%) deducted — Net Payout Settlements for Garages/Staff.</p>
+              </div>
+              <span className="badge bg-success px-3 py-2 fs-7 fw-bold">
+                {payoutsList.filter(p => p.status === 'pending').length} Pending Payouts
+              </span>
+            </div>
+            <div className="table-responsive">
+              <table className="table table-hover align-middle mb-0" style={{ fontSize: '13px' }}>
+                <thead style={{ background: '#f8fafc', color: '#64748b' }}>
+                  <tr>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>PAYOUT ID</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>RECIPIENT (GARAGE / STAFF)</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>INVOICE REF</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>NET PAYOUT AMOUNT</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px' }}>STATUS</th>
+                    <th style={{ padding: '10px 12px', fontSize: '11px', textAlign: 'right' }}>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payoutsList.map(p => (
+                    <tr key={p._id}>
+                      <td style={{ padding: '12px' }}><strong>#{p._id.slice(-8).toUpperCase()}</strong></td>
+                      <td style={{ padding: '12px' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{p.garageId?.name || 'Authorized Service Partner'}</div>
+                        <div style={{ fontSize: '11px', color: '#64748b' }}>{p.garageId?.phone || p.garageId?.email || 'Garro Network'}</div>
+                      </td>
+                      <td style={{ padding: '12px', fontWeight: 600 }}>
+                        {p.invoiceId?.invoiceNumber || `#INV-${p._id.slice(-6)}`}
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <strong style={{ color: '#16a34a', fontSize: '15px' }}>AED {p.amount}</strong>
+                        <span style={{ fontSize: '10px', color: '#64748b', display: 'block' }}>(Subtotal - 10% Platform Fee)</span>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <span className={`badge ${p.status === 'processed' ? 'bg-success' : 'bg-warning text-dark'}`} style={{ padding: '5px 10px', fontSize: '11px' }}>
+                          {p.status.toUpperCase()}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', textAlign: 'right' }}>
+                        {p.status === 'pending' ? (
+                          <button
+                            onClick={() => handleProcessPayout(p._id)}
+                            className="btn btn-sm btn-success fw-bold px-3 py-1.5"
+                            style={{ borderRadius: '8px', fontSize: '12px' }}
+                          >
+                            ⚡ Process Bank Payout
+                          </button>
+                        ) : (
+                          <span className="text-muted small fw-semibold">✓ Paid on {new Date(p.processedAt || p.updatedAt).toLocaleDateString()}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         {/* ── DATA TABLES ── */}
         <div className="data-row">
@@ -1050,6 +1419,186 @@ const AdminDashboard = () => {
                   title={hasConflict ? 'Resolve the time conflict first' : ''}
                 >
                   {submittingAssign ? 'Assigning...' : hasConflict ? 'Conflict — Change Time' : 'Confirm Assignment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Custom Approve Refund Modal */}
+      {selectedRefundReq && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)',
+          zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: '20px', width: '100%', maxWidth: '520px',
+            padding: '28px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h4 style={{ margin: 0, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ color: '#16a34a' }}>💳</span> Approve Refund &amp; Cancellation
+              </h4>
+              <button onClick={() => setSelectedRefundReq(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <LuX size={22} />
+              </button>
+            </div>
+
+            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '14px 16px', marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Booking ID:</span>
+                <strong style={{ fontSize: '13px', color: '#0f172a' }}>#{selectedRefundReq._id.slice(-8).toUpperCase()}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Customer:</span>
+                <strong style={{ fontSize: '13px', color: '#0f172a' }}>{selectedRefundReq.userId?.name} ({selectedRefundReq.userId?.phone || selectedRefundReq.userId?.email})</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Total Customer Paid:</span>
+                <strong style={{ fontSize: '14px', color: '#16a34a' }}>AED {selectedRefundReq.refundAmount || selectedRefundReq.invoice?.totalAmount || 299}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600 }}>Customer Reason:</span>
+                <span style={{ fontSize: '12px', fontStyle: 'italic', color: '#991b1b' }}>"{selectedRefundReq.cancellationReason || 'No reason provided'}"</span>
+              </div>
+            </div>
+
+            {['arrived_at_customer', 'picked_up', 'in_garage', 'repair_in_progress'].includes(selectedRefundReq.previousStatus || selectedRefundReq.status) && (
+              <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '12px 14px', marginBottom: '20px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: '#b45309', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  📍 TECHNICIAN HAD ALREADY ARRIVED
+                </div>
+                <div style={{ fontSize: '12px', color: '#92400e' }}>
+                  Staff traveled to customer location. You can enter a lower refund amount below to deduct a travel/cancellation fee.
+                </div>
+              </div>
+            )}
+
+            <form onSubmit={submitApproveRefund}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#1e293b', marginBottom: '6px' }}>
+                  Approved Refund Amount (AED):
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  required
+                  value={refundInputAmount}
+                  onChange={(e) => setRefundInputAmount(e.target.value)}
+                  style={{
+                    width: '100%', borderRadius: '10px', border: '1px solid #cbd5e1',
+                    padding: '10px 14px', fontSize: '15px', fontWeight: 700, color: '#0f172a', background: '#f8fafc'
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#1e293b', marginBottom: '6px' }}>
+                  Admin Note / Deduction Reason (Sent to Customer):
+                </label>
+                <textarea
+                  rows={2}
+                  value={refundAdminNotes}
+                  onChange={(e) => setRefundAdminNotes(e.target.value)}
+                  placeholder="Optional note regarding fine deduction or refund timeline..."
+                  style={{
+                    width: '100%', borderRadius: '10px', border: '1px solid #cbd5e1',
+                    padding: '10px 12px', fontSize: '13px', color: '#0f172a'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRefundReq(null)}
+                  style={{
+                    padding: '10px 18px', background: '#f1f5f9', color: '#475569',
+                    border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingRefund}
+                  style={{
+                    padding: '10px 22px', background: '#16a34a', color: 'white',
+                    border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(22, 163, 74, 0.35)'
+                  }}
+                >
+                  {isSubmittingRefund ? 'Processing...' : `Confirm Refund (AED ${Number(refundInputAmount || 0).toFixed(2)})`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Reject Cancellation Modal */}
+      {selectedRejectReq && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)',
+          zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: '20px', width: '100%', maxWidth: '480px',
+            padding: '28px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h4 style={{ margin: 0, fontWeight: 800, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>✕</span> Reject Cancellation Request
+              </h4>
+              <button onClick={() => setSelectedRejectReq(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <LuX size={22} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '13.5px', color: '#475569', marginBottom: '16px' }}>
+              Rejecting cancellation for Booking <strong>#{selectedRejectReq._id.slice(-8).toUpperCase()}</strong> will restore its active status.
+            </p>
+
+            <form onSubmit={submitRejectCancellation}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#1e293b', marginBottom: '6px' }}>
+                  Rejection Reason (Sent to Customer):
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={rejectReasonInput}
+                  onChange={(e) => setRejectReasonInput(e.target.value)}
+                  placeholder="Explain why cancellation cannot be approved at this stage..."
+                  style={{
+                    width: '100%', borderRadius: '10px', border: '1px solid #cbd5e1',
+                    padding: '10px 12px', fontSize: '13px', color: '#0f172a'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRejectReq(null)}
+                  style={{
+                    padding: '10px 18px', background: '#f1f5f9', color: '#475569',
+                    border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReject}
+                  style={{
+                    padding: '10px 20px', background: '#dc2626', color: 'white',
+                    border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  {isSubmittingReject ? 'Rejecting...' : 'Reject Request'}
                 </button>
               </div>
             </form>

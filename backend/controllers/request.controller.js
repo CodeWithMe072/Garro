@@ -4,12 +4,16 @@ import Helper from '../models/Helper.js';
 import Job from '../models/Job.js';
 import Quote from '../models/Quote.js';
 import Invoice from '../models/Invoice.js';
+import Payment from '../models/Payment.js';
+import Notification from '../models/Notification.js';
 import GaragePayout from '../models/GaragePayout.js';
 import HelperBookingSlot from '../models/HelperBookingSlot.js';
 import { checkHelperAvailability, SERVICE_DURATION_MAP } from './helper.controller.js';
 import { uploadToR2  } from '../utils/upload.js';
 import { success, error  } from '../utils/response.js';
-import { notifyCustomer } from '../utils/notify.js';
+import { notifyCustomer, notifyGarage } from '../utils/notify.js';
+import { getPriceForServiceType } from './servicePricing.controller.js';
+import Stripe from 'stripe';
 
 // POST /api/requests
 export const createRequest = async (req, res) => {
@@ -38,21 +42,14 @@ export const createRequest = async (req, res) => {
 
     const request = await Request.create(requestData);
 
-    // Determine estimated cost based on serviceType
-    const serviceTypeCosts = {
-      minor_service: 299,
-      brake_repair: 399,
-      battery: 499,
-      ac_repair: 249,
-      other: 199
-    };
-    const estimatedCost = serviceTypeCosts[request.serviceType] || 199;
+    // Determine estimated cost — reads from admin-configurable ServicePricing collection
+    const { partsCost, laborCost, total: estimatedTotal } = await getPriceForServiceType(request.serviceType);
 
     // Create a temporary Quote for upfront payment (pre-approved)
     const quote = await Quote.create({
       requestId: request._id,
-      partsCost: 0,
-      laborCost: estimatedCost,
+      partsCost,
+      laborCost,
       status: 'approved'
     });
 
@@ -111,7 +108,8 @@ export const getRequest = async (req, res) => {
       .populate('userId', 'name phone email')
       .populate('vehicleId')
       .populate('garageId')
-      .populate('helperId');
+      .populate('helperId')
+      .populate('quoteId');
     if (!request) return error(res, 'Request not found', 404);
     success(res, { request });
   } catch (err) {
@@ -127,6 +125,10 @@ export const manualAssign = async (req, res) => {
 
     const request = await Request.findById(req.params.id);
     if (!request) return error(res, 'Request not found', 404);
+
+    if (['cancellation_requested', 'cancelled'].includes(request.status)) {
+      return error(res, 'Cannot assign garage or staff to a booking that has a pending cancellation or refund request.', 400);
+    }
 
     const helper = await Helper.findById(helperId);
     if (!helper) return error(res, 'Helper not found', 404);
@@ -176,14 +178,21 @@ export const manualAssign = async (req, res) => {
       paidQuote.garageId = garageId;
       await paidQuote.save();
 
-      const job = await Job.create({
-        quoteId:          paidQuote._id,
-        requestId:        request._id,
-        garageId:         garageId,
-        helperId:         helperId,
-        status:           'pickup_scheduled',
-        estimatedArrival: new Date(Date.now() + 4 * 60 * 60 * 1000)
-      });
+      let job = await Job.findOne({ requestId: request._id });
+      if (job) {
+        job.garageId = garageId;
+        job.helperId = helperId;
+        await job.save();
+      } else {
+        job = await Job.create({
+          quoteId:          paidQuote._id,
+          requestId:        request._id,
+          garageId:         garageId,
+          helperId:         helperId,
+          status:           'pickup_scheduled',
+          estimatedArrival: new Date(Date.now() + 4 * 60 * 60 * 1000)
+        });
+      }
 
       const invoice = await Invoice.findOne({ quoteId: paidQuote._id });
       if (invoice) {
@@ -224,6 +233,20 @@ export const manualAssign = async (req, res) => {
           helperName: notifyPopulated.helperId ? notifyPopulated.helperId.name : 'Service Tech',
           requestId: notifyPopulated._id
         });
+      }
+
+      // Notify garage of their new job assignment
+      try {
+        const notifyGaragePopulated = await Request.findById(request._id)
+          .populate('garageId')
+          .populate('userId', 'name')
+          .populate('vehicleId', 'make model year');
+        if (notifyGaragePopulated?.garageId) {
+          const assignedJob = await Job.findOne({ requestId: request._id }).sort({ createdAt: -1 });
+          await notifyGarage(notifyGaragePopulated.garageId, assignedJob, notifyGaragePopulated);
+        }
+      } catch (garageNotifyErr) {
+        console.error('Garage assignment notification failed:', garageNotifyErr.message);
       }
     } catch (notifyErr) {
       console.error('Manual assignment notification failed:', notifyErr.message);
@@ -451,6 +474,220 @@ export const getCustomerDashboardStats = async (req, res) => {
       recentActivity,
       upcomingAppointments
     });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// PATCH /api/requests/:id/cancel — Customer requests cancellation & refund
+export const requestCancellation = async (req, res) => {
+  try {
+    const { cancellationReason } = req.body;
+    const request = await Request.findById(req.params.id);
+
+    if (!request) return error(res, 'Request not found', 404);
+
+    // Verify ownership or admin role
+    if (req.user.role === 'customer' && request.userId.toString() !== req.user.id.toString()) {
+      return error(res, 'Unauthorized', 403);
+    }
+
+    if (['completed', 'delivered', 'closed', 'cancelled'].includes(request.status)) {
+      return error(res, `Cannot cancel request in status '${request.status}'`, 400);
+    }
+
+    const unpaidStatuses = ['pending_payment', 'quote_pending', 'new'];
+    const isUnpaid = unpaidStatuses.includes(request.status);
+
+    if (isUnpaid) {
+      request.status = 'cancelled';
+      request.cancellationReason = cancellationReason || 'Cancelled by customer before payment';
+      request.refundStatus = 'none';
+      await request.save();
+
+      const io = req.app.get('io');
+      if (io) io.emit('request:updated', request);
+
+      return success(res, { request, message: 'Request cancelled successfully.' });
+    }
+
+    // For paid bookings, set to cancellation_requested & refundStatus: 'requested'
+    request.previousStatus = request.status;
+    request.status = 'cancellation_requested';
+    request.cancellationReason = cancellationReason || 'Customer requested cancellation and refund';
+    request.refundStatus = 'requested';
+    request.cancellationRequestedAt = new Date();
+
+    // Revoke any reserved booking slots and set active jobs to cancelled
+    await HelperBookingSlot.updateMany({ bookingId: request._id }, { status: 'cancelled' });
+    await Job.updateMany({ requestId: request._id }, { status: 'cancelled' });
+
+    const invoice = await Invoice.findOne({
+      $or: [{ jobId: request._id }, { quoteId: request.quoteId }]
+    });
+    if (invoice) {
+      request.refundAmount = invoice.totalAmount || 0;
+    }
+
+    await request.save();
+
+    // Create Notification for Admin
+    await Notification.create({
+      userId: req.user.id,
+      role: 'admin',
+      type: 'request_status',
+      message: `Cancellation & refund requested for Booking #${request._id.toString().slice(-8).toUpperCase()}: ${request.cancellationReason}`
+    });
+
+    const io = req.app.get('io');
+    if (io) io.emit('request:updated', request);
+
+    success(res, { request, message: 'Cancellation and refund request submitted! Pending admin approval.' });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/admin/cancellations — Admin views pending cancellation & refund requests
+export const getAdminCancellations = async (req, res) => {
+  try {
+    const requests = await Request.find({
+      $or: [
+        { status: 'cancellation_requested' },
+        { refundStatus: { $in: ['requested', 'approved', 'processed', 'rejected'] } }
+      ]
+    })
+      .populate('userId', 'name email phone')
+      .populate('vehicleId', 'make model year')
+      .populate('garageId', 'name')
+      .sort({ updatedAt: -1 });
+
+    // Attach invoice & payment info
+    const requestsWithPayments = await Promise.all(requests.map(async (r) => {
+      const invoice = await Invoice.findOne({
+        $or: [{ jobId: r._id }, { quoteId: r.quoteId }]
+      });
+      const payment = invoice ? await Payment.findOne({ invoiceId: invoice._id }) : null;
+      return {
+        ...r.toObject(),
+        invoice,
+        payment
+      };
+    }));
+
+    success(res, { requests: requestsWithPayments });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/admin/cancellations/:id/approve — Admin approves cancellation & executes custom or full refund
+export const approveRefund = async (req, res) => {
+  try {
+    const { customRefundAmount, adminNotes } = req.body;
+    const request = await Request.findById(req.params.id);
+    if (!request) return error(res, 'Request not found', 404);
+
+    const invoice = await Invoice.findOne({
+      $or: [{ jobId: request._id }, { quoteId: request.quoteId }]
+    });
+
+    const fullAmount = invoice?.totalAmount || request.refundAmount || 0;
+    const finalRefundAmount = (customRefundAmount !== undefined && customRefundAmount !== null && customRefundAmount !== '')
+      ? Number(customRefundAmount)
+      : fullAmount;
+
+    let payment = invoice ? await Payment.findOne({ invoiceId: invoice._id }) : null;
+    if (!payment && invoice?.stripePaymentIntentId) {
+      payment = await Payment.findOne({ stripePaymentIntentId: invoice.stripePaymentIntentId });
+    }
+
+    let refundResult = null;
+    const paymentIntentId = invoice?.stripePaymentIntentId || payment?.stripePaymentIntentId;
+
+    if (paymentIntentId) {
+      const isMock = paymentIntentId.startsWith('bypass_') || paymentIntentId.startsWith('mock_');
+      if (isMock) {
+        console.log(`[Refund Simulation] Approved test/mock refund of AED ${finalRefundAmount} for PaymentIntent: ${paymentIntentId}`);
+        refundResult = { id: 're_mock_' + Date.now() };
+      } else {
+        const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
+        if (stripe) {
+          try {
+            refundResult = await stripe.refunds.create({
+              payment_intent: paymentIntentId,
+              amount: Math.round(finalRefundAmount * 100)
+            });
+          } catch (stripeErr) {
+            console.error('Stripe refund execution failed:', stripeErr.message);
+            return error(res, `Stripe refund failed: ${stripeErr.message}`, 400);
+          }
+        }
+      }
+    }
+
+    // Update Payment, Invoice, Request status
+    if (payment) {
+      payment.status = 'refunded';
+      payment.stripeRefundId = refundResult?.id || 're_manual_' + Date.now();
+      payment.refundedAt = new Date();
+      await payment.save();
+    }
+
+    if (invoice) {
+      invoice.status = 'refunded';
+      await invoice.save();
+    }
+
+    request.status = 'cancelled';
+    request.refundStatus = 'processed';
+    request.refundAmount = finalRefundAmount;
+    request.refundedAt = new Date();
+    if (adminNotes) request.adminNotes = adminNotes;
+    await request.save();
+
+    // Send push notification to Customer
+    const noteText = adminNotes ? ` (${adminNotes})` : '';
+    await Notification.create({
+      userId: request.userId,
+      role: 'customer',
+      type: 'payment_update',
+      message: `Your cancellation and refund of AED ${finalRefundAmount.toFixed(2)} has been approved and processed!${noteText} Funds will appear in your account.`
+    });
+
+    const io = req.app.get('io');
+    if (io) io.emit('request:updated', request);
+
+    success(res, { request, message: `Cancellation approved & AED ${finalRefundAmount.toFixed(2)} refund processed successfully!` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/admin/cancellations/:id/reject — Admin rejects cancellation request
+export const rejectCancellation = async (req, res) => {
+  try {
+    const { rejectionReason } = req.body;
+    const request = await Request.findById(req.params.id);
+    if (!request) return error(res, 'Request not found', 404);
+
+    // Revert status
+    request.status = request.previousStatus || 'assigned';
+    request.refundStatus = 'rejected';
+    await request.save();
+
+    // Notify Customer
+    await Notification.create({
+      userId: request.userId,
+      role: 'customer',
+      type: 'request_status',
+      message: `Your cancellation request for Booking #${request._id.toString().slice(-8).toUpperCase()} was rejected: ${rejectionReason || 'Service is already underway'}`
+    });
+
+    const io = req.app.get('io');
+    if (io) io.emit('request:updated', request);
+
+    success(res, { request, message: 'Cancellation request rejected. Booking status reverted.' });
   } catch (err) {
     error(res, err.message, 500);
   }

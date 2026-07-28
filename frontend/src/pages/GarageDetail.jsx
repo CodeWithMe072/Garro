@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -20,8 +21,7 @@ const GarageDetail = () => {
   useEffect(() => {
     const fetchGarage = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const token = localStorage.getItem('token');
+                const token = localStorage.getItem('token');
         const response = await fetch(`${API_BASE}/api/garages/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });

@@ -1,9 +1,10 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
-import { LuCar, LuLock, LuShieldAlert, LuUser, LuLightbulb } from 'react-icons/lu';
+import { LuCar, LuLock, LuShieldAlert, LuUser, LuLightbulb, LuShieldCheck, LuDownload, LuTrash2 } from 'react-icons/lu';
 
 const Profile = () => {
   const { user, login, logout } = useAuth();
@@ -56,8 +57,52 @@ const Profile = () => {
   const [verifyingOtp, setVerifyingOtp] = useState(false);
   const [demoCode, setDemoCode] = useState(null);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const token = localStorage.getItem('token');
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+
+  const handleDownloadData = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/users/me/export`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed to export data');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `garro_data_export_${user?.id || 'profile'}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast.success('🎉 Your data export has started!');
+    } catch (err) {
+      toast.error(err.message || 'Failed to download data');
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      return toast.error("Please type 'DELETE' to confirm.");
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/users/me`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Account successfully deleted and anonymized. Goodbye!');
+        logout();
+        navigate('/login');
+      } else {
+        toast.error(data.message || 'Failed to delete account');
+      }
+    } catch (err) {
+      toast.error('An error occurred during account deletion');
+    }
+  };
 
   // Handle personal profile submission (updates only name)
   const handleProfileSubmit = async (e) => {
@@ -225,6 +270,34 @@ const Profile = () => {
               {t('security_alert_desc')}
             </p>
           </div>
+
+          {/* GDPR User Controls */}
+          <div className="card border-0 shadow-sm p-4 mt-4" style={{ borderRadius: '16px', borderTop: '4px solid #ef4444' }}>
+            <h6 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+              <LuShieldCheck size={18} style={{ color: '#ff5c1a' }} /> GDPR Privacy Controls
+            </h6>
+            <p className="text-muted small mb-3">
+              Manage your personal data. You can download a portability export of all your data or request deletion of your account.
+            </p>
+            <div className="d-grid gap-2">
+              <button 
+                type="button" 
+                onClick={handleDownloadData} 
+                className="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center gap-2"
+                style={{ borderRadius: '8px' }}
+              >
+                <LuDownload size={14} /> Download My Data
+              </button>
+              <button 
+                type="button" 
+                onClick={() => setShowDeleteModal(true)} 
+                className="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center gap-2"
+                style={{ borderRadius: '8px' }}
+              >
+                <LuTrash2 size={14} /> Delete Account
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Profile Editing Section */}
@@ -382,6 +455,50 @@ const Profile = () => {
           </div>
         </div>
       </div>
+      {/* GDPR Account Deletion Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+              <div className="modal-header bg-danger text-white">
+                <h5 className="modal-title fw-bold">⚠️ Delete Account Permanently?</h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); }}></button>
+              </div>
+              <div className="modal-body p-4">
+                <p className="text-dark fw-medium mb-3">
+                  This action is irreversible. All of your personal profile data, email, phone number, and vehicle listings will be anonymized or deleted.
+                </p>
+                <p className="text-muted small mb-4">
+                  Note: Transactional receipts and tax invoices will be retained for accounting audit trails.
+                </p>
+                <div className="mb-3">
+                  <label className="form-label small fw-bold text-danger">To confirm deletion, type 'DELETE' below:</label>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    value={deleteConfirmText} 
+                    onChange={e => setDeleteConfirmText(e.target.value)} 
+                    placeholder="DELETE"
+                  />
+                </div>
+              </div>
+              <div className="modal-footer bg-light border-0">
+                <button type="button" className="btn btn-outline-secondary" onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); }}>
+                  Cancel
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-danger" 
+                  disabled={deleteConfirmText !== 'DELETE'} 
+                  onClick={handleDeleteAccount}
+                >
+                  Confirm Permanent Deletion
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

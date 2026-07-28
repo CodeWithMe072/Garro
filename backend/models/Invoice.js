@@ -31,7 +31,7 @@ const invoiceSchema = new mongoose.Schema({
   garagePayoutAmount: { type: Number }, // subtotal * 0.90
 
   // Payment details
-  status:                { type: String, enum: ['pending', 'paid', 'overdue'], default: 'pending' },
+  status:                { type: String, enum: ['pending', 'paid', 'overdue', 'refunded'], default: 'pending' },
   paidAt:                { type: Date },
   paymentMethod:         { type: String },
   stripePaymentIntentId: { type: String },

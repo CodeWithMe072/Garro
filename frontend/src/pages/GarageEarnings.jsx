@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
@@ -10,8 +11,7 @@ const GarageEarnings = () => {
   const { toast } = useNotification();
   const navigate = useNavigate();
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+  
   const fetchEarnings = async () => {
     try {
       const token = localStorage.getItem('token');

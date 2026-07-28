@@ -18,14 +18,27 @@ const EmergencyPickup = () => {
   const { isAuthenticated } = useAuth();
   const { toast } = useNotification();
 
+const UAE_CITIES_MAP = {
+  'Dubai': ['Al Quoz', 'Business Bay', 'Dubai Marina', 'Downtown Dubai', 'Motor City', 'JLT', 'Al Barsha', 'Deira', 'Jumeirah', 'Mirdif', 'Silicon Oasis', 'Dubai Investment Park (DIP)'],
+  'Abu Dhabi': ['Musaffah', 'Al Reem Island', 'Khalifa City', 'Mohammed Bin Zayed City', 'Al Khalidiyah', 'Yas Island', 'Corniche'],
+  'Sharjah': ['Al Majaz', 'Industrial Area 1-18', 'Al Nahda', 'Al Khan', 'Muwaileh'],
+  'Ajman': ['Al Nuaimia', 'Industrial Area', 'Al Rashidiya'],
+  'Ras Al Khaimah': ['Al Nakheel', 'Al Hamra', 'Khuzam'],
+  'Fujairah': ['Al Faseel', 'Fujairah City Centre'],
+  'Al Ain': ['Al Jimi', 'Al Maqam', 'Industrial Area']
+};
+
   const [formData, setFormData] = useState({
     carBrand: '',
     carModel: '',
     carYear: '',
     regNumber: '',
+    city: 'Dubai',
+    area: 'Al Quoz',
     address: '',
     lat: 25.2048,
     lng: 55.2708,
+    isGpsUsed: false,
     issue: 'Towing Required',
     phone: '',
     notes: ''
@@ -56,9 +69,17 @@ const EmergencyPickup = () => {
   const brandOptions = catalogBrands.map(b => b.name);
   const activeBrand = catalogBrands.find(b => b.name === formData.carBrand);
   const modelOptions = activeBrand ? [...activeBrand.models.map(m => m.name), 'Other'] : ['Other'];
+  const areaOptions = UAE_CITIES_MAP[formData.city] || ['General Area'];
 
   const handleFieldChange = (name, value) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData(prev => {
+      const updated = { ...prev, [name]: value };
+      if (name === 'city') {
+        const newAreas = UAE_CITIES_MAP[value] || ['General Area'];
+        updated.area = newAreas[0];
+      }
+      return updated;
+    });
   };
 
   const handleGetCurrentLocation = () => {
@@ -69,20 +90,58 @@ const EmergencyPickup = () => {
 
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
+        let formattedAddress = `GPS Location (${latitude.toFixed(5)}, ${longitude.toFixed(5)})`;
+        let detectedCity = formData.city || 'Dubai';
+        let detectedArea = formData.area || '';
+
+        try {
+          const googleKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+          if (googleKey) {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${googleKey}`);
+            const data = await res.json();
+            if (data.status === 'OK' && data.results?.[0]) {
+              formattedAddress = data.results[0].formatted_address;
+              for (const comp of data.results[0].address_components) {
+                if (comp.types.includes('locality') || comp.types.includes('administrative_area_level_1')) {
+                  detectedCity = comp.long_name;
+                }
+                if (comp.types.includes('sublocality') || comp.types.includes('neighborhood')) {
+                  detectedArea = comp.long_name;
+                }
+              }
+            }
+          } else {
+            // Free Reverse Geocoding via OpenStreetMap API
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+            const data = await res.json();
+            if (data && data.display_name) {
+              formattedAddress = data.display_name;
+              detectedCity = data.address?.city || data.address?.state || data.address?.county || 'Dubai';
+              detectedArea = data.address?.suburb || data.address?.neighbourhood || data.address?.road || '';
+            }
+          }
+        } catch (err) {
+          console.error('Reverse geocode error:', err);
+        }
+
         setFormData(prev => ({
           ...prev,
           lat: latitude,
           lng: longitude,
-          address: `GPS Location (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`
+          address: formattedAddress,
+          city: detectedCity,
+          area: detectedArea,
+          isGpsUsed: true
         }));
+
         setIsLocating(false);
-        toast.success('Successfully retrieved your current coordinates.');
+        toast.success(`GPS Location detected: ${detectedArea ? detectedArea + ', ' : ''}${detectedCity}`);
       },
       (error) => {
         setIsLocating(false);
-        toast.error('Unable to retrieve location. Please type your address manually.');
+        toast.error('Unable to retrieve GPS coordinates. Please select your city & area from dropdowns below.');
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -132,13 +191,16 @@ const EmergencyPickup = () => {
         },
         body: JSON.stringify({
           vehicleId,
-          serviceType: 'other',
+          serviceType: 'emergency_pickup',
           description: `EMERGENCY PICKUP: ${formData.issue}. ${formData.notes || ''}`.trim(),
           urgency: 'asap',
           location: {
-            address: formData.address || 'Stranded UAE Roadway',
+            address: formData.address || `${formData.area ? formData.area + ', ' : ''}${formData.city || 'Dubai'}`,
+            city: formData.city || 'Dubai',
+            area: formData.area || '',
             lat: formData.lat,
-            lng: formData.lng
+            lng: formData.lng,
+            isGpsUsed: !!formData.isGpsUsed
           },
           garageId: null
         })
@@ -214,12 +276,20 @@ const EmergencyPickup = () => {
                 <form onSubmit={handleSubmit}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     
-                    {/* Location input with GPS button */}
+                    {/* Location Selection with GPS and Dropdown Options */}
                     <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.03em' }}>
-                        Your Current Location
-                      </label>
-                      <div style={{ display: 'flex', gap: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <label style={{ fontSize: '12px', fontWeight: 700, color: '#334155', margin: 0, textTransform: 'uppercase', letterSpacing: '.03em' }}>
+                          Stranded Location
+                        </label>
+                        {formData.isGpsUsed && (
+                          <span style={{ fontSize: '11px', background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '12px', fontWeight: 700 }}>
+                            ✓ GPS Coordinates Detected
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
                         <div style={{ position: 'relative', flex: 1 }}>
                           <span style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }}>
                             <LuMapPin size={16} />
@@ -243,7 +313,7 @@ const EmergencyPickup = () => {
                           disabled={isLocating}
                           style={{
                             background: '#f8fafc',
-                            border: '1.5px solid #e2e8f0',
+                            border: '1.5px solid #ef4444',
                             borderRadius: '12px',
                             padding: '0 16px',
                             cursor: 'pointer',
@@ -252,16 +322,40 @@ const EmergencyPickup = () => {
                             gap: '6px',
                             fontSize: '13px',
                             fontWeight: 700,
-                            color: '#334155',
+                            color: '#ef4444',
                             transition: 'all 0.2s',
                             whiteSpace: 'nowrap'
                           }}
-                          onMouseEnter={e => e.currentTarget.style.background = '#f1f5f9'}
-                          onMouseLeave={e => e.currentTarget.style.background = '#f8fafc'}
                         >
                           <LuNavigation size={15} color="#ef4444" className={isLocating ? 'spin-anim' : ''} />
-                          {isLocating ? 'Locating...' : 'Get GPS'}
+                          {isLocating ? 'Detecting...' : '📍 Use GPS Location'}
                         </button>
+                      </div>
+
+                      {/* City & Area Dropdowns (Dropdown selection fallback) */}
+                      <div className="row g-2">
+                        <div className="col-6">
+                          <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', marginBottom: '4px', display: 'block' }}>
+                            EMIRATE / CITY:
+                          </label>
+                          <CustomDropdown
+                            placeholder="Select City"
+                            options={Object.keys(UAE_CITIES_MAP)}
+                            value={formData.city}
+                            onChange={(val) => handleFieldChange('city', val)}
+                          />
+                        </div>
+                        <div className="col-6">
+                          <label style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', marginBottom: '4px', display: 'block' }}>
+                            NEIGHBORHOOD AREA:
+                          </label>
+                          <CustomDropdown
+                            placeholder="Select Area"
+                            options={areaOptions}
+                            value={formData.area}
+                            onChange={(val) => handleFieldChange('area', val)}
+                          />
+                        </div>
                       </div>
                     </div>
 

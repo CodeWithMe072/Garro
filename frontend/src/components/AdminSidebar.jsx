@@ -54,6 +54,28 @@ const AdminSidebar = ({ pendingBookings }) => {
   };
 
   const [bookingsCount, setBookingsCount] = useState(pendingBookings || 0);
+  const [cancellationsCount, setCancellationsCount] = useState(0);
+
+  useEffect(() => {
+    const fetchCancellationsCount = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${API_BASE}/api/admin/cancellations`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok && data.success && Array.isArray(data.requests)) {
+          const pending = data.requests.filter(r => r.status === 'cancellation_requested').length;
+          setCancellationsCount(pending);
+        }
+      } catch (err) {
+        console.error('Error fetching cancellations count:', err);
+      }
+    };
+    fetchCancellationsCount();
+  }, []);
 
   useEffect(() => {
     if (pendingBookings !== undefined) {
@@ -129,6 +151,10 @@ const AdminSidebar = ({ pendingBookings }) => {
           <span className="icon"><LuDollarSign /></span>
           <span className="link-text">{t('quote_builder')}</span>
         </Link>
+        <Link to="/admin/service-pricing" className={`sidebar-link ${isActive('/admin/service-pricing')}`}>
+          <span className="icon"><LuDollarSign /></span>
+          <span className="link-text">Service Pricing</span>
+        </Link>
         <Link to="/admin/customers" className={`sidebar-link ${isActive('/admin/customers')}`}>
           <span className="icon"><LuUser /></span>
           <span className="link-text">{t('customer_search')}</span>
@@ -136,6 +162,15 @@ const AdminSidebar = ({ pendingBookings }) => {
         <Link to="/admin/complaints" className={`sidebar-link ${isActive('/admin/complaints')}`}>
           <span className="icon"><LuTriangleAlert /></span>
           <span className="link-text">{t('complaints')}</span>
+        </Link>
+        <Link to="/admin" className={`sidebar-link ${isActive('/admin')}`}>
+          <span className="icon"><LuDollarSign /></span>
+          <span className="link-text">Refund Requests</span>
+          {cancellationsCount > 0 && <span className="sidebar-badge" style={{ background: '#ef4444', color: 'white' }}>{cancellationsCount}</span>}
+        </Link>
+        <Link to="/admin" className={`sidebar-link ${isActive('/admin')}`}>
+          <span className="icon"><LuDollarSign /></span>
+          <span className="link-text">Payout Settlements</span>
         </Link>
         <Link to="/admin/support" className={`sidebar-link ${isActive('/admin/support')}`}>
           <span className="icon"><LuMessageCircle /></span>
@@ -148,6 +183,10 @@ const AdminSidebar = ({ pendingBookings }) => {
         <Link to="/admin/settings" className={`sidebar-link ${isActive('/admin/settings')}`}>
           <span className="icon"><LuSettings /></span>
           <span className="link-text">{t('system_settings')}</span>
+        </Link>
+        <Link to="/admin/activity-logs" className={`sidebar-link ${isActive('/admin/activity-logs')}`}>
+          <span className="icon"><LuClipboardList /></span>
+          <span className="link-text">{t('activity_logs') || 'Activity Logs'}</span>
         </Link>
         <Link to="/my-bookings" className={`sidebar-link ${isActive('/my-bookings')}`}>
           <span className="icon"><LuClipboardList /></span>

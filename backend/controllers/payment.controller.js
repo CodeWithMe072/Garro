@@ -23,7 +23,10 @@ export const createPaymentIntent = async (req, res) => {
     const { quoteId } = req.body;
     if (!quoteId) return error(res, 'quoteId is required', 400);
 
-    const quote = await Quote.findById(quoteId).populate('requestId');
+    let quote = await Quote.findById(quoteId).populate('requestId');
+    if (!quote) {
+      quote = await Quote.findOne({ requestId: quoteId }).populate('requestId');
+    }
     if (!quote) return error(res, 'Quote not found', 404);
     if (quote.status !== 'approved') return error(res, 'Quote must be approved before payment', 400);
 
@@ -122,7 +125,10 @@ export const stripeWebhook = async (req, res) => {
     const { quoteId, garageId, customerId } = intent.metadata || {};
 
     try {
-      const quote    = await Quote.findById(quoteId);
+      let quote = await Quote.findById(quoteId);
+      if (!quote) {
+        quote = await Quote.findOne({ requestId: quoteId });
+      }
       const garage   = garageId ? await Garage.findById(garageId) : null;
       const customer = await User.findById(customerId);
 
@@ -136,15 +142,15 @@ export const stripeWebhook = async (req, res) => {
       if (garage) {
         job = await Job.findOne({ quoteId: quote._id });
         if (!job) {
-          console.error('Webhook: no job found for quoteId', quoteId);
+          console.error('Webhook: no job found for quoteId', quote._id);
           return res.json({ received: true });
         }
       }
 
       // Check we haven't already processed this payment
-      const alreadyPaid = await Invoice.findOne({ quoteId, status: 'paid' });
+      const alreadyPaid = await Invoice.findOne({ quoteId: quote._id, status: 'paid' });
       if (alreadyPaid) {
-        console.log('Webhook: already processed payment for', quoteId);
+        console.log('Webhook: already processed payment for', quote._id);
         return res.json({ received: true });
       }
 
@@ -199,11 +205,12 @@ export const stripeWebhook = async (req, res) => {
       }
 
       // 3. Update quote to paid
-      await Quote.findByIdAndUpdate(quoteId, { status: 'paid' });
+      await Quote.findByIdAndUpdate(quote._id, { status: 'paid' });
 
       // 4. Update request status to 'new' (so it shows to admin)
+      const realReqId = quote.requestId?._id || quote.requestId;
       const updatedRequest = await Request.findByIdAndUpdate(
-        quote.requestId,
+        realReqId,
         { status: 'new' },
         { new: true }
       )
@@ -225,7 +232,7 @@ export const stripeWebhook = async (req, res) => {
       );
 
       // 6. Create garage payout record (only if garage is assigned)
-      if (garage && job) {
+      if (garage) {
         await GaragePayout.create({
           garageId:  garage._id,
           invoiceId: invoice._id,
@@ -235,18 +242,20 @@ export const stripeWebhook = async (req, res) => {
         });
       }
 
-      // 7. Notify customer via WhatsApp + Email
-      if (pdfUrl) {
-        await notifyPayment(customer, invoice, pdfUrl);
+      // 7. Dispatch invoice email & WhatsApp to customer
+      try {
+        await notifyPayment(customer, invoice, pdfUrl || '#');
+      } catch (notifyErr) {
+        console.error('Webhook: customer payment notification failed:', notifyErr.message);
       }
 
-      console.log(`✅ Payment processed: ${invoice.invoiceNumber} — AED ${totalAmount}`);
+      console.log(`Webhook processed successfully for quote ${quote._id}, invoice ${invoice.invoiceNumber}`);
+      res.json({ received: true });
     } catch (err) {
-      console.error('Post-payment processing error:', err.message);
+      console.error('Webhook processing error:', err.message);
+      res.status(500).json({ error: err.message });
     }
-  }
-
-  if (event.type === 'payment_intent.payment_failed') {
+  } else if (event.type === 'payment_intent.payment_failed') {
     const intent = event.data.object;
     const { quoteId, requestId } = intent.metadata || {};
 
@@ -262,19 +271,30 @@ export const stripeWebhook = async (req, res) => {
     } catch (err) {
       console.error('Failed to clean up failed payment resources:', err.message);
     }
+    res.json({ received: true });
+  } else {
+    res.json({ received: true });
   }
-
-  res.json({ received: true });
 };
 
 // GET /api/payments/quote/:quoteId/status
 // Customer polls this to check if their payment went through
 export const getPaymentStatusByQuote = async (req, res) => {
   try {
-    const invoice = await Invoice.findOne({ quoteId: req.params.quoteId })
-      .select('invoiceNumber status totalAmount paidAt pdfUrl');
+    const inputId = req.params.quoteId;
+    let quote = await Quote.findById(inputId);
+    if (!quote) {
+      quote = await Quote.findOne({ requestId: inputId });
+    }
+    const realQuoteId = quote ? quote._id : inputId;
+
+    const invoice = await Invoice.findOne({
+      $or: [{ quoteId: realQuoteId }, { quoteId: inputId }],
+      status: 'paid'
+    }).select('invoiceNumber status totalAmount paidAt pdfUrl');
+
     success(res, {
-      paid:    invoice?.status === 'paid',
+      paid:    !!invoice && invoice.status === 'paid',
       invoice: invoice || null
     });
   } catch (err) {
@@ -299,7 +319,10 @@ export const bypassPayment = async (req, res) => {
     const { quoteId } = req.body;
     if (!quoteId) return error(res, 'quoteId is required', 400);
 
-    const quote = await Quote.findById(quoteId);
+    let quote = await Quote.findById(quoteId);
+    if (!quote) {
+      quote = await Quote.findOne({ requestId: quoteId });
+    }
     if (!quote) return error(res, 'Quote not found', 404);
 
     const customerId = req.user.id;
@@ -316,7 +339,11 @@ export const bypassPayment = async (req, res) => {
     }
 
     // Check we haven't already processed this payment
-    let invoice = await Invoice.findOne({ quoteId, status: 'paid' });
+    let invoice = await Invoice.findOne({
+      $or: [{ quoteId: quote._id }, { quoteId }],
+      status: 'paid'
+    });
+
     if (!invoice) {
       // Derive amounts from the Quote
       const subtotal           = Number(quote.subtotal);
@@ -369,11 +396,12 @@ export const bypassPayment = async (req, res) => {
     }
 
     // 3. Update quote to paid
-    await Quote.findByIdAndUpdate(quoteId, { status: 'paid' });
+    await Quote.findByIdAndUpdate(quote._id, { status: 'paid' });
 
     // 4. Update request status to 'new' (so it shows to admin)
+    const realReqId = quote.requestId?._id || quote.requestId;
     const updatedRequest = await Request.findByIdAndUpdate(
-      quote.requestId,
+      realReqId,
       { status: 'new' },
       { new: true }
     )

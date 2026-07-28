@@ -1,8 +1,10 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
+import { io } from 'socket.io-client';
 import {
   LuClock,
   LuUser,
@@ -32,7 +34,38 @@ const MyRequests = () => {
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'all');
   const [now, setNow]             = useState(Date.now());
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const [cancelModalReq, setCancelModalReq] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
+
+  const handleCancelSubmit = async (e) => {
+    e.preventDefault();
+    if (!cancelModalReq) return;
+    setIsSubmittingCancel(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/requests/${cancelModalReq._id}/cancel`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ cancellationReason: cancelReason })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Cancellation request failed.');
+      }
+      toast.success(data.message || 'Cancellation & refund requested successfully!');
+      setCancelModalReq(null);
+      setCancelReason('');
+      fetchData();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setIsSubmittingCancel(false);
+    }
+  };
 
   useEffect(() => {
     // Setup timer to tick every second for quote countdowns
@@ -56,6 +89,24 @@ const MyRequests = () => {
     }
 
     fetchData();
+
+    const socket = io(API_BASE);
+
+    socket.on('request:updated', () => {
+      fetchData();
+    });
+
+    socket.on('job:status', () => {
+      fetchData();
+    });
+
+    socket.on('request:assigned', () => {
+      fetchData();
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   const fetchData = async () => {
@@ -84,36 +135,48 @@ const MyRequests = () => {
     }
   };
 
-  // Map invoice by quoteId or jobId for quick lookup
+  // Map invoice by quoteId, jobId, or requestId for quick lookup
   const invoiceMap = {};
   invoices.forEach(inv => {
-    if (inv.quoteId) invoiceMap[inv.quoteId?.toString?.()] = inv;
-    if (inv.jobId)   invoiceMap[inv.jobId?._id?.toString?.() || inv.jobId?.toString?.()] = inv;
+    const qId = inv.quoteId?._id?.toString?.() || inv.quoteId?.toString?.();
+    if (qId) invoiceMap[qId] = inv;
+
+    const reqId = inv.quoteId?.requestId?._id?.toString?.() || inv.quoteId?.requestId?.toString?.();
+    if (reqId) invoiceMap[reqId] = inv;
+
+    const jId = inv.jobId?._id?.toString?.() || inv.jobId?.toString?.();
+    if (jId) invoiceMap[jId] = inv;
   });
 
   const getStatusColor = (status) => {
     const map = {
-      new:           '#f59e0b',
-      assigned:      '#3b82f6',
-      quote_pending: '#8b5cf6',
-      approved:      '#10b981',
-      paid:          '#10b981',
-      in_progress:   '#0ea5e9',
-      completed:     '#6366f1',
-      cancelled:     '#ef4444',
-      closed:        '#64748b'
+      pending_payment: '#f59e0b',
+      new:             '#10b981',
+      assigned:        '#3b82f6',
+      quote_pending:   '#8b5cf6',
+      quote_approved:  '#f59e0b',
+      approved:        '#10b981',
+      paid:            '#10b981',
+      in_progress:     '#0ea5e9',
+      completed:       '#6366f1',
+      cancelled:       '#ef4444',
+      closed:          '#64748b'
     };
     return map[status] || '#94a3b8';
   };
 
   const getStatusLabel = (status) => {
     switch (status) {
+      case 'pending_payment':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuClock /> Pending Payment</span>;
       case 'new':
-        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuClock /> New</span>;
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuCircleCheck /> Paid — Pending Garage</span>;
       case 'assigned':
-        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuUser /> Assigned</span>;
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuUser /> Garage Assigned</span>;
       case 'quote_pending':
         return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuFileText /> Quote Pending</span>;
+      case 'quote_approved':
+        return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuClock /> Quote Approved — Pay Now</span>;
       case 'approved':
         return <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><LuCircleCheck /> Approved</span>;
       case 'paid':
@@ -169,34 +232,22 @@ const MyRequests = () => {
     }
   };
 
-  const getRemainingTime = (validUntilStr) => {
-    const validUntil = new Date(validUntilStr).getTime();
-    const diff = validUntil - now;
-    if (diff <= 0) return 'Expired';
-
-    const secs = Math.floor((diff / 1000) % 60);
-    const mins = Math.floor((diff / (1000 * 60)) % 60);
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-
-    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')} remaining`;
-  };
-
   const mockTransactions = [
     {
-      id: 'TXN-884920',
-      bookingId: '946A6687',
-      service: 'Minor Service (Deira Motors)',
-      date: '2026-07-01T14:30:00Z',
-      amount: 299.00,
+      id: 'TXN-984120',
+      bookingId: '478516CE',
+      service: 'Ceramic Coating & Paint Protection',
+      date: '2026-07-27T18:30:00Z',
+      amount: 229.85,
       method: 'Visa •••• 4242',
       status: 'success'
     },
     {
-      id: 'TXN-773829',
-      bookingId: '946A6685',
-      service: 'Car Wash & Cleaning (Al Quoz Workshop)',
-      date: '2026-06-15T11:15:00Z',
-      amount: 49.00,
+      id: 'TXN-872109',
+      bookingId: 'F4031B9C',
+      service: 'Major Service Package (Toyota Camry)',
+      date: '2026-07-10T14:15:00Z',
+      amount: 450.00,
       method: 'Apple Pay',
       status: 'success'
     },
@@ -214,23 +265,28 @@ const MyRequests = () => {
   const tabs = [
     { key: 'all',       label: t('all_requests') },
     { key: 'active',    label: t('active_requests') },
+    { key: 'completed', label: `✅ ${t('completed') || 'Completed'} (${requests.filter(r => ['delivered', 'completed', 'closed'].includes(r.status)).length})` },
     { key: 'quotes',    label: `✉️ ${t('my_service_quotes') || 'Pending Quotes'} (${quotes.length})` },
     { key: 'invoices',  label: `📄 ${t('invoices')} (${invoices.length})` },
     { key: 'transactions', label: `💳 Transaction History` }
   ];
 
-  const activeStatuses   = [
+  const activeStatuses = [
     'pending_payment', 'new', 'assigned', 'quote_pending', 'quote_sent', 'quote_approved',
-    'pickup_scheduled', 'picked_up', 'in_garage', 'repair_in_progress',
-    'work_complete', 'ready_for_delivery', 'delivered', 'approved', 'in_progress'
+    'pickup_scheduled', 'arrived_at_customer', 'picked_up', 'in_garage', 'inspection_done',
+    'repair_in_progress', 'work_complete', 'ready_for_delivery', 'approved', 'in_progress'
   ];
+  const completedStatuses = ['delivered', 'completed', 'closed'];
+
   const filteredRequests = activeTab === 'active'
     ? requests.filter(r => activeStatuses.includes(r.status))
+    : activeTab === 'completed'
+    ? requests.filter(r => completedStatuses.includes(r.status))
     : requests;
 
   const downloadInvoice = (invoiceId) => {
     const token = localStorage.getItem('token');
-    window.open(`${API_BASE}/api/invoices/${invoiceId}/download?token=${token}`, '_blank');
+    window.open(`${API_BASE}/api/invoices/${invoiceId}/pdf?token=${token}`, '_blank');
   };
 
   if (loading) {
@@ -272,30 +328,43 @@ const MyRequests = () => {
           {[
             { label: 'Total Requests', value: requests.length, icon: <LuClipboardList style={{ color: '#ff5c1a' }} />, color: '#ff5c1a' },
             { label: 'Active',  value: requests.filter(r => activeStatuses.includes(r.status)).length, icon: <LuSettings style={{ color: '#f59e0b' }} />, color: '#f59e0b' },
-            { label: 'Completed', value: requests.filter(r => ['completed','closed','paid'].includes(r.status)).length, icon: <LuCircleCheck style={{ color: '#10b981' }} />, color: '#10b981' },
+            { label: 'Completed', value: requests.filter(r => completedStatuses.includes(r.status)).length, icon: <LuCircleCheck style={{ color: '#10b981' }} />, color: '#10b981' },
             { label: 'Invoices', value: invoices.length, icon: <LuFileText style={{ color: '#8b5cf6' }} />, color: '#8b5cf6' }
           ].map(s => (
             <div key={s.label} style={{
               background: 'white', borderRadius: 14, padding: '16px 18px',
               boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-              borderTop: `3px solid ${s.color}`
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between'
             }}>
-              <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
-              <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 500 }}>{s.label}</div>
+              <div>
+                <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>
+                  {s.label}
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: '#0f172a' }}>
+                  {s.value}
+                </div>
+              </div>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10,
+                background: s.color + '12',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 18
+              }}>
+                {s.icon}
+              </div>
             </div>
           ))}
         </div>
 
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+        {/* Navigation Tabs */}
+        <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
           {tabs.map(tab => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               style={{
-                padding: '8px 18px',
-                borderRadius: 20,
+                padding: '10px 18px',
+                borderRadius: 10,
                 border: 'none',
                 background: activeTab === tab.key ? '#ff5c1a' : 'white',
                 color:  activeTab === tab.key ? 'white' : '#64748b',
@@ -379,133 +448,11 @@ const MyRequests = () => {
                         fontWeight: 600, fontSize: 12, display: 'flex', alignItems: 'center', gap: 6
                       }}
                     >
-                      <LuDownload size={14} /> Download
+                      <LuDownload size={13} /> PDF
                     </button>
                   </div>
                 </div>
               ))}
-            </div>
-          )
-        )}
-
-        {/* Quotes Tab */}
-        {activeTab === 'quotes' && (
-          quotes.length === 0 ? (
-            <div style={{
-              background: 'white', borderRadius: 16, padding: 48, textAlign: 'center',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
-            }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>✉️</div>
-              <h4 style={{ color: '#1a1a2e', marginBottom: 8 }}>No Pending Quotes</h4>
-              <p style={{ color: '#64748b', fontSize: 14 }}>You don't have any pending quotes requiring approval at the moment.</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {quotes.map(q => {
-                const timerText = getRemainingTime(q.validUntil);
-                const isExpired = timerText === 'Expired';
-
-                return (
-                  <div key={q._id} style={{
-                    background: 'white', borderRadius: 16, padding: '24px',
-                    boxShadow: '0 2px 12px rgba(0,0,0,0.06)', borderLeft: '4px solid #f97316',
-                    opacity: isExpired ? 0.6 : 1,
-                    pointerEvents: isExpired ? 'none' : 'auto'
-                  }}>
-                    {/* Card Header */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottom: '1px solid #f1f5f9', paddingBottom: 16 }}>
-                      <div>
-                        <span style={{ fontSize: '11px', color: '#f97316', fontWeight: '700', textTransform: 'uppercase' }}>
-                          {q.requestId?.serviceType?.replace(/_/g, ' ') || 'Car Repair'}
-                        </span>
-                        <h3 style={{ fontSize: '16px', fontWeight: '700', margin: '4px 0 0', color: '#1a1a2e' }}>
-                          Quote from {q.garageId?.name || 'Partner Garage'}
-                        </h3>
-                      </div>
-                      <div style={{
-                        background: 'rgba(249, 115, 22, 0.1)',
-                        color: '#f97316',
-                        borderRadius: '30px',
-                        padding: '6px 14px',
-                        fontSize: '12px',
-                        fontWeight: '700',
-                      }}>
-                        ⏱️ {timerText === 'Expired' ? 'Expired' : timerText}
-                      </div>
-                    </div>
-
-                    {/* Description */}
-                    <p style={{ color: '#475569', fontSize: '14px', lineHeight: '1.5', margin: '0 0 20px' }}>
-                      <strong>Request Details:</strong> {q.requestId?.description || 'N/A'}
-                    </p>
-
-                    {/* Financial Table */}
-                    <div style={{ background: '#f8fafc', borderRadius: '12px', padding: '16px 20px', marginBottom: 24, border: '1px solid #e2e8f0' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b' }}>
-                        <span>Spare Parts Cost</span>
-                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.partsCost?.toFixed(2)}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b', borderBottom: '1px dashed #e2e8f0', paddingBottom: 8 }}>
-                        <span>Labor Cost</span>
-                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.laborCost?.toFixed(2)}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b', paddingTop: 8 }}>
-                        <span>Subtotal</span>
-                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.subtotal?.toFixed(2)}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b' }}>
-                        <span>Service Fee</span>
-                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.serviceFee?.toFixed(2)}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#64748b', borderBottom: '1px solid #e2e8f0', paddingBottom: 8 }}>
-                        <span>VAT (5%)</span>
-                        <span style={{ color: '#1e293b', fontWeight: '600' }}>AED {q.vat?.toFixed(2)}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 10, fontSize: '16px', fontWeight: '800' }}>
-                        <span style={{ color: '#1e293b' }}>Total Due</span>
-                        <span style={{ color: '#10b981' }}>AED {q.customerTotal?.toFixed(2)}</span>
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    {!isExpired && (
-                      <div style={{ display: 'flex', gap: '12px', justifyContent: 'end' }}>
-                        <button
-                          onClick={() => handleRejectQuote(q._id)}
-                          style={{
-                            background: 'none',
-                            border: '1.5px solid rgba(239, 68, 68, 0.4)',
-                            borderRadius: '10px',
-                            padding: '10px 20px',
-                            color: '#ef4444',
-                            fontWeight: '600',
-                            fontSize: '13px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          Reject Quote
-                        </button>
-                        <button
-                          onClick={() => handleApproveQuote(q._id)}
-                          style={{
-                            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                            border: 'none',
-                            borderRadius: '10px',
-                            padding: '10px 24px',
-                            color: 'white',
-                            fontWeight: '700',
-                            fontSize: '13px',
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 12px rgba(249, 115, 22, 0.2)'
-                          }}
-                        >
-                          Approve &amp; Confirm Repair
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
             </div>
           )
         )}
@@ -538,22 +485,21 @@ const MyRequests = () => {
                         {new Date(txn.date).toLocaleDateString('en-AE', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </td>
                       <td style={{ padding: '16px 16px' }}>
-                        <div style={{ fontWeight: 600, color: '#475569' }}>Booking #{txn.bookingId}</div>
-                        <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 2 }}>{txn.service}</div>
+                        #{txn.bookingId} ({txn.service})
                       </td>
-                      <td style={{ padding: '16px 16px', color: '#64748b' }}>
+                      <td style={{ padding: '16px 16px' }}>
                         {txn.method}
                       </td>
-                      <td style={{ padding: '16px 16px', fontWeight: 800, color: '#ff5c1a' }}>
+                      <td style={{ padding: '16px 16px', fontWeight: 700, color: '#0f172a' }}>
                         AED {txn.amount.toFixed(2)}
                       </td>
                       <td style={{ padding: '16px 16px' }}>
                         <span style={{
                           padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
                           background: txn.status === 'success' ? '#dcfce7' : '#fee2e2',
-                          color:      txn.status === 'success' ? '#16a34a' : '#ef4444'
+                          color:      txn.status === 'success' ? '#16a34a' : '#dc2626'
                         }}>
-                          {txn.status === 'success' ? '✓ SUCCESS' : '✖ REFUNDED'}
+                          {txn.status.toUpperCase()}
                         </span>
                       </td>
                     </tr>
@@ -564,19 +510,19 @@ const MyRequests = () => {
           </div>
         )}
 
-        {/* Requests Tab (All / Active) */}
-        {activeTab !== 'invoices' && activeTab !== 'quotes' && activeTab !== 'transactions' && (
+        {/* Requests & Quotes Tabs Content */}
+        {activeTab !== 'invoices' && activeTab !== 'transactions' && (
           filteredRequests.length === 0 ? (
             <div style={{
               background: 'white', borderRadius: 16, padding: 48, textAlign: 'center',
               boxShadow: '0 2px 12px rgba(0,0,0,0.06)'
             }}>
               <div style={{ marginBottom: 16, color: '#ff5c1a', display: 'flex', justifyContent: 'center' }}>
-                <LuCar size={48} />
+                <LuClipboardList size={48} />
               </div>
-              <h4 style={{ color: '#0f172a', marginBottom: 8 }}>No Requests Yet</h4>
+              <h4 style={{ color: '#0f172a', marginBottom: 8 }}>{t('no_requests_found')}</h4>
               <p style={{ color: '#64748b', fontSize: 14, marginBottom: 24 }}>
-                Book your first car service to get started
+                {t('no_requests_sub')}
               </p>
               <Link to="/get-quote" style={{
                 background: 'linear-gradient(135deg, #ff5c1a, #ff8c42)', color: 'white', padding: '12px 28px',
@@ -588,8 +534,9 @@ const MyRequests = () => {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {filteredRequests.map(req => {
-                const inv = invoiceMap[req._id] || null;
-                const quoteApproved = req.status === 'approved';
+                const inv = invoiceMap[req._id] || invoiceMap[req.quoteId?._id] || invoiceMap[req.quoteId] || null;
+                const quoteApproved = req.status === 'quote_approved';
+                const isPaid = req.status === 'new' || req.status === 'assigned' || (inv && inv.status === 'paid');
 
                 return (
                   <div key={req._id} style={{
@@ -688,8 +635,8 @@ const MyRequests = () => {
                         </div>
                       )}
 
-                      {/* Pay Now button — if approved but not paid */}
-                      {quoteApproved && !inv && (
+                      {/* Pay Now button — if pending_payment or quote_approved and not paid */}
+                      {(req.status === 'pending_payment' || req.status === 'quote_approved' || (quoteApproved && !inv)) && !isPaid && (
                         <div style={{
                           background: '#fffbeb', border: '1px solid #fde68a',
                           borderRadius: 10, padding: '12px 16px', marginBottom: 14,
@@ -697,14 +644,17 @@ const MyRequests = () => {
                         }}>
                           <div>
                             <div style={{ fontSize: 11, color: '#d97706', fontWeight: 700, marginBottom: 2 }}>
-                              ⏳ QUOTE APPROVED — PAYMENT REQUIRED
+                              ⏳ PAYMENT REQUIRED
                             </div>
                             <div style={{ fontSize: 13, color: '#92400e' }}>
-                              Your quote has been approved. Complete your payment to proceed.
+                              Complete your payment to confirm your booking and begin service.
                             </div>
                           </div>
                           <button
-                            onClick={() => navigate(`/payment?quoteId=${req.quoteId || req._id}`)}
+                            onClick={() => {
+                              const targetQuoteId = req.quoteId?._id || req.quoteId || req._id;
+                              navigate(`/payment?quoteId=${targetQuoteId}`);
+                            }}
                             style={{
                               padding: '10px 18px',
                               background: 'linear-gradient(135deg, #ff5c1a, #ff8c42)',
@@ -715,6 +665,68 @@ const MyRequests = () => {
                           >
                             <LuCreditCard size={14} /> Pay Now
                           </button>
+                        </div>
+                      )}
+
+                      {/* Cancellation Pending Banner */}
+                      {req.status === 'cancellation_requested' && (
+                        <div style={{
+                          background: '#fef2f2', border: '1px solid #fecaca',
+                          borderRadius: 10, padding: '12px 16px', marginBottom: 14,
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}>
+                          <div>
+                            <div style={{ fontSize: 11, color: '#dc2626', fontWeight: 700, marginBottom: 2 }}>
+                              ⏳ CANCELLATION &amp; REFUND PENDING ADMIN APPROVAL
+                            </div>
+                            <div style={{ fontSize: 12.5, color: '#991b1b' }}>
+                              Reason: "{req.cancellationReason || 'Customer requested refund'}"
+                            </div>
+                          </div>
+                          <span style={{ padding: '4px 12px', background: '#fee2e2', color: '#dc2626', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+                            Pending Refund
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Approved Refund Banner */}
+                      {req.refundStatus === 'processed' && (
+                        <div style={{
+                          background: '#f0fdf4', border: '1px solid #bbf7d0',
+                          borderRadius: 10, padding: '12px 16px', marginBottom: 14,
+                          display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+                        }}>
+                          <div>
+                            <div style={{ fontSize: 11, color: '#16a34a', fontWeight: 700, marginBottom: 2, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <LuCircleCheck /> REFUND APPROVED &amp; PROCESSED
+                            </div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: '#14532d' }}>
+                              AED {Number(req.refundAmount || 0).toFixed(2)} refunded to your payment card
+                            </div>
+                            {req.adminNotes && (
+                              <div style={{ fontSize: 11.5, color: '#166534', marginTop: 2 }}>
+                                Note: {req.adminNotes}
+                              </div>
+                            )}
+                          </div>
+                          <span style={{ padding: '4px 12px', background: '#dcfce7', color: '#15803d', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>
+                            Refunded
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Rejected Refund Banner */}
+                      {req.refundStatus === 'rejected' && (
+                        <div style={{
+                          background: '#fff1f2', border: '1px solid #fecdd3',
+                          borderRadius: 10, padding: '12px 16px', marginBottom: 14
+                        }}>
+                          <div style={{ fontSize: 11, color: '#e11d48', fontWeight: 700, marginBottom: 2 }}>
+                            ✕ CANCELLATION REQUEST REJECTED BY ADMIN
+                          </div>
+                          <div style={{ fontSize: 12.5, color: '#9f1239' }}>
+                            Reason: {req.adminNotes || 'Service is already underway.'}
+                          </div>
                         </div>
                       )}
 
@@ -730,6 +742,22 @@ const MyRequests = () => {
                         >
                           <LuSearch size={13} /> Track Status
                         </Link>
+
+                        {!['completed', 'delivered', 'closed', 'cancelled', 'cancellation_requested'].includes(req.status) && (
+                          <button
+                            onClick={() => {
+                              setCancelModalReq(req);
+                              setCancelReason('');
+                            }}
+                            style={{
+                              padding: '8px 16px', background: '#fff1f2', color: '#e11d48',
+                              border: '1px solid #fecdd3', borderRadius: 8, cursor: 'pointer',
+                              fontWeight: 600, fontSize: 12, display: 'inline-flex', alignItems: 'center', gap: 6
+                            }}
+                          >
+                            <LuX size={13} /> {isPaid ? 'Cancel & Request Refund' : 'Cancel Booking'}
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -739,6 +767,89 @@ const MyRequests = () => {
           )
         )}
       </div>
+
+      {/* Cancel & Refund Request Modal */}
+      {cancelModalReq && (() => {
+        const modalInv = invoiceMap[cancelModalReq._id] || invoiceMap[cancelModalReq.quoteId?._id] || invoiceMap[cancelModalReq.quoteId] || null;
+        const modalIsPaid = modalInv && modalInv.status === 'paid';
+
+        return (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(4px)',
+            zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+          }}>
+            <div style={{
+              background: 'white', borderRadius: '16px', width: '100%', maxWidth: '500px',
+              padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h5 style={{ margin: 0, fontWeight: 800, color: '#0f172a' }}>
+                  {modalIsPaid ? 'Cancel Booking & Request Refund' : 'Cancel Booking'}
+                </h5>
+                <button onClick={() => setCancelModalReq(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                  <LuX size={20} />
+                </button>
+              </div>
+
+              <p style={{ fontSize: '13.5px', color: '#475569', marginBottom: '16px' }}>
+                Are you sure you want to cancel Booking <strong>#{cancelModalReq._id.slice(-8).toUpperCase()}</strong>?
+                {modalIsPaid ? (
+                  <span style={{ display: 'block', marginTop: '6px', color: '#dc2626', fontWeight: 600 }}>
+                    Since this booking is paid, your cancellation request will be sent to Admin for immediate refund approval.
+                  </span>
+                ) : (
+                  <span style={{ display: 'block', marginTop: '6px', color: '#475569' }}>
+                    This booking has not been paid yet and will be cancelled immediately.
+                  </span>
+                )}
+              </p>
+
+              <form onSubmit={handleCancelSubmit}>
+                <div style={{ marginBottom: '20px' }}>
+                  <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#1e293b', marginBottom: '6px' }}>
+                    Reason for Cancellation:
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Please explain why you wish to cancel (e.g., Change of plans, selected wrong date)..."
+                    style={{
+                      width: '100%', borderRadius: '10px', border: '1px solid #cbd5e1',
+                      padding: '10px 12px', fontSize: '13px', color: '#0f172a'
+                    }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setCancelModalReq(null)}
+                    style={{
+                      padding: '10px 18px', background: '#f1f5f9', color: '#475569',
+                      border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer'
+                    }}
+                  >
+                    Keep Booking
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmittingCancel}
+                    style={{
+                      padding: '10px 20px', background: '#dc2626', color: 'white',
+                      border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer'
+                    }}
+                  >
+                    {isSubmittingCancel ? 'Submitting...' : (modalIsPaid ? 'Submit Cancellation & Refund' : 'Confirm Cancel Booking')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };

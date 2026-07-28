@@ -40,7 +40,9 @@ const seedDB = async () => {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('DB connected for seeding');
 
-    // Clean all collections completely to ensure a fresh state
+    // Drop database completely to ensure 100% fresh state
+    await mongoose.connection.dropDatabase();
+    console.log('Database dropped completely.');
     await Promise.all([
       User.deleteMany({}),
       Garage.deleteMany({}),
@@ -153,17 +155,17 @@ const seedDB = async () => {
 
     console.log('Seeded Users: Customer, Admin, and 6 Helpers');
 
-    // 3. Seed Garages
+    // 3. Seed Garages with complete Service Category & Area mappings
     const garage1 = await Garage.create({
       name: 'Al Quoz Auto Workshop',
       contactPerson: 'Manager Al Quoz',
       phone: '+97144441111',
       email: 'alquoz@test.com',
       commissionPercent: 10,
-      services: ['minor_service', 'major_service', 'brake_repair', 'diagnostics'],
-      areas: ['Al Quoz', 'Downtown Dubai'],
+      services: ['minor_service', 'major_service', 'brake_repair', 'diagnostics', 'engine_repair', 'oil_change', 'ceramic_coating', 'dent_repair', 'ac_repair', 'battery_replacement', 'safety_inspection'],
+      areas: ['Al Quoz', 'Downtown Dubai', 'Business Bay', 'Jumeirah', 'Dubai Marina', 'Al Barsha', 'Silicon Oasis', 'Mirdif', 'Deira', 'Bur Dubai', 'Yas Island', 'Al Majaz'],
       status: 'active',
-      rating: 4.5,
+      rating: 4.8,
       location: { lat: 25.1584, lng: 55.2297 }
     });
 
@@ -173,10 +175,10 @@ const seedDB = async () => {
       phone: '+97142223333',
       email: 'deira@test.com',
       commissionPercent: 10,
-      services: ['ac_repair', 'electrical', 'battery', 'diagnostics', 'minor_service'],
-      areas: ['Deira', 'Bur Dubai'],
+      services: ['ac_repair', 'electrical_fix', 'battery_replacement', 'diagnostics', 'minor_service', 'suspension_repair', 'steering_repair', 'scratch_removal', 'window_tinting', 'oil_change'],
+      areas: ['Deira', 'Bur Dubai', 'Al Majaz', 'Al Nahda', 'Muwaileh', 'Mirdif', 'Downtown Dubai'],
       status: 'active',
-      rating: 4.2,
+      rating: 4.5,
       location: { lat: 25.2697, lng: 55.3094 }
     });
 
@@ -186,10 +188,10 @@ const seedDB = async () => {
       phone: '+97148881122',
       email: 'marina@test.com',
       commissionPercent: 10,
-      services: ['minor_service', 'major_service', 'brake_repair', 'battery'],
-      areas: ['Dubai Marina', 'Jumeirah'],
+      services: ['minor_service', 'major_service', 'brake_repair', 'battery_replacement', 'ceramic_coating', 'full_detailing', 'transmission_service', 'safety_inspection', 'annual_inspection'],
+      areas: ['Dubai Marina', 'Jumeirah', 'Al Barsha', 'Downtown Dubai', 'Business Bay', 'Yas Island', 'Al Reem Island'],
       status: 'active',
-      rating: 4.8,
+      rating: 4.9,
       location: { lat: 25.0686, lng: 55.1378 }
     });
 
@@ -199,10 +201,10 @@ const seedDB = async () => {
       phone: '+97147773344',
       email: 'barsha@test.com',
       commissionPercent: 10,
-      services: ['ac_repair', 'electrical', 'battery', 'other'],
-      areas: ['Al Barsha', 'Silicon Oasis'],
+      services: ['ac_repair', 'electrical_fix', 'battery_replacement', 'oil_change', 'annual_inspection', 'dent_repair', 'scratch_removal', 'brake_repair', 'engine_repair'],
+      areas: ['Al Barsha', 'Silicon Oasis', 'Al Quoz', 'Downtown Dubai', 'Khalifa City', 'Al Khalidiyah'],
       status: 'active',
-      rating: 4.4,
+      rating: 4.6,
       location: { lat: 25.1124, lng: 55.2062 }
     });
 
@@ -212,8 +214,8 @@ const seedDB = async () => {
       phone: '+97149995566',
       email: 'downtown@test.com',
       commissionPercent: 10,
-      services: ['minor_service', 'major_service', 'diagnostics', 'other'],
-      areas: ['Downtown Dubai', 'Business Bay'],
+      services: ['minor_service', 'major_service', 'diagnostics', 'engine_repair', 'transmission_service', 'ceramic_coating', 'full_detailing', 'ac_repair', 'brake_repair'],
+      areas: ['Downtown Dubai', 'Business Bay', 'Al Quoz', 'Jumeirah', 'Dubai Marina', 'Deira'],
       status: 'active',
       rating: 4.7,
       location: { lat: 25.2048, lng: 55.2708 }
@@ -225,14 +227,70 @@ const seedDB = async () => {
       phone: '+97143336677',
       email: 'mirdif@test.com',
       commissionPercent: 10,
-      services: ['minor_service', 'brake_repair', 'battery', 'other'],
-      areas: ['Mirdif', 'Silicon Oasis'],
+      services: ['minor_service', 'major_service', 'brake_repair', 'battery_replacement', 'safety_inspection', 'annual_inspection', 'oil_change', 'steering_repair', 'suspension_repair'],
+      areas: ['Mirdif', 'Silicon Oasis', 'Deira', 'Bur Dubai', 'Al Majaz', 'Al Nahda'],
       status: 'active',
-      rating: 4.3,
+      rating: 4.4,
       location: { lat: 25.2167, lng: 55.4167 }
     });
 
-    console.log('Seeded 6 Garages');
+    // Seed User accounts for the garages so they can log in to Garage Portal
+    await User.create({
+      name: 'Al Quoz Auto Workshop',
+      email: 'alquoz@test.com',
+      phone: '+97144441111',
+      role: 'garage',
+      status: 'active',
+      password: hashedPassword,
+      garageId: garage1._id
+    });
+    await User.create({
+      name: 'Deira Motors',
+      email: 'deira@test.com',
+      phone: '+97142223333',
+      role: 'garage',
+      status: 'active',
+      password: hashedPassword,
+      garageId: garage2._id
+    });
+    await User.create({
+      name: 'Marina Auto Service',
+      email: 'marina@test.com',
+      phone: '+97148881122',
+      role: 'garage',
+      status: 'active',
+      password: hashedPassword,
+      garageId: garage3._id
+    });
+    await User.create({
+      name: 'Al Barsha Garage Pro',
+      email: 'barsha@test.com',
+      phone: '+97147773344',
+      role: 'garage',
+      status: 'active',
+      password: hashedPassword,
+      garageId: garage4._id
+    });
+    await User.create({
+      name: 'Downtown Car Clinic',
+      email: 'downtown@test.com',
+      phone: '+97149995566',
+      role: 'garage',
+      status: 'active',
+      password: hashedPassword,
+      garageId: garage5._id
+    });
+    await User.create({
+      name: 'Mirdif Auto Care',
+      email: 'mirdif@test.com',
+      phone: '+97143336677',
+      role: 'garage',
+      status: 'active',
+      password: hashedPassword,
+      garageId: garage6._id
+    });
+
+    console.log('Seeded 6 Garages and their User accounts');
 
     // 4. Seed Helpers
     await Helper.create({

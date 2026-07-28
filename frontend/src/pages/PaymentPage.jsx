@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
@@ -31,7 +32,6 @@ const PaymentForm = ({ quoteId, breakdown, clientSecret }) => {
     toast.success('🎉 Payment successful! Redirecting to requests...');
 
     // Poll backend until invoice is created (webhook may take a few seconds)
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const token    = localStorage.getItem('token');
     let attempts = 0;
     const maxAttempts = 12;
@@ -67,8 +67,12 @@ const PaymentForm = ({ quoteId, breakdown, clientSecret }) => {
 
     // If clientSecret is a mock secret, bypass Stripe elements to allow local testing
     if (clientSecret.startsWith('mock_secret_')) {
+      if (!import.meta.env.DEV) {
+        setCardError('Bypass payment is disabled in production.');
+        setProcessing(false);
+        return;
+      }
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const token    = localStorage.getItem('token');
 
         const res = await fetch(`${API_BASE}/api/payments/bypass-pay`, {
@@ -132,11 +136,14 @@ const PaymentForm = ({ quoteId, breakdown, clientSecret }) => {
   };
 
   const confirmWalletPayment = async () => {
+    if (!import.meta.env.DEV) {
+      setCardError('Wallet payment simulation is disabled in production.');
+      return;
+    }
     setProcessing(true);
     setShowWalletSheet(false);
     
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const token    = localStorage.getItem('token');
 
       const res = await fetch(`${API_BASE}/api/payments/bypass-pay`, {
@@ -163,10 +170,13 @@ const PaymentForm = ({ quoteId, breakdown, clientSecret }) => {
 
   // Simulate Bank Transfer confirmation
   const handleBankConfirm = async () => {
+    if (!import.meta.env.DEV) {
+      setCardError('Bank transfer simulation is disabled in production.');
+      return;
+    }
     setProcessing(true);
     
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const token    = localStorage.getItem('token');
 
       const res = await fetch(`${API_BASE}/api/payments/bypass-pay`, {
@@ -226,12 +236,17 @@ const PaymentForm = ({ quoteId, breakdown, clientSecret }) => {
       <label style={{ fontSize: 12, fontWeight: 700, color: '#475569', marginBottom: 10, display: 'block' }}>
         SELECT PAYMENT METHOD
       </label>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 24 }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: import.meta.env.DEV ? '1fr 1fr 1fr' : '1fr',
+        gap: 8,
+        marginBottom: 24
+      }}>
         {[
           { id: 'card', label: '💳 Card', subtitle: 'Credit/Debit' },
-          { id: 'wallet', label: '📱 Pay', subtitle: 'Apple/Google' },
-          { id: 'bank', label: '🏦 Bank', subtitle: 'Transfer' }
-        ].map(opt => (
+          import.meta.env.DEV && { id: 'wallet', label: '📱 Pay', subtitle: 'Apple/Google' },
+          import.meta.env.DEV && { id: 'bank', label: '🏦 Bank', subtitle: 'Transfer' }
+        ].filter(Boolean).map(opt => (
           <button
             key={opt.id}
             type="button"
