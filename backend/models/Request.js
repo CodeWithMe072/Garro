@@ -23,6 +23,13 @@ const requestSchema = new mongoose.Schema({
   refundStatus: { type: String, enum: ['none', 'requested', 'approved', 'processed', 'rejected'], default: 'none' },
   refundAmount: { type: Number, default: 0 },
   refundedAt: { type: Date, default: null },
+  // Audit trail — who acted and when
+  refundApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  refundApprovedAt: { type: Date, default: null },
+  refundRejectedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  refundRejectedAt: { type: Date, default: null },
+  // Set true when Stripe call was skipped (bypass_/mock_ payment intent)
+  isMockTransaction: { type: Boolean, default: false },
   photos: [{ type: String }],
   preferredDate: { type: Date },
   urgency: { type: String, enum: ['asap', 'today', 'this_week', 'flexible'], default: 'flexible' },
@@ -32,6 +39,8 @@ const requestSchema = new mongoose.Schema({
     address: { type: String },
     city: { type: String, default: 'Dubai' },
     area: { type: String, default: '' },
+    standardLocation: { type: String, default: '' },
+    strandedLocation: { type: String, default: '' },
     lat: { type: Number },
     lng: { type: Number },
     isGpsUsed: { type: Boolean, default: false }
@@ -42,7 +51,13 @@ const requestSchema = new mongoose.Schema({
   scheduledArrivalDate: { type: Date, default: null },
   estimatedDuration: { type: Number, default: null },
   quoteId: { type: mongoose.Schema.Types.ObjectId, ref: 'Quote', default: null },
-  adminNotes: { type: String }
+  adminNotes: { type: String },
+  statusHistory: [{
+    status: { type: String },
+    changedBy: { type: String, default: 'system' },
+    changedAt: { type: Date, default: Date.now },
+    note: { type: String, default: '' }
+  }]
 }, { timestamps: true });
 
 export default mongoose.model('Request', requestSchema);

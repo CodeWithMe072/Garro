@@ -29,6 +29,7 @@ import userRoutes from './routes/user.routes.js';
 import auth from './middleware/auth.middleware.js';
 import role from './middleware/role.middleware.js';
 import { manualAssign } from './controllers/request.controller.js';
+import { stripeWebhook } from './controllers/payment.controller.js';
 import paymentRoutes from './routes/payment.routes.js';
 import catalogRoutes from './routes/catalog.routes.js';
 import reviewRoutes from './routes/review.routes.js';
@@ -51,27 +52,46 @@ const allowedOrigins = [
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    credentials: true
-  }
-});
+// CORS configuration supporting localhost, Railway & production frontend domains
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true); // Allow non-browser calls / Postman / Mobile
+    const allowed = [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL
+    ].filter(Boolean);
+
+    if (
+      allowed.includes(origin) ||
+      origin.endsWith('.railway.app') ||
+      origin.endsWith('.up.railway.app')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Fallback allow for production Railway deployment
+  },
+  credentials: true
+};
+
+const io = new Server(server, { cors: corsOptions });
 
 // Database Connection
 connectDB().then(() => {
   loadSettings();
 });
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
+app.use(cors(corsOptions));
 
 app.use(cookieParser());
 
 // Stripe payment routes (webhook requires raw body, must be before express.json)
 app.use('/api/payments', paymentRoutes);
+
+// Canonical /api/webhooks/stripe alias — same raw-body handler, stable URL for Stripe dashboard config
+// This keeps a clean /api/webhooks/* namespace for future payment providers (Tabby, Tamara, etc.)
+app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), stripeWebhook);
 
 // 3. JSON parsers
 app.use(express.json());

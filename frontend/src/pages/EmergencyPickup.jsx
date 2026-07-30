@@ -131,13 +131,11 @@ const UAE_CITIES_MAP = {
           lat: latitude,
           lng: longitude,
           address: formattedAddress,
-          city: detectedCity,
-          area: detectedArea,
           isGpsUsed: true
         }));
 
         setIsLocating(false);
-        toast.success(`GPS Location detected: ${detectedArea ? detectedArea + ', ' : ''}${detectedCity}`);
+        toast.success(`GPS Location detected (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
       },
       (error) => {
         setIsLocating(false);
@@ -195,9 +193,11 @@ const UAE_CITIES_MAP = {
           description: `EMERGENCY PICKUP: ${formData.issue}. ${formData.notes || ''}`.trim(),
           urgency: 'asap',
           location: {
-            address: formData.address || `${formData.area ? formData.area + ', ' : ''}${formData.city || 'Dubai'}`,
+            address: `${formData.area ? formData.area + ', ' : ''}${formData.city || 'Dubai'}`,
             city: formData.city || 'Dubai',
             area: formData.area || '',
+            standardLocation: formData.address || '',
+            strandedLocation: formData.address || '',
             lat: formData.lat,
             lng: formData.lng,
             isGpsUsed: !!formData.isGpsUsed

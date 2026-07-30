@@ -163,12 +163,12 @@ const AdminSidebar = ({ pendingBookings }) => {
           <span className="icon"><LuTriangleAlert /></span>
           <span className="link-text">{t('complaints')}</span>
         </Link>
-        <Link to="/admin" className={`sidebar-link ${isActive('/admin')}`}>
+        <Link to="/admin/refunds" className={`sidebar-link ${isActive('/admin/refunds')}`}>
           <span className="icon"><LuDollarSign /></span>
           <span className="link-text">Refund Requests</span>
           {cancellationsCount > 0 && <span className="sidebar-badge" style={{ background: '#ef4444', color: 'white' }}>{cancellationsCount}</span>}
         </Link>
-        <Link to="/admin" className={`sidebar-link ${isActive('/admin')}`}>
+        <Link to="/admin/payouts" className={`sidebar-link ${isActive('/admin/payouts')}`}>
           <span className="icon"><LuDollarSign /></span>
           <span className="link-text">Payout Settlements</span>
         </Link>

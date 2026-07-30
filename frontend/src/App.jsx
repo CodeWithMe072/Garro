@@ -166,6 +166,16 @@ const App = () => {
                 <PageLayout><AdminDashboard /></PageLayout>
               </ProtectedRoute>
             } />
+            <Route path="/admin/refunds" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <PageLayout><AdminDashboard /></PageLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/payouts" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <PageLayout><AdminDashboard /></PageLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/admin/staff" element={
               <ProtectedRoute roles={['staff', 'manager', 'superadmin', 'admin']}>
                 <PageLayout><StaffDashboard /></PageLayout>

@@ -272,7 +272,109 @@ export const stripeWebhook = async (req, res) => {
       console.error('Failed to clean up failed payment resources:', err.message);
     }
     res.json({ received: true });
+
+  // ── Refund reconciliation safety net ──────────────────────────────────────────
+  // Fires when Stripe confirms a refund reached the card network.
+  // Closes the gap where the Stripe API call succeeded but the DB write after it failed.
+  // All checks are idempotent — safe to receive duplicate events.
+  } else if (event.type === 'charge.refunded') {
+    const charge = event.data.object;
+    try {
+      // Find matching Payment by stripePaymentIntentId
+      const payment = await Payment.findOne({ stripePaymentIntentId: charge.payment_intent });
+      if (!payment) {
+        console.log('Webhook charge.refunded: no local Payment found for intent', charge.payment_intent);
+        return res.json({ received: true });
+      }
+
+      // Idempotency — only update if not already reconciled
+      if (payment.status !== 'refunded') {
+        payment.status = 'refunded';
+        payment.refundedAt = payment.refundedAt || new Date();
+        // Capture the Stripe refund ID from the most recent refund on the charge
+        if (charge.refunds?.data?.length > 0) {
+          payment.stripeRefundId = payment.stripeRefundId || charge.refunds.data[0].id;
+        }
+        await payment.save();
+
+        // Reconcile the linked Invoice
+        if (payment.invoiceId) {
+          await Invoice.findByIdAndUpdate(payment.invoiceId, { status: 'refunded' });
+        }
+
+        // Reconcile the linked Request (find via invoice)
+        const invoice = payment.invoiceId ? await Invoice.findById(payment.invoiceId) : null;
+        if (invoice) {
+          const request = await Request.findOne({
+            $or: [{ _id: invoice.jobId }, { quoteId: invoice.quoteId }]
+          });
+          if (request && request.refundStatus !== 'processed') {
+            request.refundStatus = 'processed';
+            request.refundedAt = request.refundedAt || new Date();
+            await request.save();
+          }
+        }
+
+        console.log(`Webhook charge.refunded: reconciled Payment ${payment._id} → status=refunded`);
+      }
+    } catch (err) {
+      console.error('Webhook charge.refunded processing error:', err.message);
+    }
+    res.json({ received: true });
+
+  // ── Payout transfer confirmed by Stripe ───────────────────────────────────────
+  // Fires when a Stripe Connect transfer reaches the connected account successfully.
+  // Safety net for cases where the admin action completed in Stripe but the DB write failed.
+  } else if (event.type === 'transfer.paid') {
+    const transfer = event.data.object;
+    try {
+      // Look up GaragePayout by stripeTransferId
+      const payout = await GaragePayout.findOne({ stripeTransferId: transfer.id });
+      if (!payout) {
+        console.log('Webhook transfer.paid: no local GaragePayout found for transfer', transfer.id);
+        return res.json({ received: true });
+      }
+
+      // Idempotency — only update if not already processed
+      if (payout.status !== 'processed') {
+        payout.status = 'processed';
+        payout.processedAt = payout.processedAt || new Date();
+        payout.notes = (payout.notes ? payout.notes + ' | ' : '') + 'Reconciled via Stripe transfer.paid webhook';
+        await payout.save();
+        console.log(`Webhook transfer.paid: reconciled GaragePayout ${payout._id} → status=processed`);
+      }
+    } catch (err) {
+      console.error('Webhook transfer.paid processing error:', err.message);
+    }
+    res.json({ received: true });
+
+  // ── Payout transfer failure ────────────────────────────────────────────────────
+  // Fires when a Stripe Connect transfer fails (e.g. invalid bank account, network issue).
+  // Currently the system has no failure path for payouts — this closes that gap.
+  } else if (event.type === 'transfer.failed') {
+    const transfer = event.data.object;
+    try {
+      const payout = await GaragePayout.findOne({ stripeTransferId: transfer.id });
+      if (!payout) {
+        console.log('Webhook transfer.failed: no local GaragePayout found for transfer', transfer.id);
+        return res.json({ received: true });
+      }
+
+      // Idempotency — only flag if not already in a terminal state
+      if (!['failed', 'processed'].includes(payout.status)) {
+        payout.status = 'failed';
+        payout.notes = (payout.notes ? payout.notes + ' | ' : '') +
+          `Stripe transfer failed: ${transfer.failure_message || 'Unknown reason'} (code: ${transfer.failure_code || 'n/a'})`;
+        await payout.save();
+        console.error(`Webhook transfer.failed: GaragePayout ${payout._id} flagged as failed — ${transfer.failure_message}`);
+      }
+    } catch (err) {
+      console.error('Webhook transfer.failed processing error:', err.message);
+    }
+    res.json({ received: true });
+
   } else {
+    // Unhandled event type — acknowledge receipt so Stripe doesn't retry
     res.json({ received: true });
   }
 };

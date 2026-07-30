@@ -41,6 +41,14 @@ const MyRequests = () => {
   const handleCancelSubmit = async (e) => {
     e.preventDefault();
     if (!cancelModalReq) return;
+
+    const trimmed = cancelReason.trim();
+    const placeholders = ['no', 'na', 'n/a', 'test', 'none', 'nothing', 'a', 'x', 'nil'];
+    if (!trimmed || trimmed.length < 5 || placeholders.includes(trimmed.toLowerCase())) {
+      toast.error('Please enter a detailed cancellation reason (at least 5 characters).');
+      return;
+    }
+
     setIsSubmittingCancel(true);
     try {
       const token = localStorage.getItem('token');

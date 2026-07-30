@@ -253,7 +253,9 @@ const StaffDashboard = () => {
       car_model: b.vehicleId ? `${b.vehicleId.make} ${b.vehicleId.model}` : 'Unknown Car',
       services: [b.serviceType ? b.serviceType.replace('_', ' ').toUpperCase() : 'GENERAL SERVICE'],
       pickup_type: b.location && b.location.address !== 'Self Drop at Garage' ? 'pickup_drop' : 'self_drop',
-      customer_address: b.location?.address || 'Dubai',
+      customer_address: b.location?.standardLocation || b.location?.strandedLocation || b.location?.address || 'Dubai',
+      standard_location: b.location?.standardLocation || b.location?.strandedLocation || '',
+      area_city_address: b.location?.address || '',
       lat: b.location?.lat,
       lng: b.location?.lng,
       is_emergency: b.serviceType === 'emergency_pickup' || b.serviceType === 'roadside_assistance' || b.urgency === 'asap',
@@ -388,6 +390,11 @@ const StaffDashboard = () => {
                           </a>
                         )}
                       </div>
+                      {b.standard_location && (
+                        <div style={{ fontSize: '12px', color: '#1e40af', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '6px 10px', marginTop: '6px', fontWeight: 700 }}>
+                          📍 Standard / Stranded Location for Assigned Staff: <span style={{ color: '#0f172a' }}>"{b.standard_location}"</span>
+                        </div>
+                      )}
                       <div className="tl-services">
                         {b.services.join(', ')}
                       </div>
