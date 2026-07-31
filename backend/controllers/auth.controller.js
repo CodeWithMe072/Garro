@@ -242,7 +242,25 @@ export const login = async (req, res) => {
       return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
     }
 
-    if (user.status !== 'active') return res.status(403).json({ success: false, message: 'Please verify your account first.' });
+    if (user.status !== 'active') {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+      await Otp.findOneAndUpdate(
+        { email: user.email.toLowerCase() },
+        { code, createdAt: new Date() },
+        { upsert: true, new: true }
+      );
+
+      await sendEmailOtp(user.email, code);
+
+      return res.status(403).json({
+        success: false,
+        isUnverified: true,
+        email: user.email,
+        message: 'Your account is not verified yet. A new verification OTP code has been sent to your email.',
+        demoCode: process.env.RESEND_API_KEY ? null : code
+      });
+    }
 
     const token = signToken(user);
     await generateAndSetRefreshToken(res, user._id);

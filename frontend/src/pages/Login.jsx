@@ -39,6 +39,18 @@ const Login = () => {
 
       const data = await response.json();
       if (!response.ok || !data.success) {
+        if (data.isUnverified && data.email) {
+          localStorage.setItem('lastRegisteredEmail', data.email);
+          toast.info('Account unverified. A new OTP verification code has been sent to your email.');
+          navigate('/verify-otp', {
+            state: {
+              email: data.email,
+              demoCode: data.demoCode,
+              message: data.message
+            }
+          });
+          return;
+        }
         throw new Error(data.message || 'Invalid email or password.');
       }
 
