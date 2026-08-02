@@ -2,13 +2,14 @@ import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
+import { useNotification } from '../context/NotificationContext';
 
 const GarageDetail = () => {
   const { id } = useParams();
   const [garage, setGarage] = useState(null);
   const [loading, setLoading] = useState(true);
   const { isAuthenticated } = useAuth();
+  const { toast } = useNotification();
   
   const [reviewsList, setReviewsList] = useState([]);
   const [newRating, setNewRating] = useState(5);
