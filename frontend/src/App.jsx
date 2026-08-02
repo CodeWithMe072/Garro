@@ -89,6 +89,14 @@ const DashboardRedirect = () => {
 
 const CustomerSupportChatWrapper = () => {
   const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
+
+  // Hide support chat widget on landing, home, login, and signup views
+  const hiddenPaths = ['/', '/home', '/login', '/signup'];
+  if (hiddenPaths.includes(location.pathname)) {
+    return null;
+  }
+
   if (isAuthenticated && user?.role === 'customer') {
     return <SupportChatWidget />;
   }

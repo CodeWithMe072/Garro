@@ -220,20 +220,6 @@ const Home = () => {
               {t('get_help')}
             </h1>
             <p className="hm-sub">{t('hero_sub')}</p>
-            <div className="hm-stats">
-              <div className="hm-stat">
-                <span className="material-icons-round">shield</span>
-                <div><div className="hm-stat-num">500+</div><div className="hm-stat-lbl">{t('verified_garages')}</div></div>
-              </div>
-              <div className="hm-stat">
-                <span className="material-icons-round">schedule</span>
-                <div><div className="hm-stat-num">24/7</div><div className="hm-stat-lbl">{t('support')}</div></div>
-              </div>
-              <div className="hm-stat">
-                <span className="material-icons-round">verified</span>
-                <div><div className="hm-stat-num">100%</div><div className="hm-stat-lbl">{t('transparent')}</div></div>
-              </div>
-            </div>
           </div>
           <div className="hm-hero-right">
             <div className="hm-hero-img">
@@ -415,7 +401,7 @@ const Home = () => {
               <div className="hiw-card">
                 <div className="hiw-num">02</div>
                 <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#3b82f6,#1d4ed8)' }}>
-                  <span className="material-icons-round">search</span>
+                  <span className="material-icons-round">request_quote</span>
                 </div>
                 <div className="hiw-name">{t('step2_title')}</div>
                 <div className="hiw-desc">{t('step2_desc')}</div>
@@ -426,66 +412,18 @@ const Home = () => {
               <div className="hiw-card">
                 <div className="hiw-num">03</div>
                 <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#10b981,#059669)' }}>
-                  <span className="material-icons-round">verified_user</span>
+                  <span className="material-icons-round">local_shipping</span>
                 </div>
                 <div className="hiw-name">{t('step3_title')}</div>
                 <div className="hiw-desc">{t('step3_desc')}</div>
               </div>
             </div>
-            <div className="col-auto hiw-connector"><span className="material-icons-round">arrow_forward</span></div>
-            <div className="col">
-              <div className="hiw-card">
-                <div className="hiw-num">04</div>
-                <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#8b5cf6,#6d28d9)' }}>
-                  <span className="material-icons-round">local_shipping</span>
-                </div>
-                <div className="hiw-name">{t('step4_title')}</div>
-                <div className="hiw-desc">{t('step4_desc')}</div>
-              </div>
-            </div>
-            <div className="col-auto hiw-connector"><span className="material-icons-round">arrow_forward</span></div>
-            <div className="col">
-              <div className="hiw-card">
-                <div className="hiw-num">05</div>
-                <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}>
-                  <span className="material-icons-round">location_on</span>
-                </div>
-                <div className="hiw-name">{t('step5_title')}</div>
-                <div className="hiw-desc">{t('step5_desc')}</div>
-              </div>
-            </div>
           </div>
 
 
         </div>
       </section>
 
-      {/* ══ DARK STATS ══ */}
-      <section className="dark-stats">
-        <div className="container">
-          <div className="row g-0 text-center align-items-center">
-            <div className="col">
-              <div className="dstat-num">500+</div>
-              <div className="dstat-lbl">{t('stat_verified_uae')}</div>
-            </div>
-            <div className="col-auto dstat-divider d-none d-md-block">&nbsp;</div>
-            <div className="col">
-              <div className="dstat-num">50K+</div>
-              <div className="dstat-lbl">{t('stat_happy_served')}</div>
-            </div>
-            <div className="col-auto dstat-divider d-none d-md-block">&nbsp;</div>
-            <div className="col">
-              <div className="dstat-num">98%</div>
-              <div className="dstat-lbl">{t('stat_satisfaction')}</div>
-            </div>
-            <div className="col-auto dstat-divider d-none d-md-block">&nbsp;</div>
-            <div className="col">
-              <div className="dstat-num">24/7</div>
-              <div className="dstat-lbl">{t('stat_emergency_support')}</div>
-            </div>
-          </div>
-        </div>
-      </section>
     </>
   );
 };

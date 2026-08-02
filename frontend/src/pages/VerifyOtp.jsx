@@ -2,8 +2,56 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { LuGlobe, LuChevronDown, LuCheck } from 'react-icons/lu';
+
+
+const localT = {
+  en: {
+    verify_account: "Verify Your Account",
+    verify_desc: "Enter the 6-digit OTP to activate your Garro account",
+    demo_mode: "Demo Mode — Your OTP is:",
+    click_autofill: "Click to auto-fill ↓",
+    verifying: "Verifying...",
+    verify_continue: "Verify & Continue",
+    didnt_receive: "Didn't receive it? ",
+    resend_otp: "Resend OTP",
+    back_to_signup: "Back to Sign Up",
+    resend_success: "A new OTP verification code has been sent.",
+    resend_failed: "Failed to resend verification email."
+  },
+  ar: {
+    verify_account: "تحقق من حسابك",
+    verify_desc: "أدخل رمز التحقق المكون من 6 أرقام لتنشيط حسابك في غارو",
+    demo_mode: "وضع التجريب - رمز التحقق الخاص بك هو:",
+    click_autofill: "انقر للتعبئة التلقائية ↓",
+    verifying: "جاري التحقق...",
+    verify_continue: "التحقق والمتابعة",
+    didnt_receive: "لم تستلم الرمز؟ ",
+    resend_otp: "إعادة إرسال الرمز",
+    back_to_signup: "العودة لإنشاء الحساب",
+    resend_success: "تم إرسال رمز تحقق جديد.",
+    resend_failed: "فشل إعادة إرسال البريد الإلكتروني للتحقق."
+  },
+  ur: {
+    verify_account: "اپنا اکاؤنٹ تصدیق کریں",
+    verify_desc: "اپنا گارو اکاؤنٹ فعال کرنے کے لیے 6 ہندسوں کا OTP درج کریں",
+    demo_mode: "ڈیمو موڈ - آپ کا OTP ہے:",
+    click_autofill: "خودکار فل کرنے کے لیے کلک کریں ↓",
+    verifying: "تصدیق ہو رہی ہے...",
+    verify_continue: "تصدیق کریں اور جاری رکھیں",
+    didnt_receive: "موصول نہیں ہوا؟ ",
+    resend_otp: "دوبارہ OTP بھیجیں",
+    back_to_signup: "سائن اپ پر واپس جائیں",
+    resend_success: "ایک نیا OTP تصدیقی کوڈ بھیجا گیا ہے۔",
+    resend_failed: "تصدیقی ای میل دوبارہ بھیجنے میں ناکامی۔"
+  }
+};
 
 const VerifyOtp = () => {
+  const { lang, changeLanguage } = useLanguage();
+  const [isLangOpen, setIsLangOpen] = useState(false);
+  const lt = (key) => localT[lang]?.[key] || localT['en']?.[key] || key;
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
   const [countdown, setCountdown] = useState(60);
@@ -89,10 +137,10 @@ const VerifyOtp = () => {
       if (res.ok && data.success && data.demoCode) {
         setDemoCode(data.demoCode);
       }
-      toast.info('A new OTP verification code has been sent.');
+      toast.info(lt('resend_success'));
     } catch (err) {
-      setError('Failed to resend verification email.');
-      toast.error('Failed to resend verification email.');
+      setError(lt('resend_failed'));
+      toast.error(lt('resend_failed'));
     }
   };
 
@@ -154,6 +202,116 @@ const VerifyOtp = () => {
 
   return (
     <div className="verify-body">
+      {/* Floating Language Switcher */}
+      <div style={{ position: 'absolute', top: '24px', insetInlineEnd: '24px', zIndex: 1000 }}>
+        <style>{`
+          @keyframes fadeInScale {
+            from {
+              opacity: 0;
+              transform: scale(0.95) translateY(-5px);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1) translateY(0);
+            }
+          }
+        `}</style>
+        <button
+          type="button"
+          onClick={() => setIsLangOpen(!isLangOpen)}
+          style={{
+            background: '#ffffff',
+            border: '1.5px solid #e2e8f0',
+            borderRadius: '24px',
+            padding: '7px 14px',
+            color: '#334155',
+            fontSize: '12.5px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease-in-out',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.04)',
+            outline: 'none',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = '#ff5c1a';
+            e.currentTarget.style.color = '#ff5c1a';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(255, 92, 26, 0.08)';
+          }}
+          onMouseLeave={(e) => {
+            if (!isLangOpen) {
+              e.currentTarget.style.borderColor = '#e2e8f0';
+              e.currentTarget.style.color = '#334155';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.04)';
+            }
+          }}
+        >
+          <LuGlobe size={14} />
+          <span style={{ letterSpacing: '0.05em' }}>{lang.toUpperCase()}</span>
+          <LuChevronDown size={12} style={{ transform: isLangOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s ease' }} />
+        </button>
+        {isLangOpen && (
+          <div style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            insetInlineEnd: 0,
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderRadius: '16px',
+            boxShadow: '0 12px 30px rgba(15, 23, 42, 0.1)',
+            zIndex: 1000,
+            minWidth: '130px',
+            padding: '6px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '3px',
+            transformOrigin: 'top right',
+            animation: 'fadeInScale 0.15s ease-out'
+          }}>
+            {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
+              <button
+                key={code}
+                type="button"
+                onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
+                style={{
+                  background: lang === code ? '#fff4ef' : 'none',
+                  border: 'none',
+                  borderRadius: '10px',
+                  padding: '9px 12px',
+                  color: lang === code ? '#ff5c1a' : '#334155',
+                  fontSize: '13px',
+                  fontWeight: lang === code ? '700' : '500',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  transition: 'all 0.15s ease',
+                  textAlign: 'start'
+                }}
+                onMouseEnter={(e) => {
+                  if (lang !== code) {
+                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.color = '#0f172a';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (lang !== code) {
+                    e.currentTarget.style.background = 'none';
+                    e.currentTarget.style.color = '#334155';
+                  }
+                }}
+              >
+                <span>{label}</span>
+                {lang === code && <LuCheck size={14} color="#ff5c1a" style={{ strokeWidth: '3px' }} />}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="verify-card" style={{ padding: '32px 36px' }}>
         {/* Logo */}
         <Link to="/" className="auth-brand" style={{ justifyContent: 'center', marginBottom: '16px' }}>
@@ -164,19 +322,19 @@ const VerifyOtp = () => {
         </Link>
 
         <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontSize: '1.8rem' }}>📱</div>
-        <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--dark)', marginBottom: '4px', letterSpacing: '-.03em' }}>Verify Your Account</h2>
-        <p style={{ fontSize: '13px', color: 'var(--muted)', lineHeight: '1.5', marginBottom: '16px' }}>Enter the 6-digit OTP to activate your Garro account</p>
+        <h2 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--dark)', marginBottom: '4px', letterSpacing: '-.03em' }}>{lt('verify_account')}</h2>
+        <p style={{ fontSize: '13px', color: 'var(--muted)', lineHeight: '1.5', marginBottom: '16px' }}>{lt('verify_desc')}</p>
 
         {/* Demo Box */}
         {demoCode && (
           <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '12px', padding: '10px 14px', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left' }}>
             <span className="material-icons-round" style={{ fontSize: '20px', color: '#10b981', flexShrink: 0 }}>verified</span>
             <div>
-              <div style={{ fontSize: '11px', color: 'var(--muted)' }}>Demo Mode — Your OTP is:</div>
+              <div style={{ fontSize: '11px', color: 'var(--muted)' }}>{lt('demo_mode')}</div>
               <div onClick={handleAutoFill} style={{ fontSize: '18px', fontWeight: '800', color: 'var(--dark)', letterSpacing: '.15em', cursor: 'pointer' }}>
                 {demoCode}
               </div>
-              <div style={{ fontSize: '10px', color: '#10b981', marginTop: '1px' }}>Click to auto-fill ↓</div>
+              <div style={{ fontSize: '10px', color: '#10b981', marginTop: '1px' }}>{lt('click_autofill')}</div>
             </div>
           </div>
         )}
@@ -213,18 +371,18 @@ const VerifyOtp = () => {
             disabled={!isComplete || loading}
           >
             <span className="material-icons-round">verified_user</span>
-            {loading ? 'Verifying...' : 'Verify & Continue'}
+            {loading ? lt('verifying') : lt('verify_continue')}
           </button>
         </form>
 
         <div style={{ fontSize: '12.5px', color: 'var(--muted)', marginTop: '2px' }}>
-          Didn't receive it?{' '}
+          {lt('didnt_receive')}{' '}
           <button 
             disabled={countdown > 0} 
             onClick={handleResend}
             style={{ color: 'var(--brand)', fontWeight: '700', background: 'none', border: 'none', cursor: countdown > 0 ? 'not-allowed' : 'pointer', padding: 0, opacity: countdown > 0 ? 0.4 : 1 }}
           >
-            Resend OTP
+            {lt('resend_otp')}
           </button>
           {' '}
           <span style={{ color: 'var(--muted)' }}>
@@ -233,7 +391,7 @@ const VerifyOtp = () => {
         </div>
 
         <Link to="/signup" className="auth-back" style={{ marginTop: '14px' }}>
-          <span className="material-icons-round" style={{ fontSize: '15px' }}>arrow_back</span> Back to Sign Up
+          <span className="material-icons-round" style={{ fontSize: '15px' }}>arrow_back</span> {lt('back_to_signup')}
         </Link>
       </div>
     </div>

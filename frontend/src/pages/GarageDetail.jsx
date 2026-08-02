@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const GarageDetail = () => {
   const { id } = useParams();
   const [garage, setGarage] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { isAuthenticated } = useAuth();
+  
+  const [reviewsList, setReviewsList] = useState([]);
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const serviceDetailsMap = {
     minor_service: { id: 1, service: { name: 'Minor Service', get_category_display: 'Maintenance' }, duration_hours: 2, price: 299 },
@@ -15,6 +23,22 @@ const GarageDetail = () => {
     diagnostics: { id: 6, service: { name: 'Engine Diagnostics', get_category_display: 'Diagnostics' }, duration_hours: 1, price: 99 },
     battery: { id: 7, service: { name: 'Battery Diagnostics & Change', get_category_display: 'Battery' }, duration_hours: 0.5, price: 349 },
     other: { id: 8, service: { name: 'General Mechanical Repair', get_category_display: 'Repair' }, duration_hours: 3, price: 399 }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/reviews/garage/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        setReviewsList(data.reviews || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch reviews:', err);
+    }
   };
 
   useEffect(() => {
@@ -39,17 +63,54 @@ const GarageDetail = () => {
     fetchGarage();
   }, [id]);
 
+  useEffect(() => {
+    fetchReviews();
+    // Real-time updates: poll reviews every 5 seconds
+    const interval = setInterval(fetchReviews, 5000);
+    return () => clearInterval(interval);
+  }, [id]);
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setSubmittingReview(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          garageId: id,
+          rating: Number(newRating),
+          comment: newComment
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.success) {
+        toast.success('Review submitted successfully!');
+        setNewComment('');
+        setNewRating(5);
+        fetchReviews(); // Refresh immediately
+      } else {
+        toast.error(data.message || 'Failed to submit review.');
+      }
+    } catch (err) {
+      console.error('Error submitting review:', err);
+      toast.error('Failed to submit review.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const garage_services = garage && garage.services
     ? garage.services.map(s => serviceDetailsMap[s] || { id: s, service: { name: s, get_category_display: 'Service' }, duration_hours: 2, price: 299 })
     : [];
 
-  const reviews = [
-    { id: 1, user: { get_full_name: 'Ahmed K.', first_name: 'A' }, rating: 5, comment: 'Excellent service! They picked up my car on time and returned it perfectly clean and serviced.', created_at: 'Oct 12, 2025' },
-    { id: 2, user: { get_full_name: 'Sarah M.', first_name: 'S' }, rating: 4, comment: 'Very professional. Pricing was transparent and exactly as quoted. Highly recommended.', created_at: 'Sep 28, 2025' }
-  ];
-
   const avg_rating = garage ? (garage.rating || 4.8) : 4.8;
-  const isAuthenticated = true; // Mock authentication
 
 
   if (loading) {
@@ -177,14 +238,19 @@ const GarageDetail = () => {
             </div>
             <div className="card-body p-4">
               {/* Add review */}
-              {isAuthenticated && (
+              {isAuthenticated ? (
                 <div className="mb-4 p-3 bg-light rounded-3">
                   <h6 className="fw-semibold mb-3">Write a Review</h6>
-                  <form onSubmit={(e) => { e.preventDefault(); e.target.reset(); }}>
+                  <form onSubmit={handleSubmitReview}>
                     <div className="row g-3">
                       <div className="col-md-4">
                         <label className="form-label small">Rating</label>
-                        <select className="form-select" required>
+                        <select
+                          className="form-select"
+                          value={newRating}
+                          onChange={(e) => setNewRating(e.target.value)}
+                          required
+                        >
                           <option value="5">5 Stars</option>
                           <option value="4">4 Stars</option>
                           <option value="3">3 Stars</option>
@@ -194,32 +260,59 @@ const GarageDetail = () => {
                       </div>
                       <div className="col-md-8">
                         <label className="form-label small">Your Review</label>
-                        <textarea className="form-control" rows="2" required></textarea>
+                        <textarea
+                          className="form-control"
+                          rows="2"
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          required
+                        ></textarea>
                       </div>
                     </div>
-                    <button type="submit" className="btn btn-primary-garro btn-sm mt-2">Submit Review</button>
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="btn btn-primary-garro btn-sm mt-2"
+                    >
+                      {submittingReview ? 'Submitting...' : 'Submit Review'}
+                    </button>
                   </form>
+                </div>
+              ) : (
+                <div className="mb-4 p-3 bg-light rounded-3 text-center">
+                  <p className="small text-muted mb-0">Please <Link to="/login">login</Link> to write a review.</p>
                 </div>
               )}
 
               {/* Review list */}
-              {reviews.length > 0 ? reviews.map((review, index) => (
-                <div key={review.id} className={`review-item ${index !== reviews.length - 1 ? 'border-bottom pb-3 mb-3' : ''}`}>
-                  <div className="d-flex justify-content-between align-items-start">
-                    <div className="d-flex gap-2">
-                      <div className="reviewer-avatar">{review.user.first_name || review.user.email?.charAt(0)}</div>
-                      <div>
-                        <div className="fw-semibold small">{review.user.get_full_name || review.user.email}</div>
-                        <div className="stars small">
-                          {'⭐'.repeat(review.rating)}
+              {reviewsList.length > 0 ? reviewsList.map((review, index) => {
+                const author = review.customerId || {};
+                const displayName = author.first_name
+                  ? `${author.first_name} ${author.last_name || ''}`.trim()
+                  : (author.email || 'Anonymous User');
+                const initial = (author.first_name || author.email || 'A').charAt(0).toUpperCase();
+                const formattedDate = review.createdAt
+                  ? new Date(review.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                  : 'Just now';
+
+                return (
+                  <div key={review._id || review.id} className={`review-item ${index !== reviewsList.length - 1 ? 'border-bottom pb-3 mb-3' : ''}`}>
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div className="d-flex gap-2">
+                        <div className="reviewer-avatar">{initial}</div>
+                        <div>
+                          <div className="fw-semibold small">{displayName}</div>
+                          <div className="stars small">
+                            {'⭐'.repeat(review.rating)}
+                          </div>
                         </div>
                       </div>
+                      <span className="text-muted" style={{ fontSize: '0.75rem' }}>{formattedDate}</span>
                     </div>
-                    <span className="text-muted" style={{ fontSize: '0.75rem' }}>{review.created_at}</span>
+                    <p className="text-muted small mt-2 mb-0">{review.comment}</p>
                   </div>
-                  <p className="text-muted small mt-2 mb-0">{review.comment}</p>
-                </div>
-              )) : (
+                );
+              }) : (
                 <p className="text-muted text-center py-3">No reviews yet. Be the first to review!</p>
               )}
             </div>

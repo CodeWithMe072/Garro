@@ -317,7 +317,7 @@ const Navbar = () => {
                         <LuLayoutDashboard size={16} />{t('customer_portal')}
                       </Link>
                       <Link to="/my-requests" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <LuClipboardList size={16} />{t('requests')}
+                        <LuClipboardList size={16} />{t('my_bookings')}
                       </Link>
                       <Link to="/my-vehicles" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         <LuCar size={16} />{t('vehicles')}

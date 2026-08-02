@@ -23,12 +23,6 @@ const EndOfLife = () => {
     setActiveFaq(activeFaq === index ? null : index);
   };
 
-  const stats = [
-    { icon: LuRecycle, value: '10K+', label: 'Vehicles Recycled' },
-    { icon: LuUsers, value: '500+', label: 'Partner Scrap Yards' },
-    { icon: LuClock, value: '48h', label: 'Average Pickup Time' },
-    { icon: LuThumbsUp, value: '98%', label: 'Customer Satisfaction' },
-  ];
 
   const services = [
     {
@@ -305,30 +299,6 @@ const EndOfLife = () => {
         </div>
       </section>
 
-      {/* ══ STATS BAR ══ */}
-      <section style={{ padding: '40px 0', background: '#fff4ef', borderTop: '1px solid #ffe8dd', borderBottom: '1px solid #ffe8dd' }}>
-        <div className="container">
-          <div className="row g-4 text-center">
-            {stats.map(({ icon: Icon, value, label }) => (
-              <div className="col-6 col-md-3" key={label}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px' }}>
-                  <div style={{
-                    width: '46px', height: '46px', borderRadius: '12px',
-                    background: '#ff5c1a', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', color: '#fff', flexShrink: 0
-                  }}>
-                    <Icon size={20} />
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>{value}</div>
-                    <div style={{ fontSize: '12px', color: '#b45309', fontWeight: 600, marginTop: '2px' }}>{label}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* ══ SERVICES SECTION ══ */}
       <section style={{ padding: '72px 0', background: '#ffffff' }}>

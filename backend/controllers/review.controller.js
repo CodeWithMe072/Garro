@@ -7,39 +7,49 @@ import { success, error } from '../utils/response.js';
 // POST /api/reviews — create a review
 export const createReview = async (req, res) => {
   try {
-    const { jobId, rating, comment } = req.body;
+    const { jobId, garageId, rating, comment } = req.body;
     const customerId = req.user.id;
 
-    // Check if review already exists for this job
-    const exists = await Review.findOne({ jobId });
-    if (exists) {
-      return error(res, 'You have already submitted a review for this job', 400);
-    }
+    let targetGarageId = garageId;
+    let targetHelperId = null;
 
-    const job = await Job.findById(jobId);
-    if (!job) return error(res, 'Job not found', 404);
+    if (jobId) {
+      // Check if review already exists for this job
+      const exists = await Review.findOne({ jobId });
+      if (exists) {
+        return error(res, 'You have already submitted a review for this job', 400);
+      }
+
+      const job = await Job.findById(jobId);
+      if (!job) return error(res, 'Job not found', 404);
+
+      targetGarageId = job.garageId;
+      targetHelperId = job.helperId;
+    } else if (!garageId) {
+      return error(res, 'Either jobId or garageId is required to submit a review', 400);
+    }
 
     const review = await Review.create({
       customerId,
-      garageId: job.garageId,
-      helperId: job.helperId,
-      jobId,
+      garageId: targetGarageId,
+      helperId: targetHelperId,
+      jobId: jobId || null,
       rating: Number(rating),
       comment
     });
 
     // Update Garage average rating
-    if (job.garageId) {
-      const garageReviews = await Review.find({ garageId: job.garageId });
+    if (targetGarageId) {
+      const garageReviews = await Review.find({ garageId: targetGarageId });
       const avg = garageReviews.reduce((sum, r) => sum + r.rating, 0) / garageReviews.length;
-      await Garage.findByIdAndUpdate(job.garageId, { rating: parseFloat(avg.toFixed(1)) });
+      await Garage.findByIdAndUpdate(targetGarageId, { rating: parseFloat(avg.toFixed(1)) });
     }
 
     // Update Helper average rating
-    if (job.helperId) {
-      const helperReviews = await Review.find({ helperId: job.helperId });
+    if (targetHelperId) {
+      const helperReviews = await Review.find({ helperId: targetHelperId });
       const avg = helperReviews.reduce((sum, r) => sum + r.rating, 0) / helperReviews.length;
-      await Helper.findByIdAndUpdate(job.helperId, { rating: parseFloat(avg.toFixed(1)) });
+      await Helper.findByIdAndUpdate(targetHelperId, { rating: parseFloat(avg.toFixed(1)) });
     }
 
     success(res, { review, message: 'Review submitted successfully' }, 201);

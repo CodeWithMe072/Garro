@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import {
-  LuFacebook, LuInstagram, LuLinkedin, LuTwitter, LuMessageCircle,
   LuChevronRight, LuPhone, LuMail, LuClock, LuMapPin, LuSend
 } from 'react-icons/lu';
 
@@ -22,13 +21,6 @@ const Footer = () => {
     }
   };
 
-  const socials = [
-    { icon: LuFacebook, href: 'https://facebook.com', title: 'Facebook' },
-    { icon: LuInstagram, href: 'https://instagram.com', title: 'Instagram' },
-    { icon: LuLinkedin, href: 'https://linkedin.com', title: 'LinkedIn' },
-    { icon: LuMessageCircle, href: 'https://wa.me/97180042776', title: 'WhatsApp' },
-    { icon: LuTwitter, href: 'https://twitter.com', title: 'Twitter/X' },
-  ];
 
   const quickLinks = [
     { to: '/home', label: t('home') },
@@ -56,9 +48,19 @@ const Footer = () => {
   ];
 
   const contactItems = [
-    { icon: LuPhone, label: t('emergency_pickup'), value: '+971 50 123 4567', href: 'tel:+971501234567' },
-    { icon: LuMail, label: null, value: 'hello@garro.ae', href: 'mailto:hello@garro.ae' },
-    { icon: LuClock, label: null, value: '09:00 AM – 06:00 PM (Mon–Sat)', href: null },
+    { icon: LuPhone, label: t('emergency_pickup'), value: '055 283 0456', href: 'tel:0552830456' },
+    {
+      icon: (props) => (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width={props.size || 16} height={props.size || 16} style={{ flexShrink: 0, marginTop: '2px', color: '#64748b' }} {...props}>
+          <rect width="20" height="16" x="2" y="4" rx="2" />
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </svg>
+      ),
+      label: null,
+      value: 'contact.noorrmannwaliya@gmail.com',
+      href: 'mailto:contact.noorrmannwaliya@gmail.com'
+    },
+    { icon: LuClock, label: null, value: '24/7 Support', href: null },
     { icon: LuMapPin, label: null, value: '1604, City Bay, Business Bay, Dubai, UAE', href: null },
   ];
 
@@ -73,13 +75,6 @@ const Footer = () => {
             <p style={{ fontSize: '13.5px', lineHeight: '1.8', marginBottom: '16px' }}>
               {t('footer_desc')}
             </p>
-            <div className="g-social">
-              {socials.map(({ icon: Icon, href, title }) => (
-                <a key={title} href={href} target="_blank" rel="noreferrer" title={title}>
-                  <Icon size={18} />
-                </a>
-              ))}
-            </div>
           </div>
 
           {/* Quick Links */}

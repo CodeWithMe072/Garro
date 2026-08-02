@@ -51,24 +51,7 @@ const Landing = () => {
             </h1>
             <p className="hero-sub">Book car services, repairs, diagnostics or roadside assistance in just a few clicks.</p>
 
-            <div className="hero-stats">
-              <div className="hero-stat">
-                <span className="material-icons-round" style={{ color: 'var(--brand)', fontSize: '20px' }}>shield</span>
-                <div><div className="hero-stat-num">500+</div><div className="hero-stat-label">Verified Garages</div></div>
-              </div>
-              <div className="hero-stat">
-                <span className="material-icons-round" style={{ color: 'var(--brand)', fontSize: '20px' }}>schedule</span>
-                <div><div className="hero-stat-num">24/7</div><div className="hero-stat-label">Support</div></div>
-              </div>
-              <div className="hero-stat">
-                <span className="material-icons-round" style={{ color: 'var(--brand)', fontSize: '20px' }}>emoji_events</span>
-                <div><div className="hero-stat-num">100%</div><div className="hero-stat-label">Satisfaction</div></div>
-              </div>
-              <div className="hero-stat">
-                <span className="material-icons-round" style={{ color: 'var(--brand)', fontSize: '20px' }}>location_on</span>
-                <div><div className="hero-stat-num">Across</div><div className="hero-stat-label">UAE</div></div>
-              </div>
-            </div>
+
 
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               <Link to="/login" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'linear-gradient(135deg,var(--brand),#ff8c42)', color: '#fff', borderRadius: '12px', padding: '14px 30px', fontWeight: '800', fontSize: '15px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", boxShadow: '0 6px 22px rgba(255,92,26,.45)', transition: 'all .2s' }}>
@@ -122,29 +105,7 @@ const Landing = () => {
         </div>
       </div>
 
-      {/* STATS BAR */}
-      <div className="stats-bar">
-        <div className="container">
-          <div className="stats-bar-row">
-            <div className="stats-bar-item">
-              <span className="material-icons-round stats-bar-icon">group</span>
-              <div><div className="stats-bar-num">500K+</div><div className="stats-bar-label">Happy Customers</div></div>
-            </div>
-            <div className="stats-bar-item">
-              <span className="material-icons-round stats-bar-icon">garage</span>
-              <div><div className="stats-bar-num">500+</div><div className="stats-bar-label">Verified Garages</div></div>
-            </div>
-            <div className="stats-bar-item">
-              <span className="material-icons-round stats-bar-icon">build</span>
-              <div><div className="stats-bar-num">50K+</div><div className="stats-bar-label">Services Completed</div></div>
-            </div>
-            <div className="stats-bar-item">
-              <span className="material-icons-round stats-bar-icon">verified_user</span>
-              <div><div className="stats-bar-num">100%</div><div className="stats-bar-label">Secure &amp; Reliable</div></div>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       {/* FEATURES STRIP */}
       <div className="feat-strip">

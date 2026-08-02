@@ -518,68 +518,6 @@ const Roadside = () => {
         </div>
       </section>
 
-      {/* ══ STATS BAR ══ */}
-      <section style={{ padding: '40px 0', background: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="container">
-          <div style={{
-            background: '#ffffff',
-            border: '1.5px solid #e2e8f0',
-            borderRadius: '20px',
-            padding: '24px 32px',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
-          }}>
-            <div className="row g-4 text-center align-items-center">
-              <div className="col-6 col-md-3">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <LuTruck size={18} />
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>500+</div>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>Verified Garages</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="col-6 col-md-3">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <LuUsers size={18} />
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>50K+</div>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>Customers</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="col-6 col-md-3">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <LuThumbsUp size={18} />
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>98%</div>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>Satisfaction Rate</div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="col-6 col-md-3">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                  <div style={{ width: '42px', height: '42px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', color: '#ff5c1a', justifyContent: 'center' }}>
-                    <LuClock size={18} />
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '18px', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>24x7</div>
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>Support</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ══ FAQ SECTION ══ */}
       <section style={{ padding: '70px 0', background: '#ffffff' }}>

@@ -20,11 +20,11 @@ const Contact = () => {
 
   const contactInfo = [
     {
-      icon: LuPhone, title: 'Phone', detail: '+971 50 123 4567',
-      sub: 'Mon–Sat, 9AM–6PM', color: '#ff5c1a'
+      icon: LuPhone, title: 'Phone', detail: '055 283 0456',
+      sub: 'Support Available 24/7', color: '#ff5c1a'
     },
     {
-      icon: LuMail, title: 'Email', detail: 'hello@garro.ae',
+      icon: LuMail, title: 'Email', detail: 'contact.noorrmannwaliya@gmail.com',
       sub: 'We reply within 24 hours', color: '#3b82f6'
     },
     {
@@ -32,8 +32,8 @@ const Contact = () => {
       sub: 'Also serving Kerala, India', color: '#10b981'
     },
     {
-      icon: LuClock, title: 'Working Hours', detail: 'Mon–Sat: 9AM – 6PM',
-      sub: 'Sunday: Closed', color: '#8b5cf6'
+      icon: LuClock, title: 'Working Hours', detail: '24/7 Support',
+      sub: 'Open 365 Days a Year', color: '#8b5cf6'
     },
   ];
 
@@ -208,7 +208,7 @@ const Contact = () => {
                         </div>
                         <div className="col-md-6">
                           <label dir="auto" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px', fontFamily: "'Poppins', sans-serif" }}>{t('contact_phone')}</label>
-                          <input name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="+971 50 123 4567" style={inputStyle} />
+                          <input name="phone" type="tel" value={formData.phone} onChange={handleChange} placeholder="055 283 0456" style={inputStyle} />
                         </div>
                         <div className="col-12">
                           <label dir="auto" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px', fontFamily: "'Poppins', sans-serif" }}>{t('contact_subject')} *</label>
