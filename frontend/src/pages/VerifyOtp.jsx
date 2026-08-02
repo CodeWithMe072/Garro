@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
@@ -126,8 +127,7 @@ const VerifyOtp = () => {
     if (!email) return;
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
+            const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -153,8 +153,7 @@ const VerifyOtp = () => {
     setError('');
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+            const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

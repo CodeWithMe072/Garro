@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -34,8 +35,7 @@ import {
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${API_BASE}/api/vehicles/catalog/services`);
+                const res = await fetch(`${API_BASE}/api/vehicles/catalog/services`);
         const data = await res.json();
         if (data.success && data.categories) {
           setCatalogServices(data.categories);
@@ -49,66 +49,63 @@ import {
 
   const getMatchingGarages = (req, garages) => {
     if (!req) return [];
-    
-    const reqSub = req.subCategory?.toLowerCase()?.trim() || req.serviceType?.toLowerCase()?.trim();
-    let parentCatName = '';
-    let parentCatSlug = '';
-    
-    for (const cat of catalogServices) {
-      if (cat.slug?.toLowerCase()?.trim() === reqSub || cat.name?.toLowerCase()?.trim() === reqSub) {
-        parentCatName = cat.name;
-        parentCatSlug = cat.slug;
-        break;
-      }
-      if (cat.subCategories) {
-        const foundSub = cat.subCategories.find(sub => 
-          sub.slug?.toLowerCase()?.trim() === reqSub || sub.name?.toLowerCase()?.trim() === reqSub
-        );
-        if (foundSub) {
-          parentCatName = cat.name;
-          parentCatSlug = cat.slug;
-          break;
-        }
-      }
-    }
-    
-    if (!parentCatName) {
-      const sub = reqSub || '';
-      if (sub.includes('minor') || sub.includes('oil') || sub.includes('mainten')) {
-        parentCatName = 'General Maintenance';
-        parentCatSlug = 'general_maintenance';
-      } else if (sub.includes('ac') || sub.includes('aircond') || sub.includes('elect') || sub.includes('diagn') || sub.includes('inspect') || sub.includes('batter')) {
-        parentCatName = 'Electrical & AC';
-        parentCatSlug = 'electrical_ac';
-      } else if (sub.includes('brake') || sub.includes('mechan')) {
-        parentCatName = 'Mechanical Repair';
-        parentCatSlug = 'mechanical_repair';
-      } else {
-        parentCatName = 'Mechanical Repair';
-        parentCatSlug = 'mechanical_repair';
-      }
-    }
 
-    const cleanParentName = parentCatName.toLowerCase().trim();
-    const cleanParentSlug = parentCatSlug.toLowerCase().trim();
-    const reqAddress = req.location?.address || '';
-    const reqArea = reqAddress.includes(',') 
-      ? reqAddress.split(',')[0].trim().toLowerCase() 
-      : reqAddress.trim().toLowerCase();
+    const reqService = (req.serviceType || '').toLowerCase().trim();
+    const reqSub = (req.subCategory || '').toLowerCase().trim();
+    const reqCity = (req.location?.city || '').toLowerCase().trim();
+    const reqArea = (req.location?.area || '').toLowerCase().trim();
+    const reqAddress = (req.location?.address || '').toLowerCase().trim();
 
-    return garages.filter(g => {
-      const supportsService = g.services && g.services.some(srv => {
+    // 1. Check if garage supports the service
+    const matchesService = (g) => {
+      if (!g.services || g.services.length === 0) return true;
+      return g.services.some(srv => {
         const cleanSrv = srv.toLowerCase().trim();
-        return cleanSrv === cleanParentName || cleanSrv === cleanParentSlug || cleanSrv === reqSub || cleanSrv.includes(cleanParentName) || cleanParentName.includes(cleanSrv);
+        return (
+          cleanSrv === reqService ||
+          cleanSrv === reqSub ||
+          cleanSrv.includes(reqService) ||
+          reqService.includes(cleanSrv) ||
+          (reqSub && (cleanSrv.includes(reqSub) || reqSub.includes(cleanSrv))) ||
+          cleanSrv === 'emergency_pickup' ||
+          cleanSrv === 'roadside_assistance' ||
+          cleanSrv === 'towing' ||
+          cleanSrv.includes('general') ||
+          cleanSrv.includes('repair')
+        );
       });
-      
-      const coversArea = !reqArea || reqArea === 'self drop at garage' || (g.areas && g.areas.some(area => {
-        const cleanArea = area.toLowerCase().trim();
-        return reqArea.includes(cleanArea) || cleanArea.includes(reqArea);
-      }));
-      
-      return supportsService && coversArea;
-    });
+    };
+
+    // 2. Check if garage covers the requested area
+    const matchesArea = (g) => {
+      const gAreas = (g.areas || []).map(a => a.toLowerCase().trim());
+      const gAddress = (g.address || '').toLowerCase().trim();
+
+      if (reqArea && gAreas.some(a => a.includes(reqArea) || reqArea.includes(a))) return true;
+      if (reqAddress && gAreas.some(a => reqAddress.includes(a))) return true;
+      if (reqArea && gAddress.includes(reqArea)) return true;
+      return false;
+    };
+
+    // 3. Check if garage city matches
+    const matchesCity = (g) => {
+      const gCity = (g.city || '').toLowerCase().trim();
+      const gAddress = (g.address || '').toLowerCase().trim();
+      if (!reqCity) return true;
+      return gCity.includes(reqCity) || reqCity.includes(gCity) || gAddress.includes(reqCity);
+    };
+
+    // Priority 1: Garages matching BOTH Service AND Area
+    const exactMatches = garages.filter(g => matchesService(g) && matchesArea(g));
+    if (exactMatches.length > 0) return exactMatches;
+
+    // Priority 2: Garages matching BOTH Service AND City
+    const cityMatches = garages.filter(g => matchesService(g) && matchesCity(g));
+    if (cityMatches.length > 0) return cityMatches;
+
+    // Priority 3: Garages matching Service
+    const serviceMatches = garages.filter(g => matchesService(g));
+    return serviceMatches.length > 0 ? serviceMatches : garages;
   };
 
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -140,8 +137,7 @@ import {
     const fetchSchedule = async () => {
       setScheduleLoading(true);
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const token = localStorage.getItem('token');
+                const token = localStorage.getItem('token');
         const res = await fetch(`${API_BASE}/api/admin/helpers/${assignHelperId}/schedule?date=${assignDate}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -203,8 +199,7 @@ import {
 
   const fetchBookings = async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE}/api/requests`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -223,8 +218,7 @@ import {
     fetchBookings();
 
     // Socket.IO Listeners
-    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    const socket = io(API_BASE);
+        const socket = io(API_BASE);
 
     socket.on('request:new', (data) => {
       console.log('Real-time new request received in Bookings:', data);
@@ -269,8 +263,7 @@ import {
     setAssignDuration(urgency === 'asap' ? '2' : '4');
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
       
       const garagesRes = await fetch(`${API_BASE}/api/garages`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -302,8 +295,7 @@ import {
 
     setSubmittingAssign(true);
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
       
       const response = await fetch(`${API_BASE}/api/admin/requests/${selectedRequest._id}/manual-assign`, {
         method: 'PATCH',
@@ -345,8 +337,7 @@ import {
       isDelete: true,
       onConfirm: async () => {
         try {
-          const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const token = localStorage.getItem('token');
+                    const token = localStorage.getItem('token');
           const response = await fetch(`${API_BASE}/api/requests/${id}/cancel`, {
             method: 'PATCH',
             headers: { 'Authorization': `Bearer ${token}` }
@@ -586,6 +577,54 @@ import {
                   </div>
                 )}
               </div>
+
+              {/* Prominent Stranded Location Block */}
+              <div style={{ marginTop: '12px', background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: '12px', padding: '12px 14px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                  📍 Customer Stranded Location:
+                </div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                  {selectedRequest.location?.city && (
+                    <span style={{ background: '#dbeafe', color: '#1e40af', fontSize: '11.5px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
+                      🏙 {selectedRequest.location.city}
+                    </span>
+                  )}
+                  {selectedRequest.location?.area && (
+                    <span style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '11.5px', fontWeight: 700, padding: '2px 8px', borderRadius: '6px' }}>
+                      🗺 {selectedRequest.location.area}
+                    </span>
+                  )}
+                  {selectedRequest.location?.isGpsUsed ? (
+                    <span style={{ background: '#22c55e', color: 'white', fontSize: '10px', padding: '2px 7px', borderRadius: '10px', fontWeight: 800 }}>
+                      ✓ GPS DETECTED
+                    </span>
+                  ) : (
+                    <span style={{ background: '#3b82f6', color: 'white', fontSize: '10px', padding: '2px 7px', borderRadius: '10px', fontWeight: 800 }}>
+                      📋 DROPDOWN SELECTED
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '12px', color: '#475569', marginBottom: '4px' }}>
+                  <strong>Area &amp; City:</strong> {selectedRequest.location?.address || `${selectedRequest.location?.area || ''} ${selectedRequest.location?.city || 'Dubai'}`.trim()}
+                </div>
+                {(selectedRequest.location?.standardLocation || selectedRequest.location?.strandedLocation) && (
+                  <div style={{ fontSize: '12px', color: '#1e40af', background: '#dbeafe', padding: '6px 10px', borderRadius: '8px', fontWeight: 700, marginTop: '4px' }}>
+                    🔒 Standard Location (Visible Only to Assigned Staff): <span style={{ color: '#0f172a' }}>"{selectedRequest.location.standardLocation || selectedRequest.location.strandedLocation}"</span>
+                  </div>
+                )}
+                {selectedRequest.location?.lat && (
+                  <div style={{ marginTop: '6px' }}>
+                    <a
+                      href={`https://www.google.com/maps?q=${selectedRequest.location.lat},${selectedRequest.location.lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: '#ff5c1a', fontWeight: 700, fontSize: '12px', textDecoration: 'none' }}
+                    >
+                      📍 Open GPS Navigation
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
 
             <form onSubmit={handleAssignSubmit}>
@@ -606,9 +645,9 @@ import {
                   }}
                   required
                 />
-                {selectedRequest && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
+                {selectedRequest && !['emergency_pickup','roadside_assistance'].includes(selectedRequest.serviceType) && selectedRequest.urgency !== 'asap' && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
                   <p className="text-danger small mt-1">
-                    <LuTriangleAlert style={{ verticalAlign: 'middle', marginRight: '4px' }} /> No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.address || 'N/A'}"</strong>.
+                    <LuTriangleAlert style={{ verticalAlign: 'middle', marginRight: '4px' }} /> No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.area || selectedRequest.location?.city || 'Dubai'}"</strong>.
                   </p>
                 )}
               </div>

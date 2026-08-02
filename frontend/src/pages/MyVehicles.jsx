@@ -27,12 +27,13 @@ const MyVehicles = () => {
   const [carYear, setCarYear] = useState('');
   const [plateNumber, setPlateNumber] = useState('');
   const [vinNumber, setVinNumber] = useState('');
+  const [lastOilChangeDate, setLastOilChangeDate] = useState('');
+  const [insuranceExpiryDate, setInsuranceExpiryDate] = useState('');
+  const [registrationExpiryDate, setRegistrationExpiryDate] = useState('');
   const [adding, setAdding] = useState(false);
 
   const { toast } = useNotification();
   const navigate = useNavigate();
-
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const fetchVehicles = async () => {
     try {
@@ -76,6 +77,9 @@ const MyVehicles = () => {
     setCarYear(new Date().getFullYear().toString());
     setPlateNumber('');
     setVinNumber('');
+    setLastOilChangeDate('');
+    setInsuranceExpiryDate('');
+    setRegistrationExpiryDate('');
     setVehicleModalOpen(true);
   };
 
@@ -86,6 +90,9 @@ const MyVehicles = () => {
     setCarYear(v.year.toString());
     setPlateNumber(v.registrationNumber);
     setVinNumber(v.VIN || '');
+    setLastOilChangeDate(v.lastOilChangeDate ? v.lastOilChangeDate.split('T')[0] : '');
+    setInsuranceExpiryDate(v.insuranceExpiryDate ? v.insuranceExpiryDate.split('T')[0] : '');
+    setRegistrationExpiryDate(v.registrationExpiryDate ? v.registrationExpiryDate.split('T')[0] : '');
     setVehicleModalOpen(true);
   };
 
@@ -131,7 +138,10 @@ const MyVehicles = () => {
           model: carModel,
           year: parseInt(carYear),
           registrationNumber: plateNumber,
-          VIN: vinNumber
+          VIN: vinNumber,
+          lastOilChangeDate: lastOilChangeDate || null,
+          insuranceExpiryDate: insuranceExpiryDate || null,
+          registrationExpiryDate: registrationExpiryDate || null
         })
       });
       const data = await res.json();
@@ -167,6 +177,37 @@ const MyVehicles = () => {
     } catch (err) {
       toast.error(err.message);
     }
+  };
+
+  const getReminderStatus = (expiryDate, prefix) => {
+    if (!expiryDate) return null;
+    const today = new Date();
+    const exp = new Date(expiryDate);
+    const diffTime = exp - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return { label: `${prefix} Overdue (${Math.abs(diffDays)}d ago)`, color: '#ef4444', bg: '#fef2f2' };
+    } else if (diffDays <= 30) {
+      return { label: `${prefix} Expires soon (${diffDays}d)`, color: '#f59e0b', bg: '#fffbeb' };
+    }
+    return { label: `${prefix} OK (expires ${exp.toLocaleDateString()})`, color: '#10b981', bg: '#f0fdf4' };
+  };
+
+  const getOilReminderStatus = (lastOilDate) => {
+    if (!lastOilDate) return null;
+    const today = new Date();
+    const last = new Date(lastOilDate);
+    const nextOilDate = new Date(last.getTime() + 180 * 24 * 60 * 60 * 1000);
+    const diffTime = nextOilDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      return { label: `Oil Change Overdue (${Math.abs(diffDays)}d ago)`, color: '#ef4444', bg: '#fef2f2' };
+    } else if (diffDays <= 30) {
+      return { label: `Oil Change Due soon (${diffDays}d)`, color: '#f59e0b', bg: '#fffbeb' };
+    }
+    return { label: `Oil Change OK (due ${nextOilDate.toLocaleDateString()})`, color: '#10b981', bg: '#f0fdf4' };
   };
 
   const brandOptions = catalogBrands.map(b => b.name);
@@ -265,7 +306,7 @@ const MyVehicles = () => {
                     <p style={{ color: '#475569', fontSize: '14px', margin: 0 }}>
                       Year: {v.year}
                     </p>
-                    <div style={{ display: 'flex' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{
                         background: '#f8fafc',
                         border: '1px solid #cbd5e1',
@@ -278,6 +319,36 @@ const MyVehicles = () => {
                       }}>
                         Plate: {v.registrationNumber}
                       </span>
+                    </div>
+
+                    {/* Reminders section */}
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {[
+                        getOilReminderStatus(v.lastOilChangeDate),
+                        getReminderStatus(v.insuranceExpiryDate, 'Insurance'),
+                        getReminderStatus(v.registrationExpiryDate, 'Registration')
+                      ].filter(Boolean).map((rem, index) => (
+                        <div key={index} style={{
+                          background: rem.bg,
+                          color: rem.color,
+                          padding: '6px 12px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <span style={{
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            backgroundColor: rem.color,
+                            display: 'inline-block'
+                          }}></span>
+                          {rem.label}
+                        </div>
+                      ))}
                     </div>
                   </div>
 
@@ -476,6 +547,63 @@ const MyVehicles = () => {
                   value={vinNumber}
                   onChange={(e) => setVinNumber(e.target.value)}
                   placeholder={t('vin_placeholder')}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '10px',
+                    color: '#0f172a',
+                    fontSize: '13.5px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Last Oil Change Date</label>
+                <input
+                  type="date"
+                  value={lastOilChangeDate}
+                  onChange={(e) => setLastOilChangeDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '10px',
+                    color: '#0f172a',
+                    fontSize: '13.5px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Insurance Expiry Date</label>
+                <input
+                  type="date"
+                  value={insuranceExpiryDate}
+                  onChange={(e) => setInsuranceExpiryDate(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    background: '#ffffff',
+                    border: '1.5px solid #cbd5e1',
+                    borderRadius: '10px',
+                    color: '#0f172a',
+                    fontSize: '13.5px',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Registration Expiry Date</label>
+                <input
+                  type="date"
+                  value={registrationExpiryDate}
+                  onChange={(e) => setRegistrationExpiryDate(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '10px 12px',

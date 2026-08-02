@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -5,7 +6,8 @@ import { useLanguage } from '../context/LanguageContext';
 import {
   LuHouse, LuShield, LuTruck, LuRecycle, LuZap, LuBell, LuUser, LuLogOut,
   LuClipboardList, LuCar, LuFileText, LuFileCheck, LuReceipt, LuSiren,
-  LuLayoutDashboard, LuUsers, LuGlobe, LuCheck, LuChevronDown
+  LuLayoutDashboard, LuUsers, LuGlobe, LuCheck, LuChevronDown,
+  LuMessageSquare, LuCircleHelp
 } from 'react-icons/lu';
 
 const Navbar = () => {
@@ -155,6 +157,13 @@ const Navbar = () => {
                     </Link>
                   </li>
                 </>
+              )}
+              {['staff', 'helper'].includes(user?.role) && (
+                <li>
+                  <Link to="/admin/staff" className={isActive('/admin/staff')}>
+                    <LuLayoutDashboard size={15} /> Staff Dashboard
+                  </Link>
+                </li>
               )}
             </>
           )}
@@ -321,6 +330,23 @@ const Navbar = () => {
                       </Link>
                       <Link to="/my-vehicles" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         <LuCar size={16} />{t('vehicles')}
+                      </Link>
+                      <Link to="/my-reviews" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        <LuMessageSquare size={16} />My Reviews
+                      </Link>
+                      <Link to="/help-center" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        <LuCircleHelp size={16} />Help Center
+                      </Link>
+                    </>
+                  )}
+
+                  {['staff', 'helper'].includes(user?.role) && (
+                    <>
+                      <Link to="/admin/staff" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        <LuLayoutDashboard size={16} />Staff Dashboard
+                      </Link>
+                      <Link to="/my-requests" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        <LuClipboardList size={16} />Assigned Jobs &amp; Requests
                       </Link>
                     </>
                   )}

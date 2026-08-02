@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -18,8 +19,7 @@ const GarageLogin = () => {
     setLoading(true);
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${API_BASE}/api/auth/login`, {
+            const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

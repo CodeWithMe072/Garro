@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -29,12 +30,35 @@ const GetQuote = () => {
   const [area, setArea] = useState('');
   const [urgency, setUrgency] = useState('');
 
-  // Catalog states
   const [catalogBrands, setCatalogBrands] = useState([]);
   const [catalogServices, setCatalogServices] = useState([]);
   const [catalogLocations, setCatalogLocations] = useState([]);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const [savedFavorites, setSavedFavorites] = useState([]);
+  const [saveAsFavorite, setSaveAsFavorite] = useState(false);
+  const [favoriteLabel, setFavoriteLabel] = useState('');
+
+  const fetchSavedFavorites = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const res = await fetch(`${API_BASE}/api/users/me/favorite-locations`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSavedFavorites(data.favoriteLocations || []);
+      }
+    } catch (err) {
+      console.error('Failed to load favorites:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSavedFavorites();
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const fetchCatalog = async () => {
@@ -227,6 +251,27 @@ const GetQuote = () => {
         throw new Error(requestData.message || 'Failed to submit quote request.');
       }
 
+      // Save favorite location if selected
+      if (saveAsFavorite && favoriteLabel) {
+        try {
+          await fetch(`${API_BASE}/api/users/me/favorite-locations`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              label: favoriteLabel,
+              address: `${area || ''}, ${city_name || ''}`.trim() || 'Dubai',
+              lat: 25.2048,
+              lng: 55.2708
+            })
+          });
+        } catch (fErr) {
+          console.error('Failed to save favorite location:', fErr);
+        }
+      }
+
       toast.success('Quote request submitted successfully! Redirecting to payment...');
       navigate(`/payment?quoteId=${requestData.quoteId}`);
     } catch (err) {
@@ -321,6 +366,37 @@ const GetQuote = () => {
                 />
               </div>
 
+              {/* Quick Select Saved Location */}
+              {savedFavorites.length > 0 && (
+                <div className="col-12 mb-3">
+                  <div className="qform-label"><span className="material-icons-round">bookmark</span> Quick Select Saved Favorite Location</div>
+                  <select
+                    className="qform-input"
+                    style={{ height: '48px', borderRadius: '12px', border: '1.5px solid #cbd5e1', outline: 'none', width: '100%', background: '#fff' }}
+                    onChange={(e) => {
+                      const favIndex = e.target.value;
+                      if (favIndex !== '') {
+                        const selectedFav = savedFavorites[favIndex];
+                        const parts = selectedFav.address.split(',');
+                        if (parts.length >= 2) {
+                          const favArea = parts[0].trim();
+                          const favCity = parts[1].trim();
+                          setCityName(favCity);
+                          setArea(favArea);
+                        } else {
+                          setArea(selectedFav.address);
+                        }
+                      }
+                    }}
+                  >
+                    <option value="">-- Choose a Saved Location --</option>
+                    {savedFavorites.map((fav, index) => (
+                      <option key={index} value={index}>{fav.label} ({fav.address})</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Row 3: City, Area */}
               <div className="col-md-6">
                 <div className="qform-label"><span className="material-icons-round">location_city</span> {t('city')}</div>
@@ -347,6 +423,32 @@ const GetQuote = () => {
                   required
                 />
               </div>
+
+              {/* Save Location checkbox */}
+              {isAuthenticated && (
+                <div className="col-12 mt-2 mb-3 d-flex flex-column gap-2" style={{ textAlign: 'left' }}>
+                  <label className="d-flex align-items-center gap-2" style={{ cursor: 'pointer', fontSize: '13.5px', color: '#1e293b' }}>
+                    <input
+                      type="checkbox"
+                      checked={saveAsFavorite}
+                      onChange={(e) => setSaveAsFavorite(e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                    Save this location as a Favorite Pickup Location
+                  </label>
+                  {saveAsFavorite && (
+                    <input
+                      type="text"
+                      className="qform-input"
+                      placeholder="Label e.g. Home, Office, Gym..."
+                      value={favoriteLabel}
+                      onChange={(e) => setFavoriteLabel(e.target.value)}
+                      style={{ height: '44px', borderRadius: '12px', maxWidth: '300px', border: '1.5px solid #cbd5e1', padding: '0 12px', outline: 'none' }}
+                      required={saveAsFavorite}
+                    />
+                  )}
+                </div>
+              )}
 
               {/* Row 4: Describe Issue, Preferred Time, Contact Info */}
               <div className="col-md-6">

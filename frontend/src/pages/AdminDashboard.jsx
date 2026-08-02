@@ -1,11 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import Chart from 'chart.js/auto';
 import { io } from 'socket.io-client';
 import AdminSidebar from '../components/AdminSidebar';
+import CustomDropdown from '../components/CustomDropdown';
+import RefundStatsCards from '../components/RefundStatsCards';
+import RefundFilterBar from '../components/RefundFilterBar';
+import RefundDetailsDrawer from '../components/RefundDetailsDrawer';
+import RefundExportModal from '../components/RefundExportModal';
+import PayoutStatsCards from '../components/PayoutStatsCards';
+import PayoutFilterBar from '../components/PayoutFilterBar';
+import PayoutExportModal from '../components/PayoutExportModal';
+import Pagination from '../components/Pagination';
 import {
   LuLayoutDashboard,
   LuStore,
@@ -33,10 +42,108 @@ import {
   LuArrowRight,
   LuUserCheck,
   LuX,
+  LuCircleX,
   LuCircleCheck
 } from 'react-icons/lu';
 
+const formatServiceName = (serviceType, subCategory) => {
+  const val = subCategory || serviceType || '';
+  if (!val) return 'General Service';
+  const map = {
+    'ac_repair': 'AC Repair',
+    'emergency_pickup': 'Emergency Pickup',
+    'minor_service': 'Minor Service',
+    'major_service': 'Major Service',
+    'brake_repair': 'Brake Repair',
+    'roadside_assistance': 'Roadside Assistance',
+    'electrical': 'Electrical Repair',
+    'diagnostics': 'Computer Diagnostics',
+    'battery': 'Battery Replacement',
+    'tyre_change': 'Tyre Change'
+  };
+  if (map[val.toLowerCase()]) return map[val.toLowerCase()];
+  return val
+    .replace(/_/g, ' ')
+    .replace(/-/g, ' ')
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+};
+
 const AdminDashboard = () => {
+  const location = useLocation();
+  const isRefundsPage = location.pathname === '/admin/refunds';
+  const isPayoutsPage = location.pathname === '/admin/payouts';
+  const isOverviewPage = !isRefundsPage && !isPayoutsPage;
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Refund enhancement state
+  const [refundStats, setRefundStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0, totalRefundedAmount: 0 });
+  const [statsRange, setStatsRange] = useState('all');
+  const [refundFilters, setRefundFilters] = useState({
+    status: searchParams.get('status') || 'all',
+    dateFrom: searchParams.get('dateFrom') || '',
+    dateTo: searchParams.get('dateTo') || '',
+    service: searchParams.get('service') || 'all',
+    search: searchParams.get('search') || '',
+    sort: searchParams.get('sort') || 'newest',
+    page: Number(searchParams.get('page')) || 1,
+    limit: Number(searchParams.get('limit')) || 10
+  });
+  const [refundTotalPages, setRefundTotalPages] = useState(1);
+  const [refundTotalResults, setRefundTotalResults] = useState(0);
+  const [selectedDrawerRequest, setSelectedDrawerRequest] = useState(null);
+
+  const handleRefundFilterChange = (key, value) => {
+    const newFilters = { ...refundFilters, [key]: value, page: key === 'page' || key === 'limit' ? (key === 'page' ? value : 1) : 1 };
+    setRefundFilters(newFilters);
+
+    // Sync with URL params
+    const params = new URLSearchParams();
+    Object.entries(newFilters).forEach(([k, v]) => {
+      if (v && v !== 'all' && v !== '' && !(k === 'sort' && v === 'newest') && !(k === 'page' && v === 1) && !(k === 'limit' && v === 10)) {
+        params.set(k, v);
+      }
+    });
+    setSearchParams(params, { replace: true });
+  };
+
+  const handleResetRefundFilters = () => {
+    const resetState = { status: 'all', dateFrom: '', dateTo: '', service: 'all', search: '', sort: 'newest', page: 1, limit: 10 };
+    setRefundFilters(resetState);
+    setSearchParams({}, { replace: true });
+  };
+
+  const [exportModalState, setExportModalState] = useState({ isOpen: false, format: 'pdf' });
+
+  // Payout Settlements States & Handlers
+  const [payoutStats, setPayoutStats] = useState(null);
+  const [payoutStatsRange, setPayoutStatsRange] = useState('all');
+  const [payoutFilters, setPayoutFilters] = useState({
+    status: searchParams.get('payout_status') || 'all',
+    recipientType: searchParams.get('recipientType') || 'all',
+    dateFrom: searchParams.get('payout_dateFrom') || '',
+    dateTo: searchParams.get('payout_dateTo') || '',
+    search: searchParams.get('payout_search') || '',
+    sort: searchParams.get('payout_sort') || 'newest',
+    page: Number(searchParams.get('payout_page')) || 1,
+    limit: Number(searchParams.get('payout_limit')) || 10
+  });
+  const [payoutTotalPages, setPayoutTotalPages] = useState(1);
+  const [payoutTotalResults, setPayoutTotalResults] = useState(0);
+  const [payoutExportModalOpen, setPayoutExportModalOpen] = useState(false);
+
+  const handlePayoutFilterChange = (key, value) => {
+    const newFilters = { ...payoutFilters, [key]: value, page: key === 'page' || key === 'limit' ? (key === 'page' ? value : 1) : 1 };
+    setPayoutFilters(newFilters);
+  };
+
+  const handleResetPayoutFilters = () => {
+    const resetState = { status: 'all', recipientType: 'all', dateFrom: '', dateTo: '', search: '', sort: 'newest', page: 1, limit: 10 };
+    setPayoutFilters(resetState);
+  };
+
   const { user } = useAuth();
   const { toast } = useNotification();
   const { t, lang, changeLanguage } = useLanguage();
@@ -66,67 +173,65 @@ const AdminDashboard = () => {
 
   const getMatchingGarages = (req, garages) => {
     if (!req) return [];
-    
-    const reqSub = req.subCategory?.toLowerCase()?.trim() || req.serviceType?.toLowerCase()?.trim();
-    let parentCatName = '';
-    let parentCatSlug = '';
-    
-    for (const cat of catalogServices) {
-      if (cat.slug?.toLowerCase()?.trim() === reqSub || cat.name?.toLowerCase()?.trim() === reqSub) {
-        parentCatName = cat.name;
-        parentCatSlug = cat.slug;
-        break;
-      }
-      if (cat.subCategories) {
-        const foundSub = cat.subCategories.find(sub => 
-          sub.slug?.toLowerCase()?.trim() === reqSub || sub.name?.toLowerCase()?.trim() === reqSub
-        );
-        if (foundSub) {
-          parentCatName = cat.name;
-          parentCatSlug = cat.slug;
-          break;
-        }
-      }
-    }
-    
-    if (!parentCatName) {
-      const sub = reqSub || '';
-      if (sub.includes('minor') || sub.includes('oil') || sub.includes('mainten')) {
-        parentCatName = 'General Maintenance';
-        parentCatSlug = 'general_maintenance';
-      } else if (sub.includes('ac') || sub.includes('aircond') || sub.includes('elect') || sub.includes('diagn') || sub.includes('inspect') || sub.includes('batter')) {
-        parentCatName = 'Electrical & AC';
-        parentCatSlug = 'electrical_ac';
-      } else if (sub.includes('brake') || sub.includes('mechan')) {
-        parentCatName = 'Mechanical Repair';
-        parentCatSlug = 'mechanical_repair';
-      } else {
-        parentCatName = 'Mechanical Repair';
-        parentCatSlug = 'mechanical_repair';
-      }
-    }
 
-    const cleanParentName = parentCatName.toLowerCase().trim();
-    const cleanParentSlug = parentCatSlug.toLowerCase().trim();
-    const reqAddress = req.location?.address || '';
-    const reqArea = reqAddress.includes(',') 
-      ? reqAddress.split(',')[0].trim().toLowerCase() 
-      : reqAddress.trim().toLowerCase();
+    const reqService = (req.serviceType || '').toLowerCase().trim();
+    const reqSub = (req.subCategory || '').toLowerCase().trim();
+    const reqCity = (req.location?.city || '').toLowerCase().trim();
+    const reqArea = (req.location?.area || '').toLowerCase().trim();
+    const reqAddress = (req.location?.address || '').toLowerCase().trim();
 
-    return garages.filter(g => {
-      const supportsService = g.services && g.services.some(srv => {
+    // 1. Check if garage supports the service
+    const matchesService = (g) => {
+      if (!g.services || g.services.length === 0) return true;
+      return g.services.some(srv => {
         const cleanSrv = srv.toLowerCase().trim();
-        return cleanSrv === cleanParentName || cleanSrv === cleanParentSlug || cleanSrv === reqSub || cleanSrv.includes(cleanParentName) || cleanParentName.includes(cleanSrv);
+        return (
+          cleanSrv === reqService ||
+          cleanSrv === reqSub ||
+          cleanSrv.includes(reqService) ||
+          reqService.includes(cleanSrv) ||
+          (reqSub && (cleanSrv.includes(reqSub) || reqSub.includes(cleanSrv))) ||
+          cleanSrv === 'emergency_pickup' ||
+          cleanSrv === 'roadside_assistance' ||
+          cleanSrv === 'towing' ||
+          cleanSrv.includes('general') ||
+          cleanSrv.includes('repair')
+        );
       });
-      
-      const coversArea = !reqArea || reqArea === 'self drop at garage' || (g.areas && g.areas.some(area => {
-        const cleanArea = area.toLowerCase().trim();
-        return reqArea.includes(cleanArea) || cleanArea.includes(reqArea);
-      }));
-      
-      return supportsService && coversArea;
-    });
+    };
+
+    // 2. Check if garage covers the requested area
+    const matchesArea = (g) => {
+      const gAreas = (g.areas || []).map(a => a.toLowerCase().trim());
+      const gAddress = (g.address || '').toLowerCase().trim();
+
+      if (reqArea && gAreas.some(a => a.includes(reqArea) || reqArea.includes(a))) return true;
+      if (reqAddress && gAreas.some(a => reqAddress.includes(a))) return true;
+      if (reqArea && gAddress.includes(reqArea)) return true;
+      return false;
+    };
+
+    // 3. Check if garage city matches
+    const matchesCity = (g) => {
+      const gCity = (g.city || '').toLowerCase().trim();
+      const gAddress = (g.address || '').toLowerCase().trim();
+      if (!reqCity) return true;
+      return gCity.includes(reqCity) || reqCity.includes(gCity) || gAddress.includes(reqCity);
+    };
+
+    // Priority 1: Garages matching BOTH Service AND Area
+    const exactMatches = garages.filter(g => matchesService(g) && matchesArea(g));
+    if (exactMatches.length > 0) return exactMatches;
+
+    // Priority 2: Garages matching BOTH Service AND City
+    const cityMatches = garages.filter(g => matchesService(g) && matchesCity(g));
+    if (cityMatches.length > 0) return cityMatches;
+
+    // Priority 3: Garages matching Service
+    const serviceMatches = garages.filter(g => matchesService(g));
+    return serviceMatches.length > 0 ? serviceMatches : garages;
   };
+
 
   const [dashboardStats, setDashboardStats] = useState({
     newLeads: 0,
@@ -199,6 +304,131 @@ const AdminDashboard = () => {
     fetchSchedule();
   }, [assignHelperId, assignDate, assignTime, assignDuration]);
 
+  const [cancellationRequests, setCancellationRequests] = useState([]);
+  const [payoutsList, setPayoutsList] = useState([]);
+
+  const handleProcessPayout = async (payoutId) => {
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/admin/payouts/${payoutId}/process`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ notes: 'Payout settled via bank transfer' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message || 'Payout marked as processed!');
+        refreshData();
+      } else {
+        toast.error(data.message || 'Failed to process payout');
+      }
+    } catch (err) {
+      toast.error('Error processing payout');
+    }
+  };
+
+  const [selectedRefundReq, setSelectedRefundReq] = useState(null);
+  const [refundInputAmount, setRefundInputAmount] = useState('');
+  const [refundAdminNotes, setRefundAdminNotes] = useState('');
+  const [isSubmittingRefund, setIsSubmittingRefund] = useState(false);
+  const [finePercent, setFinePercent] = useState(0); // Fine % selected by admin
+
+  const [selectedRejectReq, setSelectedRejectReq] = useState(null);
+  const [rejectReasonInput, setRejectReasonInput] = useState('');
+  const [isSubmittingReject, setIsSubmittingReject] = useState(false);
+
+  const openApproveModal = (reqItem) => {
+    const defaultAmount = reqItem.refundAmount || reqItem.invoice?.totalAmount || 299;
+    setSelectedRefundReq(reqItem);
+    setRefundInputAmount(defaultAmount);
+    setFinePercent(0); // Reset fine on each open
+    const isArrived = ['arrived_at_customer', 'picked_up', 'in_garage', 'repair_in_progress', 'work_complete', 'ready_for_delivery'].includes(reqItem.previousStatus || reqItem.status);
+    setRefundAdminNotes(isArrived ? 'Travel & cancellation fee deducted as technician arrived at location.' : '');
+  };
+
+  // Called when admin picks a fine % chip
+  const applyFinePercent = (pct) => {
+    const fullAmount = selectedRefundReq
+      ? (selectedRefundReq.refundAmount || selectedRefundReq.invoice?.totalAmount || 299)
+      : 0;
+    setFinePercent(pct);
+    const fineAmt = parseFloat((fullAmount * pct / 100).toFixed(2));
+    const refundAmt = parseFloat((fullAmount - fineAmt).toFixed(2));
+    setRefundInputAmount(refundAmt);
+    if (pct > 0) {
+      setRefundAdminNotes(`${pct}% cancellation fine applied (AED ${fineAmt.toFixed(2)} deducted). Net refund: AED ${refundAmt.toFixed(2)}.`);
+    } else {
+      const isArrived = selectedRefundReq && ['arrived_at_customer', 'picked_up', 'in_garage', 'repair_in_progress', 'work_complete', 'ready_for_delivery'].includes(selectedRefundReq.previousStatus || selectedRefundReq.status);
+      setRefundAdminNotes(isArrived ? 'Travel & cancellation fee deducted as technician arrived at location.' : '');
+    }
+  };
+
+  const submitApproveRefund = async (e) => {
+    e.preventDefault();
+    if (!selectedRefundReq) return;
+    setIsSubmittingRefund(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/admin/cancellations/${selectedRefundReq._id}/approve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          customRefundAmount: Number(refundInputAmount),
+          adminNotes: refundAdminNotes
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Refund approval failed.');
+      toast.success(data.message || 'Cancellation approved & refund processed!');
+      setSelectedRefundReq(null);
+      refreshData();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setIsSubmittingRefund(false);
+    }
+  };
+
+  const openRejectModal = (reqItem) => {
+    setSelectedRejectReq(reqItem);
+    setRejectReasonInput('Service is already underway.');
+  };
+
+  const submitRejectCancellation = async (e) => {
+    e.preventDefault();
+    if (!selectedRejectReq) return;
+    setIsSubmittingReject(true);
+    try {
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/admin/cancellations/${selectedRejectReq._id}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ rejectionReason: rejectReasonInput })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || 'Rejection failed.');
+      toast.info('Cancellation request rejected.');
+      setSelectedRejectReq(null);
+      refreshData();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setIsSubmittingReject(false);
+    }
+  };
+
   const refreshData = async () => {
     try {
       const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -234,6 +464,66 @@ const AdminDashboard = () => {
       });
       const calData = await calRes.json();
 
+      // Fetch Refund Stats
+      const statsUrl = `${API_BASE}/api/admin/cancellations/stats?range=${statsRange}`;
+      const refundStatsRes = await fetch(statsUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+      const refundStatsData = await refundStatsRes.json();
+      if (refundStatsRes.ok && refundStatsData.success) {
+        setRefundStats(refundStatsData);
+      }
+
+      // Fetch Filtered Cancellations
+      const queryParams = new URLSearchParams();
+      if (refundFilters.status) queryParams.set('status', refundFilters.status);
+      if (refundFilters.dateFrom) queryParams.set('dateFrom', refundFilters.dateFrom);
+      if (refundFilters.dateTo) queryParams.set('dateTo', refundFilters.dateTo);
+      if (refundFilters.service) queryParams.set('service', refundFilters.service);
+      if (refundFilters.search) queryParams.set('search', refundFilters.search);
+      if (refundFilters.sort) queryParams.set('sort', refundFilters.sort);
+      queryParams.set('page', refundFilters.page || 1);
+      queryParams.set('limit', refundFilters.limit || 10);
+
+      const cancelRes = await fetch(`${API_BASE}/api/admin/cancellations?${queryParams.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const cancelData = await cancelRes.json();
+      if (cancelRes.ok && cancelData.success) {
+        const list = cancelData.results || cancelData.requests || cancelData.cancellations || [];
+        setCancellationRequests(list);
+        setRefundTotalPages(cancelData.totalPages || 1);
+        setRefundTotalResults(cancelData.total || list.length);
+      }
+
+      // Fetch Payout Stats
+      const payoutStatsUrl = `${API_BASE}/api/admin/payouts/stats?range=${payoutStatsRange}`;
+      const payoutStatsRes = await fetch(payoutStatsUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+      const payoutStatsData = await payoutStatsRes.json();
+      if (payoutStatsRes.ok && payoutStatsData.success) {
+        setPayoutStats(payoutStatsData);
+      }
+
+      // Fetch Filtered Payouts
+      const payoutQueryParams = new URLSearchParams();
+      if (payoutFilters.status) payoutQueryParams.set('status', payoutFilters.status);
+      if (payoutFilters.recipientType) payoutQueryParams.set('recipientType', payoutFilters.recipientType);
+      if (payoutFilters.dateFrom) payoutQueryParams.set('dateFrom', payoutFilters.dateFrom);
+      if (payoutFilters.dateTo) payoutQueryParams.set('dateTo', payoutFilters.dateTo);
+      if (payoutFilters.search) payoutQueryParams.set('search', payoutFilters.search);
+      if (payoutFilters.sort) payoutQueryParams.set('sort', payoutFilters.sort);
+      payoutQueryParams.set('page', payoutFilters.page || 1);
+      payoutQueryParams.set('limit', payoutFilters.limit || 10);
+
+      const payoutsRes = await fetch(`${API_BASE}/api/admin/payouts?${payoutQueryParams.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const payoutsData = await payoutsRes.json();
+      if (payoutsRes.ok && payoutsData.success) {
+        const list = payoutsData.payouts || [];
+        setPayoutsList(list);
+        setPayoutTotalPages(payoutsData.totalPages || 1);
+        setPayoutTotalResults(payoutsData.total || list.length);
+      }
+
       if (statsRes.ok && statsData.success) {
         setDashboardStats(statsData);
       }
@@ -253,6 +543,9 @@ const AdminDashboard = () => {
       }
       if (calRes.ok && calData.success) {
         setCalendarRequests(calData.requests || []);
+      }
+      if (cancelRes.ok && cancelData.success) {
+        setCancellationRequests(cancelData.requests || []);
       }
     } catch (err) {
       console.error('Failed to fetch admin data:', err);
@@ -304,6 +597,21 @@ const AdminDashboard = () => {
 
     socket.on('request:cancelled', (data) => {
       console.log('Real-time request cancelled received:', data);
+      if (selectedRequest && (data._id === selectedRequest._id || data.id === selectedRequest._id)) {
+        setSelectedRequest(null);
+        toast.error('Customer requested cancellation for this booking. Assignment modal revoked.');
+      }
+      refreshData();
+    });
+
+    socket.on('request:updated', (data) => {
+      console.log('Real-time request updated received:', data);
+      if (data && ['cancellation_requested', 'cancelled'].includes(data.status)) {
+        if (selectedRequest && (data._id === selectedRequest._id || data.id === selectedRequest._id)) {
+          setSelectedRequest(null);
+          toast.error('Customer requested cancellation & refund for this booking. Assignment revoked.');
+        }
+      }
       refreshData();
     });
 
@@ -315,9 +623,13 @@ const AdminDashboard = () => {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [selectedRequest, statsRange, refundFilters, payoutStatsRange, payoutFilters]);
 
   const handleOpenAssignModal = async (req) => {
+    if (['cancellation_requested', 'cancelled'].includes(req.status)) {
+      toast.error('Cannot assign garage or staff to a booking with a pending cancellation or refund request.');
+      return;
+    }
     setSelectedRequest(req);
     setAssignGarageId('');
     setAssignHelperId('');
@@ -535,22 +847,109 @@ const AdminDashboard = () => {
         <div className="dash-header mb-4" style={{ display: 'block' }}>
           <div>
             <div className="dash-title">
-              {(() => {
-                const hour = new Date().getHours();
-                if (hour < 12) {
-                  return lang === 'ar' ? 'صباح الخير' : (lang === 'ur' ? 'صبح بخیر' : 'Good Morning');
-                } else if (hour < 17) {
-                  return lang === 'ar' ? 'مساء الخير' : (lang === 'ur' ? 'سہ پہر بخیر' : 'Good Afternoon');
-                } else {
-                  return lang === 'ar' ? 'مساء الخير' : (lang === 'ur' ? 'شام بخیر' : 'Good Evening');
-                }
-              })()}, {user?.firstName || 'Admin'} 👋
+              {isRefundsPage
+                ? 'Cancellation & Refund Requests'
+                : isPayoutsPage
+                ? 'Garage & Staff Payout Settlements'
+                : `${(() => {
+                    const hour = new Date().getHours();
+                    if (hour < 12) return lang === 'ar' ? 'صباح الخير' : (lang === 'ur' ? 'صبح بخیر' : 'Good Morning');
+                    if (hour < 17) return lang === 'ar' ? 'مساء الخير' : (lang === 'ur' ? 'سہ پہر بخیر' : 'Good Afternoon');
+                    return lang === 'ar' ? 'مساء الخير' : (lang === 'ur' ? 'شام بخیر' : 'Good Evening');
+                  })()}, ${user?.firstName || 'Admin'} 👋`}
             </div>
             <div className="dash-subtitle">
-              {lang === 'ar' ? 'إليك ما يحدث في غارو اليوم' : (lang === 'ur' ? 'آج گارو میں کیا ہو رہا ہے' : "Here's what's happening at Garro today")}
+              {isRefundsPage
+                ? 'Review customer cancellation requests, set custom refund deductions, or reject requests.'
+                : isPayoutsPage
+                ? 'Platform Commission (10%) & VAT (5%) deducted — Process bank settlements for authorized garages and staff.'
+                : (lang === 'ar' ? 'إليك ما يحدث في غارو اليوم' : (lang === 'ur' ? 'آج گارو میں کیا ہو رہا ہے' : "Here's what's happening at Garro today"))}
             </div>
           </div>
         </div>
+
+        {/* ── OVERVIEW DASHBOARD CONTENT ── */}
+        {isOverviewPage && (
+          <React.Fragment>
+            {/* 🚨 ACTIVE EMERGENCY PICKUP REQUESTS DISPATCH PANEL */}
+            {(() => {
+              const activeEmg = recentBookings.filter(r => (
+                r.serviceType === 'emergency_pickup' ||
+                r.serviceType === 'roadside_assistance' ||
+                r.urgency === 'asap'
+              ) && !['completed', 'closed', 'delivered', 'cancelled'].includes(r.status));
+
+              if (activeEmg.length === 0) return null;
+
+              return (
+                <div style={{
+                  background: 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%)',
+                  color: 'white', borderRadius: '16px', padding: '20px', marginBottom: '24px',
+                  border: '2px solid #ef4444', boxShadow: '0 10px 30px rgba(220, 38, 38, 0.4)'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <span className="badge bg-danger px-3 py-1.5 fs-7 fw-bold" style={{ letterSpacing: '1px' }}>
+                        🚨 EMERGENCY DISPATCH REQUIRED ({activeEmg.length})
+                      </span>
+                      <h4 style={{ margin: '8px 0 4px', fontWeight: 800, color: 'white' }}>
+                        Active Roadside Emergency Pickups
+                      </h4>
+                      <div style={{ fontSize: '13px', opacity: 0.9 }}>
+                        Customers waiting for immediate tow truck / helper dispatch.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '12px' }}>
+                    {activeEmg.map(r => (
+                      <div key={r._id} style={{ background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(6px)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '12px', padding: '14px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                          <strong style={{ fontSize: '13px', color: '#fef08a' }}>#{r._id.slice(-8).toUpperCase()}</strong>
+                          <span className="badge bg-warning text-dark fw-bold">{r.status.toUpperCase()}</span>
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '2px' }}>{r.userId?.name || 'Customer'}</div>
+                        <div style={{ fontSize: '12.5px', color: '#ffffff', fontWeight: 600, marginBottom: '8px' }}>
+                          📍 {r.location?.area ? `${r.location.area}, ` : ''}{r.location?.city || 'Dubai'} &nbsp;
+                          {r.location?.isGpsUsed ? (
+                            <span style={{ background: '#22c55e', color: 'white', fontSize: '10px', padding: '2px 7px', borderRadius: '10px', fontWeight: 800 }}>
+                              ✓ GPS DETECTED
+                            </span>
+                          ) : (
+                            <span style={{ background: '#3b82f6', color: 'white', fontSize: '10px', padding: '2px 7px', borderRadius: '10px', fontWeight: 800 }}>
+                              📋 DROPDOWN SELECTED
+                            </span>
+                          )}
+                          <div style={{ fontSize: '11.5px', opacity: 0.85, marginTop: '2px' }}>
+                            {r.location?.address}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            onClick={() => setSelectedRequest(r)}
+                            className="btn btn-sm btn-warning fw-bold px-3 py-1.5"
+                            style={{ borderRadius: '8px', fontSize: '12px' }}
+                          >
+                            ⚡ Fast-Assign Helper
+                          </button>
+                          {r.location?.lat && (
+                            <a
+                              href={`https://www.google.com/maps?q=${r.location.lat},${r.location.lng}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn btn-sm btn-outline-light fw-bold px-3 py-1.5"
+                              style={{ borderRadius: '8px', fontSize: '12px' }}
+                            >
+                              📍 Open Maps
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
 
         {/* ── STATS ── */}
         <div className="stats-grid">
@@ -642,151 +1041,480 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* ── DATA TABLES ── */}
+        {/* ── DATA TABLES (Overview Only) ── */}
         <div className="data-row">
-          <div className="data-card">
-            <div className="data-head">
-              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuClock /> Recent Bookings</h4>
-              <Link to="/my-bookings" className="btn-view-all">
-                <span>View all</span> <LuArrowRight size={13} />
-              </Link>
-            </div>
-            <table className="g-table">
-              <tbody>
-                {recentBookings.map(b => {
-                  const userDisplayName = b.userId ? b.userId.name : 'Unknown User';
-                  const garageDisplayName = b.garageId ? b.garageId.name : 'Pending Assignment';
-                  const statusDisplay = b.status.charAt(0).toUpperCase() + b.status.slice(1);
-                  const price = b.estimatedCost || 299;
-
-                  return (
-                    <tr key={b._id}>
-                      <td>
-                        <span style={{ fontFamily: 'monospace', fontSize: '11px', background: '#f1f5f9', padding: '2px 7px', borderRadius: '5px' }}>
-                          #{b._id.substring(18)}
-                        </span>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: '600', fontSize: '13px' }}>{userDisplayName}</div>
-                        <div style={{ fontSize: '11.5px', color: '#94a3b8' }}>{garageDisplayName}</div>
-                      </td>
-                      <td>
-                        <span className={`sbadge ${b.status}`}>{statusDisplay}</span>
-                        {b.status === 'new' && (
-                          <button 
-                            onClick={() => handleOpenAssignModal(b)} 
-                            className="btn-assign-action ms-2"
-                          >
-                            <LuUserCheck size={11} /> <span>Assign</span>
-                          </button>
-                        )}
-                      </td>
-                      <td style={{ textAlign: 'right', fontWeight: '700', fontSize: '13px' }}>AED {price}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Calendar Widget Card */}
-          <div className="data-card" style={{ background: '#ffffff', color: '#0f172a' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #f8fafc' }}>
-              <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><LuCalendarDays /> Schedule Calendar</h4>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}><LuChevronLeft size={18} /></button>
-                <span className="fw-bold" style={{ fontSize: '13px', minWidth: '95px', textAlign: 'center', color: '#1e293b' }}>
-                  {calendarDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                </span>
-                <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}><LuChevronRight size={18} /></button>
+            <div className="data-card">
+              <div className="data-head">
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><LuClock /> Recent Bookings</h4>
+                <Link to="/my-bookings" className="btn-view-all">
+                  <span>View all</span> <LuArrowRight size={13} />
+                </Link>
               </div>
-            </div>
+              <table className="g-table">
+                <tbody>
+                  {recentBookings.map(b => {
+                    const userDisplayName = b.userId ? b.userId.name : 'Unknown User';
+                    const garageDisplayName = b.garageId ? b.garageId.name : 'Pending Assignment';
+                    const statusDisplay = b.status.charAt(0).toUpperCase() + b.status.slice(1);
+                    const price = b.invoice?.totalAmount || b.estimatedCost || 299;
 
-            <div style={{ padding: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px' }}>
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((h, i) => <div key={i}>{h}</div>)}
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
-                {getDaysInMonth(calendarDate).map((d, index) => {
-                  const reqs = getDayRequests(d.dateStr);
-                  const hasBooking = reqs.length > 0;
-                  const isSelected = selectedCalendarDay === d.dateStr;
-                  const isToday = d.dateStr === new Date().toISOString().split('T')[0];
-
-                  return (
-                    <div
-                      key={index}
-                      onClick={() => d.day && setSelectedCalendarDay(d.dateStr)}
-                      style={{
-                        height: '34px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '8px',
-                        cursor: d.day ? 'pointer' : 'default',
-                        position: 'relative',
-                        fontSize: '12px',
-                        fontWeight: isToday || isSelected ? 'bold' : 'normal',
-                        background: isSelected ? '#ff5c1a' : isToday ? '#eff6ff' : 'none',
-                        color: isSelected ? 'white' : isToday ? '#ff5c1a' : '#475569',
-                        border: isToday && !isSelected ? '1px solid #ff5c1a' : 'none',
-                        opacity: d.day ? 1 : 0
-                      }}
-                    >
-                      {d.day}
-                      {hasBooking && !isSelected && (
-                        <span style={{
-                          position: 'absolute',
-                          bottom: '3px',
-                          width: '4px',
-                          height: '4px',
-                          borderRadius: '50%',
-                          background: reqs.some(r => r.urgency === 'asap') ? '#ef4444' : '#10b981'
-                        }}></span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {selectedCalendarDay && (
-              <div style={{ padding: '0 20px 20px', borderTop: '1px solid #f8fafc', paddingTop: '15px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <span className="fw-bold text-slate-700" style={{ fontSize: '12px' }}>
-                    Schedule: {new Date(selectedCalendarDay).toLocaleDateString('en-AE', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </span>
-                  <button onClick={() => setSelectedCalendarDay(null)} className="btn p-0 text-secondary" style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '11px' }}>Clear</button>
-                </div>
-                {getDayRequests(selectedCalendarDay).length === 0 ? (
-                  <p className="text-muted small mb-0">No pickups or deliveries scheduled.</p>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {getDayRequests(selectedCalendarDay).map(req => {
-                      const time = new Date(req.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                      return (
-                        <div key={req._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
-                          <div>
-                            <div className="fw-semibold text-slate-800" style={{ fontSize: '12px' }}>
-                              {req.vehicleId ? `${req.vehicleId.make} ${req.vehicleId.model}` : 'Vehicle'}
-                            </div>
-                            <div className="text-secondary" style={{ fontSize: '11px' }}>
-                              User: {req.userId?.name || 'User'} | Time: {time}
-                            </div>
-                          </div>
-                          <span className={`sbadge ${req.status}`} style={{ fontSize: '10px' }}>
-                            {req.status.replace(/_/g, ' ')}
+                    return (
+                      <tr key={b._id}>
+                        <td>
+                          <span style={{ fontFamily: 'monospace', fontSize: '11px', background: '#f1f5f9', padding: '2px 7px', borderRadius: '5px' }}>
+                            #{b._id.substring(18)}
                           </span>
-                        </div>
-                      );
-                    })}
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: '600', fontSize: '13px' }}>{userDisplayName}</div>
+                          <div style={{ fontSize: '11.5px', color: '#94a3b8' }}>{garageDisplayName}</div>
+                        </td>
+                        <td>
+                          <span className={`sbadge ${b.status}`}>{statusDisplay}</span>
+                          {b.status === 'new' && (
+                            <button 
+                              onClick={() => handleOpenAssignModal(b)} 
+                              className="btn-assign-action ms-2"
+                            >
+                              <LuUserCheck size={11} /> <span>Assign</span>
+                            </button>
+                          )}
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: '700', fontSize: '13px' }}>AED {price}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Calendar Widget Card */}
+            <div className="data-card" style={{ background: '#ffffff', color: '#0f172a' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #f8fafc' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}><LuCalendarDays /> Schedule Calendar</h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}><LuChevronLeft size={18} /></button>
+                  <span className="fw-bold" style={{ fontSize: '13px', minWidth: '95px', textAlign: 'center', color: '#1e293b' }}>
+                    {calendarDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </span>
+                  <button onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))} style={{ border: 'none', background: 'none', cursor: 'pointer', color: '#64748b' }}><LuChevronRight size={18} /></button>
+                </div>
+              </div>
+
+              <div style={{ padding: '20px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px', textAlign: 'center', fontSize: '11px', fontWeight: 'bold', color: '#94a3b8', marginBottom: '8px' }}>
+                  {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((h, i) => <div key={i}>{h}</div>)}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '4px' }}>
+                  {getDaysInMonth(calendarDate).map((d, index) => {
+                    const reqs = getDayRequests(d.dateStr);
+                    const hasBooking = reqs.length > 0;
+                    const isSelected = selectedCalendarDay === d.dateStr;
+                    const isToday = d.dateStr === new Date().toISOString().split('T')[0];
+
+                    return (
+                      <div
+                        key={index}
+                        onClick={() => d.day && setSelectedCalendarDay(d.dateStr)}
+                        style={{
+                          height: '34px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderRadius: '8px',
+                          cursor: d.day ? 'pointer' : 'default',
+                          position: 'relative',
+                          fontSize: '12px',
+                          fontWeight: isToday || isSelected ? 'bold' : 'normal',
+                          background: isSelected ? '#ff5c1a' : isToday ? '#eff6ff' : 'none',
+                          color: isSelected ? 'white' : isToday ? '#ff5c1a' : '#475569',
+                          border: isToday && !isSelected ? '1px solid #ff5c1a' : 'none',
+                          opacity: d.day ? 1 : 0
+                        }}
+                      >
+                        {d.day}
+                        {hasBooking && !isSelected && (
+                          <span style={{
+                            position: 'absolute',
+                            bottom: '3px',
+                            width: '4px',
+                            height: '4px',
+                            borderRadius: '50%',
+                            background: reqs.some(r => r.urgency === 'asap') ? '#ef4444' : '#10b981'
+                          }}></span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {selectedCalendarDay && (
+                <div style={{ padding: '0 20px 20px', borderTop: '1px solid #f8fafc', paddingTop: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <span className="fw-bold text-slate-700" style={{ fontSize: '12px' }}>
+                      Schedule: {new Date(selectedCalendarDay).toLocaleDateString('en-AE', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
+                    <button onClick={() => setSelectedCalendarDay(null)} className="btn p-0 text-secondary" style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '11px' }}>Clear</button>
+                  </div>
+                  {getDayRequests(selectedCalendarDay).length === 0 ? (
+                    <p className="text-muted small mb-0">No pickups or deliveries scheduled.</p>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {getDayRequests(selectedCalendarDay).map(req => {
+                        const time = new Date(req.preferredDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        return (
+                          <div key={req._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                            <div>
+                              <div className="fw-semibold text-slate-800" style={{ fontSize: '12px' }}>
+                                {req.vehicleId ? `${req.vehicleId.make} ${req.vehicleId.model}` : 'Vehicle'}
+                              </div>
+                              <div className="text-secondary" style={{ fontSize: '11px' }}>
+                                User: {req.userId?.name || 'User'} | Time: {time}
+                              </div>
+                            </div>
+                            <span className={`sbadge ${req.status}`} style={{ fontSize: '10px' }}>
+                              {req.status.replace(/_/g, ' ')}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </React.Fragment>
+        )}
+
+        {/* ── CANCELLATION & REFUND APPROVAL QUEUE (Enhanced View) ── */}
+        {(isOverviewPage || isRefundsPage) && (
+          <>
+            {isRefundsPage && (
+              <RefundStatsCards
+                stats={refundStats}
+                range={statsRange}
+                onRangeChange={(r) => setStatsRange(r)}
+                onOpenExportModal={(fmt) => setExportModalState({ isOpen: true, format: fmt })}
+              />
+            )}
+
+            {isRefundsPage && (
+              <RefundFilterBar
+                filters={refundFilters}
+                onFilterChange={handleRefundFilterChange}
+                onResetFilters={handleResetRefundFilters}
+                catalogServices={catalogServices}
+              />
+            )}
+
+            {cancellationRequests.length > 0 ? (
+              <div className="card border-0 shadow-sm mb-4 w-100" style={{ borderRadius: '16px', border: '1.5px solid #cbd5e1', background: '#ffffff', overflow: 'hidden', width: '100%', maxWidth: '100%' }}>
+                <div className="card-header bg-white py-3 px-4" style={{ borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h5 className="fw-extrabold mb-1" style={{ color: '#0f172a', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <LuTriangleAlert className="text-danger" /> Cancellation &amp; Refund Approval Queue
+                    </h5>
+                    <p className="text-muted small mb-0">Manage customer booking cancellations, review reasons, and execute automated or custom refunds.</p>
+                  </div>
+                  <span className="badge bg-danger px-3 py-2 fs-7 fw-bold">
+                    {cancellationRequests.filter(r => r.status === 'cancellation_requested' || r.refundStatus === 'requested').length} Pending Refunds
+                  </span>
+                </div>
+                <div className="table-responsive" style={{ width: '100%', overflowX: 'auto' }}>
+                  <table className="table table-hover align-middle mb-0" style={{ width: '100%', fontSize: '12.5px' }}>
+                    <thead style={{ background: '#f8fafc', color: '#64748b' }}>
+                      <tr>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '120px' }}>BOOKING ID</th>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '180px' }}>CUSTOMER</th>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '150px' }}>SERVICE</th>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '130px' }}>REFUND AMOUNT</th>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', minWidth: '220px' }}>REASON</th>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '185px' }}>STATUS</th>
+                        <th style={{ padding: '12px 16px', fontSize: '11px', textAlign: 'right', width: '175px', position: 'sticky', right: 0, background: '#f8fafc', zIndex: 2 }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {cancellationRequests.map(r => {
+                        const isPending = r.status === 'cancellation_requested' || r.refundStatus === 'requested';
+                        const isApproved = r.status === 'cancelled' && ['approved', 'processed'].includes(r.refundStatus);
+                        const isRejected = r.refundStatus === 'rejected';
+
+                        const reqDate = new Date(r.cancellationRequestedAt || r.createdAt);
+                        const hoursPending = (new Date() - reqDate) / (1000 * 60 * 60);
+                        const isUrgentPending = isPending && hoursPending > 48;
+
+                        const rawReason = r.cancellationReason || 'Customer requested refund';
+                        const cleanReasonText = rawReason.replace(/^["']|["']$/g, '').trim();
+
+                        return (
+                          <tr
+                            key={r._id}
+                            onClick={() => setSelectedDrawerRequest(r)}
+                            style={{
+                              cursor: 'pointer',
+                              background: isUrgentPending ? '#fef2f2' : 'inherit'
+                            }}
+                            className="align-middle"
+                          >
+                            <td style={{ padding: '12px 14px' }}>
+                              <strong style={{ fontFamily: 'monospace', color: '#0f172a', fontSize: '12px' }}>
+                                #{r._id ? r._id.toString().slice(-8).toUpperCase() : 'N/A'}
+                              </strong>
+                              {isUrgentPending && (
+                                <span className="badge bg-danger ms-1" style={{ fontSize: '9px' }}>
+                                  🚨 &gt;48h
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <div style={{ fontWeight: 700, color: '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {r.userId?.name || 'Customer'}
+                              </div>
+                              <div style={{ fontSize: '11px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {r.userId?.email || r.userId?.phone}
+                              </div>
+                            </td>
+                            <td style={{ padding: '12px 14px', fontWeight: 600, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {formatServiceName(r.serviceType, r.subCategory)}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <strong style={{ color: '#16a34a', fontSize: '13.5px' }}>
+                                AED {(r.refundAmount || r.invoice?.totalAmount || r.estimatedCost || 299).toFixed(2)}
+                              </strong>
+                            </td>
+                            <td style={{ padding: '12px 14px', minWidth: '220px' }}>
+                              <div
+                                style={{
+                                  fontSize: '12px',
+                                  color: '#334155',
+                                  fontWeight: 500,
+                                  lineHeight: '1.4',
+                                  wordBreak: 'break-word'
+                                }}
+                              >
+                                {cleanReasonText}
+                              </div>
+                              {cleanReasonText && cleanReasonText.length < 5 && (
+                                <div style={{ fontSize: '10px', color: '#dc2626', fontWeight: 700, marginTop: '2px' }}>⚠️ Short input</div>
+                              )}
+                            </td>
+                            <td style={{ padding: '12px 14px', width: '185px' }}>
+                              <span
+                                className={`badge ${
+                                  isPending ? 'bg-danger' : isApproved ? 'bg-success' : 'bg-secondary'
+                                }`}
+                                style={{ padding: '5px 10px', fontSize: '10.5px', borderRadius: '12px', whiteSpace: 'nowrap' }}
+                              >
+                                {isPending ? 'PENDING' : isApproved ? 'APPROVED & REFUNDED' : 'REJECTED'}
+                              </span>
+                              {['arrived_at_customer', 'picked_up', 'in_garage', 'repair_in_progress'].includes(r.previousStatus) && (
+                                <div style={{ fontSize: '9.5px', color: '#b45309', background: '#fef3c7', padding: '2px 5px', borderRadius: '4px', marginTop: '4px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                  📍 Staff Arrived (Fine May Apply)
+                                </div>
+                              )}
+                            </td>
+                            <td
+                              style={{
+                                padding: '12px 16px',
+                                textAlign: 'right',
+                                width: '175px',
+                                position: 'sticky',
+                                right: 0,
+                                background: isUrgentPending ? '#fef2f2' : '#ffffff',
+                                boxShadow: '-2px 0 6px rgba(0,0,0,0.02)'
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {isPending ? (
+                                <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                  <button
+                                    onClick={() => openApproveModal(r)}
+                                    className="btn btn-sm btn-success fw-bold px-2.5 py-1"
+                                    style={{ borderRadius: '8px', fontSize: '11.5px', boxShadow: '0 2px 6px rgba(22,163,74,0.25)', whiteSpace: 'nowrap' }}
+                                  >
+                                    ✓ Approve
+                                  </button>
+                                  <button
+                                    onClick={() => openRejectModal(r)}
+                                    className="btn btn-sm btn-outline-danger fw-bold px-2.5 py-1"
+                                    style={{ borderRadius: '8px', fontSize: '11.5px', whiteSpace: 'nowrap' }}
+                                  >
+                                    ✕ Reject
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="text-muted small fw-semibold">
+                                  {isApproved ? '✓ Processed' : '✕ Rejected'}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {isRefundsPage && (
+                  <div className="border-top px-3 py-2 bg-white">
+                    <Pagination
+                      page={refundFilters.page}
+                      totalPages={refundTotalPages}
+                      totalResults={refundTotalResults}
+                      limit={refundFilters.limit}
+                      onPageChange={(p) => handleRefundFilterChange('page', p)}
+                      onLimitChange={(l) => handleRefundFilterChange('limit', l)}
+                    />
                   </div>
                 )}
               </div>
+            ) : isRefundsPage ? (
+              <div className="card p-5 border-0 text-center shadow-sm mb-4" style={{ borderRadius: '16px', background: '#ffffff' }}>
+                <div style={{ fontSize: '36px', marginBottom: '10px' }}>🎉</div>
+                <h5 className="fw-bold text-dark mb-1">No Refund Requests Found</h5>
+                <p className="text-muted small mb-0">No cancellation or refund requests match your selected filters.</p>
+              </div>
+            ) : null}
+          </>
+        )}
+
+        {/* ── GARAGE & STAFF PAYOUT SETTLEMENTS QUEUE (Redesigned) ── */}
+        {(isOverviewPage || isPayoutsPage) && (
+          <>
+            {isPayoutsPage && (
+              <PayoutStatsCards
+                stats={payoutStats}
+                range={payoutStatsRange}
+                onRangeChange={(r) => setPayoutStatsRange(r)}
+                onOpenExportModal={() => setPayoutExportModalOpen(true)}
+              />
             )}
-          </div>
-        </div>
+
+            {isPayoutsPage && (
+              <PayoutFilterBar
+                filters={payoutFilters}
+                onFilterChange={handlePayoutFilterChange}
+                onResetFilters={handleResetPayoutFilters}
+              />
+            )}
+
+            {payoutsList.length > 0 ? (
+              <div className="card border-0 shadow-sm mb-4 w-100" style={{ borderRadius: '16px', border: '1.5px solid #cbd5e1', background: '#ffffff', overflow: 'hidden', width: '100%', maxWidth: '100%' }}>
+                <div className="card-header bg-white py-3 px-4" style={{ borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <h5 className="fw-extrabold mb-1" style={{ color: '#0f172a', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <LuDollarSign className="text-success" /> Garage &amp; Staff Payout Settlements
+                    </h5>
+                    <p className="text-muted small mb-0">Platform Commission Fee (10%) &amp; VAT (5%) deducted — Net Payout Settlements for Garages/Staff.</p>
+                  </div>
+                  <span className="badge bg-success px-3 py-2 fs-7 fw-bold">
+                    {payoutStats?.pending ?? payoutsList.filter(p => p.status === 'pending').length} Pending Payouts
+                  </span>
+                </div>
+                <div className="table-responsive" style={{ width: '100%', overflowX: 'auto' }}>
+                  <table className="table table-hover align-middle mb-0" style={{ width: '100%', fontSize: '12.5px' }}>
+                    <thead style={{ background: '#f8fafc', color: '#64748b' }}>
+                      <tr>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '130px' }}>PAYOUT ID</th>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '200px' }}>RECIPIENT (GARAGE / STAFF)</th>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '150px' }}>INVOICE REF</th>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '180px' }}>NET PAYOUT AMOUNT</th>
+                        <th style={{ padding: '12px 14px', fontSize: '11px', width: '140px' }}>STATUS</th>
+                        <th style={{ padding: '12px 16px', fontSize: '11px', textAlign: 'right', width: '180px', position: 'sticky', right: 0, background: '#f8fafc', zIndex: 2 }}>ACTION</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payoutsList.map(p => {
+                        const isProcessed = p.status === 'processed';
+                        const isPending = p.status === 'pending';
+
+                        return (
+                          <tr key={p._id} className="align-middle">
+                            <td style={{ padding: '12px 14px', fontWeight: 700, color: '#0f172a' }}>
+                              #{p._id ? p._id.toString().slice(-8).toUpperCase() : 'N/A'}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <div style={{ fontWeight: 700, color: '#0f172a' }}>{p.garageId?.name || 'Authorized Service Partner'}</div>
+                              <div style={{ fontSize: '11px', color: '#64748b' }}>{p.garageId?.email || p.garageId?.phone || 'Garro Network'}</div>
+                            </td>
+                            <td style={{ padding: '12px 14px', fontWeight: 600, color: '#334155' }}>
+                              {p.invoiceId?.invoiceNumber || `#INV-${p._id.toString().slice(-6)}`}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <strong style={{ color: '#16a34a', fontSize: '15px' }}>
+                                AED {(p.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </strong>
+                              <span style={{ fontSize: '10.5px', color: '#64748b', display: 'block', marginTop: '2px' }}>
+                                (Subtotal − 10% Platform Fee − 5% VAT)
+                              </span>
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <span
+                                className={`badge ${
+                                  isProcessed ? 'bg-success' : isPending ? 'bg-warning text-dark' : 'bg-danger'
+                                }`}
+                                style={{ padding: '5px 10px', fontSize: '10.5px', borderRadius: '12px', whiteSpace: 'nowrap' }}
+                              >
+                                {isProcessed ? 'PROCESSED' : isPending ? 'PENDING' : 'FAILED / ON HOLD'}
+                              </span>
+                            </td>
+                            <td
+                              style={{
+                                padding: '12px 16px',
+                                textAlign: 'right',
+                                width: '180px',
+                                position: 'sticky',
+                                right: 0,
+                                background: '#ffffff',
+                                boxShadow: '-2px 0 6px rgba(0,0,0,0.02)'
+                              }}
+                            >
+                              {isPending ? (
+                                <button
+                                  onClick={() => handleProcessPayout(p._id)}
+                                  className="btn btn-sm btn-success fw-bold px-3 py-1.5"
+                                  style={{ borderRadius: '8px', fontSize: '11.5px', boxShadow: '0 2px 6px rgba(22,163,74,0.25)', whiteSpace: 'nowrap' }}
+                                >
+                                  ⚡ Process Payout
+                                </button>
+                              ) : (
+                                <span className="text-muted small fw-semibold">
+                                  ✓ Paid on {new Date(p.processedAt || p.updatedAt).toLocaleDateString()}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {isPayoutsPage && (
+                  <div className="border-top px-3 py-2 bg-white">
+                    <Pagination
+                      page={payoutFilters.page}
+                      totalPages={payoutTotalPages}
+                      totalResults={payoutTotalResults}
+                      limit={payoutFilters.limit}
+                      onPageChange={(p) => handlePayoutFilterChange('page', p)}
+                      onLimitChange={(l) => handlePayoutFilterChange('limit', l)}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : isPayoutsPage ? (
+              <div className="card p-5 border-0 text-center shadow-sm mb-4" style={{ borderRadius: '16px', background: '#ffffff' }}>
+                <div style={{ fontSize: '36px', marginBottom: '10px' }}>🎉</div>
+                <h5 className="fw-bold text-dark mb-1">No Payout Settlements Found</h5>
+                <p className="text-muted small mb-0">No garage or staff payout settlements match your selected filters.</p>
+              </div>
+            ) : null}
+          </>
+        )}
 
       </main>
 
@@ -863,6 +1591,62 @@ const AdminDashboard = () => {
                   </div>
                 )}
               </div>
+
+              <div style={{ marginTop: '14px', background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: '12px', padding: '12px 16px' }}>
+                {/* Emergency badge */}
+                {(selectedRequest.serviceType === 'emergency_pickup' || selectedRequest.serviceType === 'roadside_assistance' || selectedRequest.urgency === 'asap') && (
+                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#dc2626', color: 'white', fontSize: '10.5px', fontWeight: 800, padding: '2px 10px', borderRadius: '12px', marginBottom: '8px' }}>
+                    🚨 EMERGENCY DISPATCH
+                  </div>
+                )}
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>
+                  📍 Customer Stranded Location
+                </div>
+                {/* City + Area from dropdown — these are the reliable structured values */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                  {selectedRequest.location?.city && (
+                    <span style={{ background: '#dbeafe', color: '#1e40af', fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '8px' }}>
+                      🏙 {selectedRequest.location.city}
+                    </span>
+                  )}
+                  {selectedRequest.location?.area && (
+                    <span style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '12px', fontWeight: 700, padding: '3px 10px', borderRadius: '8px' }}>
+                      🗺 {selectedRequest.location.area}
+                    </span>
+                  )}
+                  {selectedRequest.location?.isGpsUsed ? (
+                    <span style={{ background: '#22c55e', color: 'white', fontSize: '10.5px', padding: '3px 8px', borderRadius: '12px', fontWeight: 800 }}>
+                      ✓ GPS DETECTED
+                    </span>
+                  ) : (
+                    <span style={{ background: '#3b82f6', color: 'white', fontSize: '10.5px', padding: '3px 8px', borderRadius: '12px', fontWeight: 800 }}>
+                      📋 DROPDOWN SELECTED
+                    </span>
+                  )}
+                </div>
+                {/* Address / Area City */}
+                <div style={{ fontSize: '12px', color: '#475569', marginBottom: '4px' }}>
+                  <strong>Area &amp; City:</strong> {selectedRequest.location?.address || `${selectedRequest.location?.area || ''} ${selectedRequest.location?.city || 'Dubai'}`.trim()}
+                </div>
+                {/* Standard Location (Visible to Assigned Staff) */}
+                {(selectedRequest.location?.standardLocation || selectedRequest.location?.strandedLocation) && (
+                  <div style={{ fontSize: '12px', color: '#1e40af', background: '#dbeafe', padding: '6px 10px', borderRadius: '8px', fontWeight: 700, marginTop: '4px' }}>
+                    🔒 Standard Location (Visible Only to Assigned Staff): <span style={{ color: '#0f172a' }}>"{selectedRequest.location.standardLocation || selectedRequest.location.strandedLocation}"</span>
+                  </div>
+                )}
+                {selectedRequest.location?.lat && (
+                  <div style={{ marginTop: '6px' }}>
+                    <a
+                      href={`https://www.google.com/maps?q=${selectedRequest.location.lat},${selectedRequest.location.lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: '#ff5c1a', fontWeight: 700, fontSize: '12px', textDecoration: 'none' }}
+                    >
+                      📍 Open GPS Navigation Maps
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
 
             <form onSubmit={handleAssignSubmit}>
@@ -883,9 +1667,9 @@ const AdminDashboard = () => {
                   }}
                   required
                 />
-                {selectedRequest && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
+                {selectedRequest && !['emergency_pickup','roadside_assistance'].includes(selectedRequest.serviceType) && selectedRequest.urgency !== 'asap' && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
                   <p className="text-danger small mt-1" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <LuTriangleAlert size={12} /> <span>No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.address || 'N/A'}"</strong>.</span>
+                    <LuTriangleAlert size={12} /> <span>No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.area ? `${selectedRequest.location.area}, ` : ''}{selectedRequest.location?.city || 'Dubai'}"</strong>.</span>
                   </p>
                 )}
               </div>
@@ -1056,6 +1840,288 @@ const AdminDashboard = () => {
           </div>
         </div>
       )}
+      {/* Custom Approve Refund Modal */}
+      {selectedRefundReq && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)',
+          zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: '20px', width: '100%', maxWidth: '720px',
+            padding: '24px 28px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0',
+            maxHeight: '92vh', overflowY: 'auto'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h4 style={{ margin: 0, fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ color: '#16a34a' }}>💳</span> Approve Refund &amp; Cancellation
+              </h4>
+              <button onClick={() => setSelectedRefundReq(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <LuX size={22} />
+              </button>
+            </div>
+
+            {/* ── Top Info Row: booking details + warning side by side ─── */}
+            <div style={{ display: 'flex', gap: '14px', marginBottom: '16px', alignItems: 'stretch' }}>
+
+              {/* Booking Details Card */}
+              <div style={{ flex: 1, background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Booking ID:</span>
+                  <strong style={{ fontSize: '12px', color: '#0f172a' }}>#{selectedRefundReq._id.slice(-8).toUpperCase()}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Customer:</span>
+                  <strong style={{ fontSize: '12px', color: '#0f172a', textAlign: 'right', maxWidth: '170px' }}>{selectedRefundReq.userId?.name} ({selectedRefundReq.userId?.phone || selectedRefundReq.userId?.email})</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Total Paid:</span>
+                  <strong style={{ fontSize: '13px', color: '#16a34a' }}>AED {selectedRefundReq.refundAmount || selectedRefundReq.invoice?.totalAmount || 299}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>Reason:</span>
+                  <span style={{ fontSize: '11px', fontStyle: 'italic', color: '#991b1b', textAlign: 'right', maxWidth: '170px' }}>"{selectedRefundReq.cancellationReason || 'No reason provided'}"</span>
+                </div>
+              </div>
+
+              {/* Warning Banner (only if technician arrived) */}
+              {['arrived_at_customer', 'picked_up', 'in_garage', 'repair_in_progress'].includes(selectedRefundReq.previousStatus || selectedRefundReq.status) && (
+                <div style={{ flex: 1, background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '10px', padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#b45309', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📍 TECHNICIAN HAD ALREADY ARRIVED
+                  </div>
+                  <div style={{ fontSize: '11.5px', color: '#92400e', lineHeight: '1.5' }}>
+                    Staff traveled to customer location. Apply a fine % or enter a lower refund to deduct a travel/cancellation fee.
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <form onSubmit={submitApproveRefund}>
+
+              {/* ── Row 1: Fine % chips (left) + Refund Amount input (right) ── */}
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '14px', alignItems: 'flex-start' }}>
+
+                {/* Fine % chips */}
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+                    Apply Cancellation Fine (%):
+                  </label>
+                  <div style={{ display: 'flex', gap: '7px', flexWrap: 'wrap' }}>
+                    {[0, 5, 10, 20, 25, 50].map(pct => (
+                      <button
+                        key={pct}
+                        type="button"
+                        onClick={() => applyFinePercent(pct)}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          border: finePercent === pct ? '2px solid #dc2626' : '2px solid #e2e8f0',
+                          background: finePercent === pct ? '#fef2f2' : '#f8fafc',
+                          color: finePercent === pct ? '#dc2626' : '#475569',
+                          fontWeight: 700,
+                          fontSize: '12.5px',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s'
+                        }}
+                      >
+                        {pct === 0 ? 'No Fine' : `${pct}%`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Refund Amount input */}
+                <div style={{ width: '200px', flexShrink: 0 }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#1e293b', marginBottom: '8px' }}>
+                    Refund Amount (AED):
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    value={refundInputAmount}
+                    onChange={(e) => { setRefundInputAmount(e.target.value); setFinePercent(0); }}
+                    style={{
+                      width: '100%', borderRadius: '10px', border: '2px solid #cbd5e1',
+                      padding: '9px 12px', fontSize: '16px', fontWeight: 800, color: '#16a34a',
+                      background: '#f0fdf4', boxSizing: 'border-box', textAlign: 'right'
+                    }}
+                  />
+                  <p style={{ margin: '4px 0 0', fontSize: '10.5px', color: '#94a3b8' }}>
+                    Auto-set by fine %, or type custom.
+                  </p>
+                </div>
+              </div>
+
+              {/* ── Row 2: Breakdown card (left) + Admin notes (right) ── */}
+              <div style={{ display: 'flex', gap: '16px', marginBottom: '18px', alignItems: 'flex-start' }}>
+
+                {/* Live Breakdown */}
+                <div style={{ flex: 1 }}>
+                  {finePercent > 0 && (() => {
+                    const fullAmt = selectedRefundReq
+                      ? Number(selectedRefundReq.refundAmount || selectedRefundReq.invoice?.totalAmount || 299)
+                      : 0;
+                    const fineAmt = parseFloat((fullAmt * finePercent / 100).toFixed(2));
+                    const refundAmt = parseFloat((fullAmt - fineAmt).toFixed(2));
+                    return (
+                      <div style={{
+                        background: '#fff7ed', border: '1px solid #fed7aa',
+                        borderRadius: '10px', padding: '11px 13px', height: '100%'
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                          <span style={{ fontSize: '11.5px', color: '#92400e', fontWeight: 600 }}>Total Paid</span>
+                          <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#0f172a' }}>AED {fullAmt.toFixed(2)}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                          <span style={{ fontSize: '11.5px', color: '#dc2626', fontWeight: 600 }}>− Fine ({finePercent}%)</span>
+                          <span style={{ fontSize: '12.5px', fontWeight: 800, color: '#dc2626' }}>− AED {fineAmt.toFixed(2)}</span>
+                        </div>
+                        <div style={{ borderTop: '1px dashed #fed7aa', marginTop: '6px', paddingTop: '6px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ fontSize: '11.5px', color: '#16a34a', fontWeight: 700 }}>✓ Net Refund</span>
+                          <span style={{ fontSize: '14px', fontWeight: 900, color: '#16a34a' }}>AED {refundAmt.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+                {/* Admin Notes */}
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#1e293b', marginBottom: '6px' }}>
+                    Admin Note / Deduction Reason:
+                  </label>
+                  <textarea
+                    rows={finePercent > 0 ? 4 : 3}
+                    value={refundAdminNotes}
+                    onChange={(e) => setRefundAdminNotes(e.target.value)}
+                    placeholder="Optional note regarding fine deduction or refund timeline..."
+                    style={{
+                      width: '100%', borderRadius: '10px', border: '1px solid #cbd5e1',
+                      padding: '9px 12px', fontSize: '12.5px', color: '#0f172a',
+                      resize: 'vertical', boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRefundReq(null)}
+                  style={{
+                    padding: '10px 18px', background: '#f1f5f9', color: '#475569',
+                    border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingRefund}
+                  style={{
+                    padding: '10px 22px', background: '#16a34a', color: 'white',
+                    border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer',
+                    boxShadow: '0 4px 12px rgba(22, 163, 74, 0.35)'
+                  }}
+                >
+                  {isSubmittingRefund ? 'Processing...' : `Confirm Refund (AED ${Number(refundInputAmount || 0).toFixed(2)})`}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Reject Cancellation Modal */}
+      {selectedRejectReq && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(15, 23, 42, 0.75)', backdropFilter: 'blur(6px)',
+          zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }}>
+          <div style={{
+            background: 'white', borderRadius: '20px', width: '100%', maxWidth: '480px',
+            padding: '28px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h4 style={{ margin: 0, fontWeight: 800, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>✕</span> Reject Cancellation Request
+              </h4>
+              <button onClick={() => setSelectedRejectReq(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b' }}>
+                <LuX size={22} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '13.5px', color: '#475569', marginBottom: '16px' }}>
+              Rejecting cancellation for Booking <strong>#{selectedRejectReq._id.slice(-8).toUpperCase()}</strong> will restore its active status.
+            </p>
+
+            <form onSubmit={submitRejectCancellation}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12.5px', fontWeight: 700, color: '#1e293b', marginBottom: '6px' }}>
+                  Rejection Reason (Sent to Customer):
+                </label>
+                <textarea
+                  required
+                  rows={3}
+                  value={rejectReasonInput}
+                  onChange={(e) => setRejectReasonInput(e.target.value)}
+                  placeholder="Explain why cancellation cannot be approved at this stage..."
+                  style={{
+                    width: '100%', borderRadius: '10px', border: '1px solid #cbd5e1',
+                    padding: '10px 12px', fontSize: '13px', color: '#0f172a'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedRejectReq(null)}
+                  style={{
+                    padding: '10px 18px', background: '#f1f5f9', color: '#475569',
+                    border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingReject}
+                  style={{
+                    padding: '10px 20px', background: '#dc2626', color: 'white',
+                    border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer'
+                  }}
+                >
+                  {isSubmittingReject ? 'Rejecting...' : 'Reject Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Refund Details Drawer */}
+      {selectedDrawerRequest && (
+        <RefundDetailsDrawer
+          request={selectedDrawerRequest}
+          onClose={() => setSelectedDrawerRequest(null)}
+          onApprove={(r) => openApproveModal(r)}
+          onReject={(r) => openRejectModal(r)}
+        />
+      )}
+      {/* Refund Export Modal */}
+      <RefundExportModal
+        isOpen={exportModalState.isOpen}
+        initialFormat={exportModalState.format}
+        onClose={() => setExportModalState({ isOpen: false, format: 'pdf' })}
+      />
+      {/* Payout Export Modal */}
+      <PayoutExportModal
+        isOpen={payoutExportModalOpen}
+        onClose={() => setPayoutExportModalOpen(false)}
+      />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import Invoice from '../models/Invoice.js';
 import Complaint from '../models/Complaint.js';
 import HelperBookingSlot from '../models/HelperBookingSlot.js';
 import Vehicle from '../models/Vehicle.js';
+import ActivityLog from '../models/ActivityLog.js';
 import { checkHelperAvailability, SERVICE_DURATION_MAP } from './helper.controller.js';
 import { success, error  } from '../utils/response.js';
 import { getSetting, setSettingInMemory } from '../utils/settings.js';
@@ -888,6 +889,54 @@ export const emailReport = async (req, res) => {
     });
 
     success(res, { message: `Report successfully emailed to ${recipientEmail}` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/admin/activity-logs
+export const getActivityLogs = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+
+    const { userId, action, startDate, endDate } = req.query;
+    const filter = {};
+
+    if (userId) {
+      filter.userId = userId;
+    }
+    if (action) {
+      filter.action = { $regex: action, $options: 'i' };
+    }
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) {
+        filter.createdAt.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        filter.createdAt.$lte = new Date(endDate);
+      }
+    }
+
+    const logs = await ActivityLog.find(filter)
+      .populate('userId', 'name email role')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await ActivityLog.countDocuments(filter);
+
+    success(res, {
+      logs,
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    });
   } catch (err) {
     error(res, err.message, 500);
   }

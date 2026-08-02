@@ -8,6 +8,9 @@ const vehicleSchema = new mongoose.Schema({
   engineType:         { type: String },
   registrationNumber: { type: String, required: true },
   VIN:                { type: String },
+  lastOilChangeDate:      { type: Date },
+  insuranceExpiryDate:    { type: Date },
+  registrationExpiryDate: { type: Date },
   isActive:           { type: Boolean, default: true }
 }, { timestamps: true });
 

@@ -108,6 +108,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const { login } = useAuth();
   const { toast } = useNotification();
   const navigate = useNavigate();
@@ -115,6 +116,14 @@ const Login = () => {
   const { lang, changeLanguage } = useLanguage();
   const [isLangOpen, setIsLangOpen] = useState(false);
   const lt = (key) => localT[lang]?.[key] || localT['en']?.[key] || key;
+
+  React.useEffect(() => {
+    const savedEmail = localStorage.getItem('remembered_email');
+    if (savedEmail) {
+      setIdentifier(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -132,7 +141,25 @@ const Login = () => {
 
       const data = await response.json();
       if (!response.ok || !data.success) {
+        if (data.isUnverified && data.email) {
+          localStorage.setItem('lastRegisteredEmail', data.email);
+          toast.info('Account unverified. A new OTP verification code has been sent to your email.');
+          navigate('/verify-otp', {
+            state: {
+              email: data.email,
+              demoCode: data.demoCode,
+              message: data.message
+            }
+          });
+          return;
+        }
         throw new Error(data.message || 'Invalid email or password.');
+      }
+
+      if (rememberMe) {
+        localStorage.setItem('remembered_email', identifier);
+      } else {
+        localStorage.removeItem('remembered_email');
       }
 
       // Parse name into firstName and lastName

@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -57,8 +58,7 @@ const GarageManagement = () => {
 
   const fetchCatalogData = async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const [servicesRes, locationsRes] = await Promise.all([
+            const [servicesRes, locationsRes] = await Promise.all([
         fetch(`${API_BASE}/api/vehicles/catalog/services`),
         fetch(`${API_BASE}/api/vehicles/catalog/locations`)
       ]);
@@ -90,8 +90,7 @@ const GarageManagement = () => {
 
   const fetchGarages = async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/api/garages`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -154,8 +153,7 @@ const GarageManagement = () => {
 
     setSubmitting(true);
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
 
       const payload = {
         name: formData.name,
@@ -205,8 +203,7 @@ const GarageManagement = () => {
 
   const handleToggleStatus = async (garageId) => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/api/garages/${garageId}/status`, {
         method: 'PATCH',
         headers: {
@@ -234,8 +231,7 @@ const GarageManagement = () => {
       isDelete: true,
       onConfirm: async () => {
         try {
-          const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const token = localStorage.getItem('token');
+                    const token = localStorage.getItem('token');
           const res = await fetch(`${API_BASE}/api/garages/${garageId}`, {
             method: 'DELETE',
             headers: {

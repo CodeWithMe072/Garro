@@ -219,7 +219,11 @@ export const verifyOtp = async (req, res) => {
 // POST /api/auth/login
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email: emailField, identifier, password } = req.body;
+    const email = emailField || identifier;          // accept both field names
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
 
     const user = await User.findOne({
       $or: [
@@ -238,7 +242,25 @@ export const login = async (req, res) => {
       return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
     }
 
-    if (user.status !== 'active') return res.status(403).json({ success: false, message: 'Please verify your account first.' });
+    if (user.status !== 'active') {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+      await Otp.findOneAndUpdate(
+        { email: user.email.toLowerCase() },
+        { code, createdAt: new Date() },
+        { upsert: true, new: true }
+      );
+
+      await sendEmailOtp(user.email, code);
+
+      return res.status(403).json({
+        success: false,
+        isUnverified: true,
+        email: user.email,
+        message: 'Your account is not verified yet. A new verification OTP code has been sent to your email.',
+        demoCode: process.env.RESEND_API_KEY ? null : code
+      });
+    }
 
     const token = signToken(user);
     await generateAndSetRefreshToken(res, user._id);
@@ -386,7 +408,7 @@ export const verifyPasswordChange = async (req, res) => {
 // POST /api/auth/refresh
 export const refresh = async (req, res) => {
   try {
-    const { refreshToken } = req.cookies;
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
     if (!refreshToken) {
       return res.status(401).json({ success: false, message: 'Refresh token missing' });
     }
@@ -421,6 +443,73 @@ export const refresh = async (req, res) => {
       token: newAccessToken,
       user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/forgot-password
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      // Don't leak if email exists
+      return res.json({ success: true, message: 'If that email exists in our system, we have sent a reset link.' });
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
+
+    const subject = 'Garro — Reset Your Password';
+    const html = `<div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 12px;">
+      <h2 style="color: #185FA5; text-align: center;">Reset Your Password</h2>
+      <p style="color: #475569; font-size: 15px; line-height: 1.6;">You requested a password reset for your Garro account. Please click the button below to reset your password:</p>
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${resetUrl}" style="background: #185FA5; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
+      </div>
+      <p style="color: #94a3b8; font-size: 13px; text-align: center;">This link will expire in 1 hour. If you did not request this, you can safely ignore this email.</p>
+    </div>`;
+
+    const { sendEmail } = await import('../utils/notify.js');
+    await sendEmail(user.email, subject, html);
+
+    res.json({ success: true, message: 'If that email exists in our system, we have sent a reset link.', demoToken: token });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/reset-password/:token
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { newPassword } = req.body;
+    if (!newPassword) return res.status(400).json({ success: false, message: 'New password is required' });
+
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired password reset token' });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 12);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ success: true, message: 'Password has been reset successfully.' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

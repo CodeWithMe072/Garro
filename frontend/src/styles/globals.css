@@ -962,7 +962,7 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
 
 /* Create Staff specific */
 .page-wrap{min-height:calc(100vh - 68px);display:flex;align-items:flex-start;justify-content:center;padding:40px 20px 60px}
-.card{background:white;border-radius:20px;border:1px solid #f1f5f9;box-shadow:0 4px 24px rgba(0,0,0,.07);width:100%;max-width:680px;overflow:hidden}
+.page-wrap .card{background:white;border-radius:20px;border:1px solid #f1f5f9;box-shadow:0 4px 24px rgba(0,0,0,.07);width:100%;max-width:680px;overflow:hidden}
 .card-head{background:linear-gradient(135deg,#0f172a,#1e293b);padding:32px 36px;position:relative;overflow:hidden}
 .card-head::before{content:'';position:absolute;top:-40px;right:-40px;width:140px;height:140px;border-radius:50%;background:rgba(255,92,26,.1);border:1px solid rgba(255,92,26,.15)}
 .card-head h1{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:white;letter-spacing:-.03em;margin-bottom:6px}

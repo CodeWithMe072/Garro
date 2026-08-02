@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import CustomDropdown from '../components/CustomDropdown';
@@ -52,8 +53,7 @@ const GarageList = () => {
   useEffect(() => {
     const fetchGarages = async () => {
       try {
-        const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const token = localStorage.getItem('token');
+                const token = localStorage.getItem('token');
         const response = await fetch(`${API_BASE}/api/garages`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });

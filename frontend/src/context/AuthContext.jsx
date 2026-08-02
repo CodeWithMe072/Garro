@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { disconnectSocket } from '../utils/socket';
 
@@ -12,8 +13,7 @@ export const AuthProvider = ({ children }) => {
 
   const triggerRefresh = async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${API_BASE}/api/auth/refresh`, {
+            const res = await fetch(`${API_BASE}/api/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
@@ -78,8 +78,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      await fetch(`${API_BASE}/api/auth/logout`, {
+            await fetch(`${API_BASE}/api/auth/logout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include'

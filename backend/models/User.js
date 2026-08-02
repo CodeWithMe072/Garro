@@ -13,7 +13,15 @@ const userSchema = new mongoose.Schema({
     lng: { type: Number }
   },
   lockUntil:        { type: Date },
-  wrongOtpAttempts: { type: Number, default: 0 }
+  wrongOtpAttempts: { type: Number, default: 0 },
+  resetPasswordToken:   { type: String },
+  resetPasswordExpires: { type: Date },
+  favoriteLocations: [{
+    label:   { type: String, required: true },
+    address: { type: String, required: true },
+    lat:     { type: Number },
+    lng:     { type: Number }
+  }]
 }, { timestamps: true });
 
 export default mongoose.model('User', userSchema);

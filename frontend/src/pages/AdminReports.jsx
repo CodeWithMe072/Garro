@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -38,8 +39,7 @@ const AdminReports = () => {
   const [recipientEmail, setRecipientEmail] = useState('');
   const [emailing, setEmailing] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+  
   useEffect(() => {
     fetchPreview();
   }, [reportType, months]);

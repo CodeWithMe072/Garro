@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import { 
   LuLayoutDashboard, 
   LuStore, 
@@ -17,7 +18,8 @@ import {
   LuDollarSign,
   LuTriangleAlert,
   LuMessageCircle,
-  LuTrendingUp
+  LuTrendingUp,
+  LuMegaphone
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -109,12 +111,17 @@ const AdminCustomers = () => {
 
       {/* ── MAIN CONTENT ── */}
       <main className="dash-main">
-        <div className="dash-header mb-4" style={{ display: 'block' }}>
-          <div className="dash-title d-flex align-items-center gap-2">
-            <LuUsers className="text-primary-garro" />
-            <span>{lang === 'ar' ? 'دليل وسجل العملاء' : (lang === 'ur' ? 'کسٹمر ڈائریکٹری اور ہسٹری' : 'Customer Directory & History')}</span>
+        <div className="dash-header mb-4" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div className="dash-title d-flex align-items-center gap-2">
+              <LuUsers className="text-primary-garro" />
+              <span>{lang === 'ar' ? 'دليل وسجل العملاء' : (lang === 'ur' ? 'کسٹمر ڈائریکٹری اور ہسٹری' : 'Customer Directory & History')}</span>
+            </div>
+            <div className="dash-subtitle">{lang === 'ar' ? 'البحث عن بيانات العملاء المسجلين وعرض سجلات المعاملات والحجوزات الخاصة بهم.' : (lang === 'ur' ? 'رجسٹرڈ کسٹمر ڈیٹا بیس تلاش کریں اور ان کی بکنگ اور ادائیگی کی سرگزشت دیکھیں۔' : 'Search registered customer database and view active booking and payment histories.')}</div>
           </div>
-          <div className="dash-subtitle">{lang === 'ar' ? 'البحث عن بيانات العملاء المسجلين وعرض سجلات المعاملات والحجوزات الخاصة بهم.' : (lang === 'ur' ? 'رجسٹرڈ کسٹمر ڈیٹا بیس تلاش کریں اور ان کی بکنگ اور ادائیگی کی سرگزشت دیکھیں۔' : 'Search registered customer database and view active booking and payment histories.')}</div>
+          <Link to="/admin/bulk-message" className="btn btn-primary d-flex align-items-center gap-2" style={{ borderRadius: '24px', padding: '10px 20px', fontWeight: 600 }}>
+            <LuMegaphone size={16} /> Bulk Announcement
+          </Link>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '380px 1fr', gap: '24px' }}>

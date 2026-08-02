@@ -11,9 +11,10 @@ import { uploadToR2 } from '../utils/upload.js';
 import { logActivity } from '../utils/audit.js';
 
 const STATUS_FLOW = {
-  pickup_scheduled:   ['picked_up'],
+  pickup_scheduled:   ['arrived_at_customer', 'picked_up'],
+  arrived_at_customer:['picked_up'],
   picked_up:          ['in_garage'],
-  in_garage:          ['inspection_done'],
+  in_garage:          ['inspection_done', 'repair_in_progress'],
   inspection_done:    ['repair_in_progress'],
   repair_in_progress: ['work_complete'],
   work_complete:      ['ready_for_delivery'],
@@ -22,14 +23,15 @@ const STATUS_FLOW = {
 };
 
 const STATUS_ROLES = {
-  pickup_scheduled:   ['admin', 'helper'],
-  picked_up:          ['helper'],
+  pickup_scheduled:   ['admin', 'helper', 'garage'],
+  arrived_at_customer:['admin', 'helper', 'garage'],
+  picked_up:          ['admin', 'helper', 'garage'],
   in_garage:          ['admin', 'helper', 'garage'],
-  inspection_done:    ['admin', 'garage'],
-  repair_in_progress: ['admin', 'garage'],
-  work_complete:      ['admin', 'garage'],
+  inspection_done:    ['admin', 'helper', 'garage'],
+  repair_in_progress: ['admin', 'helper', 'garage'],
+  work_complete:      ['admin', 'helper', 'garage'],
   ready_for_delivery: ['admin', 'helper', 'garage'],
-  delivered:          ['helper'],
+  delivered:          ['admin', 'helper', 'garage'],
   closed:             ['admin']
 };
 
@@ -170,14 +172,20 @@ export const updateStatus = async (req, res) => {
       console.error('Notification failed:', notifyErr.message);
     }
 
-    // Emit status update to customer via Socket.IO
+    // Emit status update to customer, staff, garage, and admin via Socket.IO
     const io = req.app.get('io');
     if (io) {
-      io.to(`job:${job._id}`).emit('job:status', {
-        jobId:  job._id,
+      const payload = {
+        _id: job.requestId,
+        jobId: job._id,
+        requestId: job.requestId,
         status: job.status,
         updatedAt: new Date()
-      });
+      };
+      io.to(`job:${job._id}`).emit('job:status', payload);
+      io.emit('job:status', payload);
+      io.emit('request:updated', payload);
+      io.emit('job:updated', job);
     }
 
     success(res, { job });
@@ -243,3 +251,59 @@ export const getJobByRequestId = async (req, res) => {
     error(res, err.message, 500);
   }
 };
+
+// PUT /api/jobs/:id/extend-time — staff/tech extends job completion time
+export const extendJobTime = async (req, res) => {
+  try {
+    const { additionalHours, reason } = req.body;
+    const hours = Number(additionalHours);
+    if (!hours || hours <= 0) return error(res, 'Valid additionalHours is required', 400);
+
+    const job = await Job.findById(req.params.id);
+    if (!job) return error(res, 'Job not found', 404);
+
+    const currentEnd = job.estimatedEndDate || new Date();
+    job.estimatedEndDate = new Date(currentEnd.getTime() + hours * 60 * 60 * 1000);
+    if (reason) {
+      job.notes = (job.notes ? job.notes + '\n' : '') + `[Time Extended +${hours}h]: ${reason}`;
+    }
+    await job.save();
+
+    // Also update request estimatedDuration
+    const request = await Request.findById(job.requestId).populate('userId');
+    if (request) {
+      request.estimatedDuration = (request.estimatedDuration || 2) + hours;
+      await request.save();
+
+      // Notify customer
+      if (request.userId) {
+        try {
+          await notifyCustomer(request.userId, 'time_extended', {
+            jobId: job._id,
+            additionalHours: hours,
+            reason: reason || 'Additional repair time required'
+          });
+        } catch (notifyErr) {
+          console.error('Time extend notification error:', notifyErr.message);
+        }
+      }
+    }
+
+    // Real-time socket event
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`job:${job._id}`).emit('job:status', {
+        jobId: job._id,
+        status: job.status,
+        estimatedEndDate: job.estimatedEndDate,
+        updatedAt: new Date()
+      });
+      io.emit('job:updated', job);
+    }
+
+    success(res, { job, message: `Job estimated time extended by ${hours} hour(s)` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+

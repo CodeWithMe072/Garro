@@ -30,6 +30,189 @@ const TrackRequest = () => {
   const [error, setError] = useState('');
   const [isEditingSchedule, setIsEditingSchedule] = useState(false);
 
+  const isStaffOrAdmin = ['staff', 'helper', 'admin', 'manager', 'superadmin'].includes(user?.role);
+
+  // Condition Report Modal State (for Staff check-in)
+  const [isVcrOpen, setIsVcrOpen] = useState(false);
+  const [vcrData, setVcrData] = useState({
+    odometer: '',
+    fuelLevel: 'half',
+    damageNotes: '',
+    driverName: user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.name || 'Helper')
+  });
+  const [submittingVcr, setSubmittingVcr] = useState(false);
+
+  // Extend Job Time Modal State
+  const [isExtendOpen, setIsExtendOpen] = useState(false);
+  const [extendHours, setExtendHours] = useState('1');
+  const [extendReason, setExtendReason] = useState('');
+  const [submittingExtend, setSubmittingExtend] = useState(false);
+
+  const handleJobStatusUpdate = async (nextStatus) => {
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      let targetJobId = associatedJob?._id;
+
+      if (!targetJobId) {
+        const jobRes = await fetch(`${API_BASE}/api/jobs/request/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const jobData = await jobRes.json();
+        if (jobRes.ok && jobData.success) {
+          targetJobId = jobData.job._id;
+          setAssociatedJob(jobData.job);
+        }
+      }
+
+      if (!targetJobId) {
+        toast.error('No active job found for status update.');
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/api/jobs/${targetJobId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: nextStatus })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(`Job status updated to: ${nextStatus.replace(/_/g, ' ')}`);
+        fetchRequestDetails();
+      } else {
+        toast.error(data.message || 'Failed to update job status.');
+      }
+    } catch (err) {
+      toast.error('Error updating job status.');
+    }
+  };
+
+  const handleVcrSubmit = async (e) => {
+    e.preventDefault();
+    if (!vcrData.odometer) {
+      toast.error('Odometer reading is required.');
+      return;
+    }
+    setSubmittingVcr(true);
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      let targetJobId = associatedJob?._id;
+
+      if (!targetJobId) {
+        const jobRes = await fetch(`${API_BASE}/api/jobs/request/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const jobData = await jobRes.json();
+        if (jobRes.ok && jobData.success) {
+          targetJobId = jobData.job._id;
+        }
+      }
+
+      if (!targetJobId) {
+        toast.error('No active job found for check-in.');
+        return;
+      }
+
+      const reportRes = await fetch(`${API_BASE}/api/jobs/${targetJobId}/condition-report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          odometer: Number(vcrData.odometer),
+          fuelLevel: vcrData.fuelLevel,
+          damageNotes: vcrData.damageNotes,
+          driverName: vcrData.driverName
+        })
+      });
+      const reportData = await reportRes.json();
+      if (!reportRes.ok || !reportData.success) {
+        throw new Error(reportData.message || 'Failed to submit condition report.');
+      }
+
+      const statusRes = await fetch(`${API_BASE}/api/jobs/${targetJobId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'in_garage' })
+      });
+      const statusData = await statusRes.json();
+      if (statusRes.ok && statusData.success) {
+        toast.success('Condition report submitted! Vehicle checked into garage.');
+        setIsVcrOpen(false);
+        fetchRequestDetails();
+      } else {
+        toast.error(statusData.message || 'Failed to update status to in_garage.');
+      }
+    } catch (err) {
+      toast.error(err.message || 'Error submitting report.');
+    } finally {
+      setSubmittingVcr(false);
+    }
+  };
+
+  const handleExtendSubmit = async (e) => {
+    e.preventDefault();
+    if (!extendHours || Number(extendHours) <= 0) {
+      toast.error('Please select valid additional hours.');
+      return;
+    }
+    setSubmittingExtend(true);
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      let targetJobId = associatedJob?._id;
+
+      if (!targetJobId) {
+        const jobRes = await fetch(`${API_BASE}/api/jobs/request/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const jobData = await jobRes.json();
+        if (jobRes.ok && jobData.success) {
+          targetJobId = jobData.job._id;
+        }
+      }
+
+      if (!targetJobId) {
+        toast.error('No active job found to extend duration.');
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/api/jobs/${targetJobId}/extend-time`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          additionalHours: Number(extendHours),
+          reason: extendReason
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(`Job duration extended by ${extendHours} hour(s)!`);
+        setIsExtendOpen(false);
+        setExtendHours('1');
+        setExtendReason('');
+        fetchRequestDetails();
+      } else {
+        toast.error(data.message || 'Failed to extend job duration.');
+      }
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setSubmittingExtend(false);
+    }
+  };
+
   const [catalogServices, setCatalogServices] = useState([]);
 
   useEffect(() => {
@@ -189,7 +372,7 @@ const TrackRequest = () => {
 
   // Fetch associated job and check review status
   useEffect(() => {
-    if (!request || !['completed', 'closed'].includes(request.status)) return;
+    if (!request) return;
 
     const fetchJobAndReviewStatus = async () => {
       try {
@@ -555,18 +738,24 @@ const TrackRequest = () => {
   }
 
   const steps = [
-    { label: 'Pending Assignment', key: 'new', icon: 'assignment_late' },
-    { label: 'Garage Assigned', key: 'assigned', icon: 'garage' },
-    { label: 'In Progress', key: 'in_progress', icon: 'build' },
-    { label: 'Completed', key: 'completed', icon: 'check_circle' }
+    { label: 'Pending', key: 'new', icon: 'schedule' },
+    { label: 'Garage Assigned', key: 'assigned', icon: 'store' },
+    { label: 'Arrived at Customer', key: 'arrived_at_customer', icon: 'location_on' },
+    { label: 'Vehicle Picked Up', key: 'picked_up', icon: 'directions_car' },
+    { label: 'In Garage', key: 'in_garage', icon: 'build' },
+    { label: 'Repairing', key: 'repair_in_progress', icon: 'engineering' },
+    { label: 'Delivered', key: 'delivered', icon: 'check_circle' }
   ];
 
   const getStepIndex = (status) => {
     if (status === 'cancelled') return -1;
-    if (status === 'new' || status === 'quote_pending') return 0;
-    if (status === 'assigned') return 1;
-    if (status === 'in_progress' || status === 'working') return 2;
-    if (status === 'completed') return 3;
+    if (['pending_payment', 'quote_approved', 'quote_pending', 'new', 'pending'].includes(status)) return 0;
+    if (['assigned', 'pickup_scheduled'].includes(status)) return 1;
+    if (status === 'arrived_at_customer') return 2;
+    if (status === 'picked_up') return 3;
+    if (['in_garage', 'inspection_done'].includes(status)) return 4;
+    if (['repair_in_progress', 'work_complete', 'ready_for_delivery'].includes(status)) return 5;
+    if (['delivered', 'completed', 'closed'].includes(status)) return 6;
     return 0;
   };
 
@@ -609,23 +798,175 @@ const TrackRequest = () => {
         </div>
       </div>
 
+      {/* Staff & Technician Action Panel */}
+      {isStaffOrAdmin && (
+        <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '16px', background: '#0f172a', color: 'white' }}>
+          <div className="card-body p-4">
+            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <h6 className="fw-bold mb-0 text-white d-flex align-items-center gap-2">
+                <span className="material-icons-round text-warning" style={{ fontSize: '20px' }}>build</span> Staff &amp; Technician Actions
+              </h6>
+              <span className="badge bg-secondary px-3 py-1.5 fs-7">
+                Role: {user?.role?.toUpperCase()}
+              </span>
+            </div>
+            <div className="d-flex flex-wrap gap-2">
+              {/* Step 1: Arrive at Customer */}
+              {(request.status === 'pickup_scheduled' || request.status === 'assigned') && (
+                <button
+                  onClick={() => handleJobStatusUpdate('arrived_at_customer')}
+                  className="btn btn-warning fw-bold px-3 py-2 text-dark"
+                  style={{ borderRadius: '10px' }}
+                >
+                  📍 Mark Arrived at Customer
+                </button>
+              )}
+
+              {/* Step 2: Pick Up Vehicle */}
+              {['pickup_scheduled', 'assigned', 'arrived_at_customer'].includes(request.status) && (
+                <button
+                  onClick={() => handleJobStatusUpdate('picked_up')}
+                  className="btn text-white fw-bold px-3 py-2"
+                  style={{ background: '#ff5c1a', border: 'none', borderRadius: '10px' }}
+                >
+                  🚗 Mark Picked Up
+                </button>
+              )}
+
+              {/* Step 3: Check-in to Garage */}
+              {request.status === 'picked_up' && (
+                <button
+                  onClick={() => setIsVcrOpen(true)}
+                  className="btn btn-success fw-bold px-3 py-2 text-white"
+                  style={{ borderRadius: '10px' }}
+                >
+                  📋 Check-in to Garage (Condition Report)
+                </button>
+              )}
+
+              {/* Step 4: Repair Progression Actions */}
+              {request.status === 'in_garage' && (
+                <button
+                  onClick={() => handleJobStatusUpdate('repair_in_progress')}
+                  className="btn btn-info fw-bold px-3 py-2 text-white"
+                  style={{ borderRadius: '10px' }}
+                >
+                  🔧 Start Repair Work
+                </button>
+              )}
+
+              {request.status === 'repair_in_progress' && (
+                <button
+                  onClick={() => handleJobStatusUpdate('work_complete')}
+                  className="btn btn-primary fw-bold px-3 py-2 text-white"
+                  style={{ borderRadius: '10px' }}
+                >
+                  ✅ Mark Work Complete
+                </button>
+              )}
+
+              {request.status === 'work_complete' && (
+                <button
+                  onClick={() => handleJobStatusUpdate('ready_for_delivery')}
+                  className="btn btn-warning fw-bold px-3 py-2 text-dark"
+                  style={{ borderRadius: '10px' }}
+                >
+                  🚚 Ready for Delivery
+                </button>
+              )}
+
+              {request.status === 'ready_for_delivery' && (
+                <button
+                  onClick={() => handleJobStatusUpdate('delivered')}
+                  className="btn btn-success fw-bold px-3 py-2 text-white"
+                  style={{ borderRadius: '10px' }}
+                >
+                  🚚 Mark Delivered to Customer
+                </button>
+              )}
+
+              {/* Action: Extend Job Time */}
+              {!['completed', 'closed', 'delivered', 'cancelled'].includes(request.status) && (
+                <button
+                  onClick={() => setIsExtendOpen(true)}
+                  className="btn fw-bold px-3 py-2 text-white"
+                  style={{ background: '#8b5cf6', border: 'none', borderRadius: '10px' }}
+                >
+                  ⏱️ Extend Job Duration
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refund Approved & Processed Card */}
+      {request.refundStatus === 'processed' && (
+        <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '16px', background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+          <div className="card-body p-4">
+            <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+              <h5 className="fw-bold mb-0 text-success d-flex align-items-center gap-2">
+                <span className="material-icons-round text-success">check_circle</span> Refund Approved &amp; Processed
+              </h5>
+              <span className="badge bg-success px-3 py-2 fs-7">REFUNDED</span>
+            </div>
+            <p className="text-dark mb-2 fs-6">
+              A total refund of <strong className="text-success fs-5">AED {Number(request.refundAmount || 0).toFixed(2)}</strong> has been approved by Admin and credited back to your payment card.
+            </p>
+            {request.adminNotes && (
+              <div className="p-3 rounded-3 mt-2" style={{ background: '#dcfce7', border: '1px solid #86efac', fontSize: '13px', color: '#14532d' }}>
+                <strong>Admin Notes / Breakdown:</strong> {request.adminNotes}
+              </div>
+            )}
+            <div className="text-muted small mt-2">
+              Refund Processed Date: {request.refundedAt ? new Date(request.refundedAt).toLocaleString() : 'Recently'}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation Pending Card */}
+      {request.status === 'cancellation_requested' && (
+        <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '16px', background: '#fef2f2', border: '1px solid #fecaca' }}>
+          <div className="card-body p-4">
+            <div className="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+              <h5 className="fw-bold mb-0 text-danger d-flex align-items-center gap-2">
+                <span className="material-icons-round text-danger">hourglass_top</span> Cancellation &amp; Refund Request Submitted
+              </h5>
+              <span className="badge bg-danger px-3 py-2 fs-7">PENDING APPROVAL</span>
+            </div>
+            <p className="text-danger-emphasis mb-0 fs-6">
+              Your cancellation request for reason: <em>"{request.cancellationReason || 'Requested by customer'}"</em> is currently being reviewed by Admin. Funds will be refunded to your card upon approval.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Timeline Stepper */}
       {request.status !== 'cancelled' && (
         <div className="card border-0 shadow-sm mb-4" style={{ borderRadius: '16px' }}>
           <div className="card-body p-4">
-            <h6 className="fw-bold text-dark mb-4">Service Progress Tracker</h6>
-            <div className="row position-relative g-0 align-items-center" style={{ minHeight: '120px' }}>
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+              <h6 className="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                <span className="material-icons-round text-warning">timeline</span> Service Progress Tracker
+              </h6>
+              <span className="badge bg-light text-dark border px-3 py-1.5 fs-7 fw-semibold">
+                Current Status: <strong style={{ color: '#ff5c1a' }}>{request.status?.replace(/_/g, ' ')?.toUpperCase()}</strong>
+              </span>
+            </div>
+
+            <div className="d-flex flex-wrap flex-md-nowrap position-relative align-items-center justify-content-between gap-2" style={{ minHeight: '110px' }}>
               {steps.map((step, idx) => {
                 const isActive = idx <= currentStepIdx;
                 const isCurrent = idx === currentStepIdx;
                 return (
-                  <div key={idx} className="col-12 col-md-3 text-center mb-3 mb-md-0 position-relative" style={{ zIndex: 2 }}>
+                  <div key={idx} className="text-center flex-fill position-relative my-2 my-md-0" style={{ zIndex: 2, minWidth: '85px' }}>
                     {/* Segment Connector Line to Next Step */}
                     {idx < steps.length - 1 && (
                       <div className="d-none d-md-block position-absolute" style={{
                         height: '3px',
-                        background: idx < currentStepIdx ? 'var(--brand)' : '#e2e8f0',
-                        top: '24px',
+                        background: idx < currentStepIdx ? '#ff5c1a' : '#e2e8f0',
+                        top: '22px',
                         left: '50%',
                         right: '-50%',
                         zIndex: -1,
@@ -634,22 +975,25 @@ const TrackRequest = () => {
                     )}
 
                     <div style={{
-                      width: '48px',
-                      height: '48px',
+                      width: '44px',
+                      height: '44px',
                       borderRadius: '50%',
-                      background: isCurrent ? 'var(--brand)' : isActive ? 'var(--brand-dark)' : '#f1f5f9',
+                      background: isCurrent ? 'linear-gradient(135deg, #ff5c1a, #f97316)' : isActive ? '#ff5c1a' : '#f1f5f9',
                       color: isActive ? '#fff' : '#94a3b8',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      margin: '0 auto 10px',
-                      boxShadow: isCurrent ? '0 0 15px rgba(255, 92, 26, 0.4)' : 'none',
+                      margin: '0 auto 8px',
+                      boxShadow: isCurrent ? '0 0 16px rgba(255, 92, 26, 0.45)' : 'none',
                       position: 'relative',
-                      zIndex: 3
+                      zIndex: 3,
+                      transition: 'all 0.3s ease'
                     }}>
-                      <span className="material-icons-round">{step.icon}</span>
+                      <span className="material-icons-round" style={{ fontSize: '22px' }}>{step.icon}</span>
                     </div>
-                    <div className={`small fw-bold ${isActive ? 'text-dark' : 'text-muted'}`}>{step.label}</div>
+                    <div className={`small fw-bold ${isActive ? 'text-dark' : 'text-muted'}`} style={{ fontSize: '11.5px', lineHeight: 1.2 }}>
+                      {step.label}
+                    </div>
                   </div>
                 );
               })}
@@ -1221,6 +1565,131 @@ const TrackRequest = () => {
                   title={hasConflict ? 'Resolve the time conflict first' : ''}
                 >
                   {submittingAssign ? 'Assigning...' : hasConflict ? 'Conflict — Change Time' : 'Confirm Assignment'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ── Vehicle Condition Report Form Modal ── */}
+      {isVcrOpen && (
+        <div className="custom-modal-overlay" onClick={() => setIsVcrOpen(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050, backdropFilter: 'blur(4px)' }}>
+          <div className="custom-modal confirm" onClick={(e) => e.stopPropagation()} style={{ background: '#ffffff', padding: '30px', borderRadius: '16px', maxWidth: '500px', width: '90%', color: '#0f172a', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0', textAlign: 'left' }}>
+            <h4 className="fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: '#0f172a' }}>
+              📋 Vehicle Check-in
+            </h4>
+            <p className="text-muted small mb-4">Submit a vehicle condition report to check the car into the garage.</p>
+
+            <form onSubmit={handleVcrSubmit}>
+              <div className="mb-3">
+                <label className="form-label small fw-bold text-secondary">Odometer Reading (km)</label>
+                <input 
+                  type="number" 
+                  className="form-control text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
+                  placeholder="e.g. 45000"
+                  value={vcrData.odometer}
+                  onChange={(e) => setVcrData({ ...vcrData, odometer: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label small fw-bold text-secondary">Fuel Level</label>
+                <select 
+                  className="form-select text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
+                  value={vcrData.fuelLevel}
+                  onChange={(e) => setVcrData({ ...vcrData, fuelLevel: e.target.value })}
+                  required
+                >
+                  <option value="empty">Empty</option>
+                  <option value="quarter">Quarter Tank</option>
+                  <option value="half">Half Tank</option>
+                  <option value="three_quarter">Three Quarter Tank</option>
+                  <option value="full">Full Tank</option>
+                </select>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label small fw-bold text-secondary">Damage/Inspection Notes</label>
+                <textarea 
+                  className="form-control text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
+                  rows="3" 
+                  placeholder="e.g. Scratch on front left door, minor dent on rear bumper"
+                  value={vcrData.damageNotes}
+                  onChange={(e) => setVcrData({ ...vcrData, damageNotes: e.target.value })}
+                />
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label small fw-bold text-secondary">Driver/Helper Name</label>
+                <input 
+                  type="text" 
+                  className="form-control text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
+                  value={vcrData.driverName}
+                  onChange={(e) => setVcrData({ ...vcrData, driverName: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'end', gap: '10px', marginTop: '24px' }}>
+                <button type="button" className="btn btn-outline-secondary btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px' }} onClick={() => setIsVcrOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn-success btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px' }} disabled={submittingVcr}>
+                  {submittingVcr ? 'Submitting...' : 'Submit & Check-in'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Extend Job Time Modal ── */}
+      {isExtendOpen && (
+        <div className="custom-modal-overlay" onClick={() => setIsExtendOpen(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050, backdropFilter: 'blur(4px)' }}>
+          <div className="custom-modal confirm" onClick={(e) => e.stopPropagation()} style={{ background: '#ffffff', padding: '30px', borderRadius: '16px', maxWidth: '480px', width: '90%', color: '#0f172a', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0', textAlign: 'left' }}>
+            <h4 className="fw-bold mb-1 d-flex align-items-center gap-2" style={{ color: '#0f172a' }}>
+              ⏱️ Extend Job Duration
+            </h4>
+            <p className="text-muted small mb-4">Add extra hours to the estimated completion time and inform the customer.</p>
+
+            <form onSubmit={handleExtendSubmit}>
+              <div className="mb-3">
+                <label className="form-label small fw-bold text-secondary">Additional Hours to Add</label>
+                <select 
+                  className="form-select text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
+                  value={extendHours}
+                  onChange={(e) => setExtendHours(e.target.value)}
+                  required
+                >
+                  <option value="1">1 Hour</option>
+                  <option value="2">2 Hours</option>
+                  <option value="3">3 Hours</option>
+                  <option value="4">4 Hours</option>
+                  <option value="6">6 Hours</option>
+                  <option value="24">24 Hours (1 Day)</option>
+                </select>
+              </div>
+
+              <div className="mb-3">
+                <label className="form-label small fw-bold text-secondary">Reason for Extension (Optional)</label>
+                <textarea 
+                  className="form-control text-dark bg-white" 
+                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
+                  rows="3" 
+                  placeholder="e.g. Additional parts required for installation, extended diagnostic testing"
+                  value={extendReason}
+                  onChange={(e) => setExtendReason(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'end', gap: '10px', marginTop: '24px' }}>
+                <button type="button" className="btn btn-outline-secondary btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px' }} onClick={() => setIsExtendOpen(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px', background: '#8b5cf6', borderColor: '#8b5cf6' }} disabled={submittingExtend}>
+                  {submittingExtend ? 'Updating...' : 'Extend Duration'}
                 </button>
               </div>
             </form>

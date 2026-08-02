@@ -5,6 +5,7 @@ import role from '../middleware/role.middleware.js';
 import * as ctrl from '../controllers/admin.controller.js';
 import * as invoiceCtrl from '../controllers/invoice.controller.js';
 import * as reqCtrl from '../controllers/request.controller.js';
+import * as pricingCtrl from '../controllers/servicePricing.controller.js';
 
 router.use(auth, role('admin'));
 
@@ -21,10 +22,25 @@ router.patch('/settings/mode',                    ctrl.setSystemMode);
 router.get('/settings',                           ctrl.getSettings);
 router.patch('/settings',                         ctrl.updateSettings);
 router.get('/users',                              ctrl.getUsers);
+router.get('/activity-logs',                     ctrl.getActivityLogs);
 router.patch('/requests/:id/manual-assign',       reqCtrl.manualAssign);
 
+// Service Pricing (admin-configurable)
+router.get('/service-pricing',                    pricingCtrl.getServicePricing);
+router.put('/service-pricing/:serviceType',       pricingCtrl.updateServicePricing);
+
+// Cancellation & Refund Management
+router.get('/cancellations/stats',                    reqCtrl.getRefundStats);
+router.get('/cancellations/export',                   reqCtrl.exportRefundReport);
+router.get('/cancellations/:id',                      reqCtrl.getRefundDetail);
+router.get('/cancellations',                        reqCtrl.getAdminCancellations);
+router.post('/cancellations/:id/approve',           reqCtrl.approveRefund);
+router.post('/cancellations/:id/reject',            reqCtrl.rejectCancellation);
+
 // Garage payout management
-router.get('/payouts',                            invoiceCtrl.getGaragePayouts);
-router.patch('/payouts/:id/process',              invoiceCtrl.processGaragePayout);
+router.get('/payouts/stats',                       invoiceCtrl.getPayoutStats);
+router.get('/payouts/export',                      invoiceCtrl.exportPayoutReport);
+router.get('/payouts',                             invoiceCtrl.getGaragePayouts);
+router.patch('/payouts/:id/process',               invoiceCtrl.processGaragePayout);
 
 export default router;

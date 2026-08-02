@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -13,8 +14,7 @@ const GarageDashboard = () => {
   const { toast } = useNotification();
   const navigate = useNavigate();
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+  
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');

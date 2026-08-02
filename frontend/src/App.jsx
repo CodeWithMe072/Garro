@@ -44,6 +44,8 @@ const AdminSignup = React.lazy(() => import('./pages/AdminSignup'));
 const StaffJoin = React.lazy(() => import('./pages/StaffJoin'));
 const PaymentPage = React.lazy(() => import('./pages/PaymentPage'));
 const GarageLogin = React.lazy(() => import('./pages/GarageLogin'));
+const ForgotPassword = React.lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const GarageDashboard = React.lazy(() => import('./pages/GarageDashboard'));
 const GarageJobs = React.lazy(() => import('./pages/GarageJobs'));
 const GarageEarnings = React.lazy(() => import('./pages/GarageEarnings'));
@@ -57,7 +59,12 @@ const AdminComplaints = React.lazy(() => import('./pages/AdminComplaints'));
 const AdminSettings = React.lazy(() => import('./pages/AdminSettings'));
 const AdminReports = React.lazy(() => import('./pages/AdminReports'));
 const AdminSupportChat = React.lazy(() => import('./pages/AdminSupportChat'));
+const AdminActivityLogs = React.lazy(() => import('./pages/AdminActivityLogs'));
+const AdminBulkMessage = React.lazy(() => import('./pages/AdminBulkMessage'));
+const HelpCenter = React.lazy(() => import('./pages/HelpCenter'));
+const MyReviews = React.lazy(() => import('./pages/MyReviews'));
 const CustomerDashboard = React.lazy(() => import('./pages/CustomerDashboard'));
+const AdminServicePricing = React.lazy(() => import('./pages/AdminServicePricing'));
 
 // Wrapper for pages with Navbar and Footer
 const PageLayout = ({ children }) => {
@@ -122,6 +129,8 @@ const App = () => {
             <Route path="/admin-signup" element={<AdminSignup />} />
             <Route path="/staff-join" element={<StaffJoin />} />
             <Route path="/garage-login" element={<GarageLogin />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Authenticated Routes with Layout */}
             <Route path="/home" element={<ProtectedRoute><PageLayout><Home /></PageLayout></ProtectedRoute>} />
@@ -135,6 +144,8 @@ const App = () => {
             <Route path="/my-vehicles" element={<ProtectedRoute><PageLayout><MyVehicles /></PageLayout></ProtectedRoute>} />
             <Route path="/my-invoices" element={<ProtectedRoute><PageLayout><MyInvoices /></PageLayout></ProtectedRoute>} />
             <Route path="/my-quotes" element={<ProtectedRoute><PageLayout><MyQuotes /></PageLayout></ProtectedRoute>} />
+            <Route path="/my-reviews" element={<ProtectedRoute><PageLayout><MyReviews /></PageLayout></ProtectedRoute>} />
+            <Route path="/help-center" element={<PageLayout><HelpCenter /></PageLayout>} />
             <Route path="/booking/:id" element={<ProtectedRoute><PageLayout><BookingDetails /></PageLayout></ProtectedRoute>} />
             
             <Route path="/insurance" element={<ProtectedRoute><PageLayout><Insurance /></PageLayout></ProtectedRoute>} />
@@ -159,6 +170,16 @@ const App = () => {
 
             {/* Dashboard Routes with Layout */}
             <Route path="/admin" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <PageLayout><AdminDashboard /></PageLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/refunds" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <PageLayout><AdminDashboard /></PageLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/payouts" element={
               <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
                 <PageLayout><AdminDashboard /></PageLayout>
               </ProtectedRoute>
@@ -203,6 +224,16 @@ const App = () => {
                 <PageLayout><AdminSettings /></PageLayout>
               </ProtectedRoute>
             } />
+            <Route path="/admin/activity-logs" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <PageLayout><AdminActivityLogs /></PageLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/bulk-message" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <PageLayout><AdminBulkMessage /></PageLayout>
+              </ProtectedRoute>
+            } />
             <Route path="/admin/reports" element={
               <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
                 <PageLayout><AdminReports /></PageLayout>
@@ -211,6 +242,11 @@ const App = () => {
             <Route path="/admin/quote-builder" element={
               <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
                 <PageLayout><AdminQuoteBuilder /></PageLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/service-pricing" element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
+                <PageLayout><AdminServicePricing /></PageLayout>
               </ProtectedRoute>
             } />
             <Route path="/admin/create-staff" element={

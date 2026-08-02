@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -34,8 +35,7 @@ const Home = () => {
   const [catalogServices, setCatalogServices] = useState([]);
   const [catalogLocations, setCatalogLocations] = useState([]);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
+  
   useEffect(() => {
     const fetchCatalog = async () => {
       try {
@@ -113,8 +113,7 @@ const Home = () => {
     const urgency = formData.get('urgency');
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token');
 
       // 1. Register vehicle
       const vehicleRes = await fetch(`${API_BASE}/api/vehicles`, {

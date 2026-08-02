@@ -1,3 +1,4 @@
+import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -48,8 +49,7 @@ const StaffManagement = () => {
   });
   const [savingSchedule, setSavingSchedule] = useState(false);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchHelpers = async () => {
