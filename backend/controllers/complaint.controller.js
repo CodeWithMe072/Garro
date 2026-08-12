@@ -1,13 +1,36 @@
 import Complaint from '../models/Complaint.js';
+import Job from '../models/Job.js';
 import Stripe from 'stripe';
 import Invoice from '../models/Invoice.js';
 import User from '../models/User.js';
-import { success, error  } from '../utils/response.js';
+import { success, error } from '../utils/response.js';
 import { notifyCustomer } from '../utils/notify.js';
 
 export const createComplaint = async (req, res) => {
   try {
     const complaint = await Complaint.create({ ...req.body, customerId: req.user.id });
+
+    // Auto-flag dispute edge case on associated job (deduped)
+    if (complaint.jobId) {
+      const job = await Job.findById(complaint.jobId);
+      if (job) {
+        job.isEdgeCase = true;
+        if (!job.edgeCaseFlags) job.edgeCaseFlags = [];
+        const existing = job.edgeCaseFlags.find(f => f.type === 'dispute');
+        if (existing) {
+          existing.flaggedAt = new Date();
+          existing.details = `Complaint filed: ${complaint.description || ''}`;
+        } else {
+          job.edgeCaseFlags.push({
+            type: 'dispute',
+            flaggedAt: new Date(),
+            details: `Complaint filed: ${complaint.description || ''}`
+          });
+        }
+        await job.save();
+      }
+    }
+
     success(res, { complaint }, 201);
   } catch (err) {
     error(res, err.message, 500);
@@ -17,7 +40,9 @@ export const createComplaint = async (req, res) => {
 export const getComplaints = async (req, res) => {
   try {
     const filter = req.user.role === 'customer' ? { customerId: req.user.id } : {};
-    const complaints = await Complaint.find(filter).populate('jobId').populate('customerId', 'name email');
+    const complaints = await Complaint.find(filter)
+      .populate('jobId')
+      .populate('customerId', 'name email phone');
     success(res, { complaints });
   } catch (err) {
     error(res, err.message, 500);

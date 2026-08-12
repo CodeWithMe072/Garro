@@ -119,8 +119,9 @@ const App = () => {
           <CustomerSupportChatWrapper />
           <Suspense fallback={<div className="container mt-5"><h4>Loading...</h4></div>}>
             <Routes>
-            {/* Standalone Route without Navbar/Footer */}
-            <Route path="/" element={<Landing />} />
+            {/* Public Routes with Layout */}
+            <Route path="/" element={<PageLayout><Home /></PageLayout>} />
+            <Route path="/home" element={<PageLayout><Home /></PageLayout>} />
 
             {/* Public Routes without Layout */}
             <Route path="/login" element={<Login />} />
@@ -133,7 +134,6 @@ const App = () => {
             <Route path="/reset-password" element={<ResetPassword />} />
 
             {/* Authenticated Routes with Layout */}
-            <Route path="/home" element={<ProtectedRoute><PageLayout><Home /></PageLayout></ProtectedRoute>} />
             <Route path="/customer/dashboard" element={<ProtectedRoute><PageLayout><CustomerDashboard /></PageLayout></ProtectedRoute>} />
             <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect /></ProtectedRoute>} />
             <Route path="/get-quote" element={<ProtectedRoute><PageLayout><GetQuote /></PageLayout></ProtectedRoute>} />
@@ -151,7 +151,7 @@ const App = () => {
             <Route path="/insurance" element={<ProtectedRoute><PageLayout><Insurance /></PageLayout></ProtectedRoute>} />
             <Route path="/insurance/:slug/quote" element={<ProtectedRoute><PageLayout><InsuranceQuote /></PageLayout></ProtectedRoute>} />
             <Route path="/roadside" element={<ProtectedRoute><PageLayout><Roadside /></PageLayout></ProtectedRoute>} />
-            <Route path="/emergency-pickup" element={<ProtectedRoute><PageLayout><EmergencyPickup /></PageLayout></ProtectedRoute>} />
+            <Route path="/emergency-pickup" element={<Navigate to="/roadside" replace />} />
             <Route path="/end-of-life" element={<ProtectedRoute><PageLayout><EndOfLife /></PageLayout></ProtectedRoute>} />
             
             <Route path="/search" element={<ProtectedRoute><PageLayout><Search /></PageLayout></ProtectedRoute>} />
@@ -163,6 +163,7 @@ const App = () => {
             <Route path="/my-bookings" element={<ProtectedRoute><PageLayout><MyBookings /></PageLayout></ProtectedRoute>} />
             <Route path="/booking/confirm/:id" element={<ProtectedRoute><PageLayout><BookingConfirm /></PageLayout></ProtectedRoute>} />
             <Route path="/payment" element={<ProtectedRoute><PageLayout><PaymentPage /></PageLayout></ProtectedRoute>} />
+            <Route path="/payment/:id" element={<ProtectedRoute><PageLayout><PaymentPage /></PageLayout></ProtectedRoute>} />
             
             <Route path="/about" element={<PageLayout><About /></PageLayout>} />
             <Route path="/contact" element={<PageLayout><Contact /></PageLayout>} />
@@ -239,11 +240,7 @@ const App = () => {
                 <PageLayout><AdminReports /></PageLayout>
               </ProtectedRoute>
             } />
-            <Route path="/admin/quote-builder" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminQuoteBuilder /></PageLayout>
-              </ProtectedRoute>
-            } />
+            <Route path="/admin/quote-builder" element={<Navigate to="/admin/service-pricing" replace />} />
             <Route path="/admin/service-pricing" element={
               <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
                 <PageLayout><AdminServicePricing /></PageLayout>

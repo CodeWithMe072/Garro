@@ -78,9 +78,13 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-            await fetch(`${API_BASE}/api/auth/logout`, {
+      const storedToken = localStorage.getItem('token');
+      await fetch(`${API_BASE}/api/auth/logout`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(storedToken ? { 'Authorization': `Bearer ${storedToken}` } : {})
+        },
         credentials: 'include'
       });
     } catch (err) {
@@ -88,6 +92,14 @@ export const AuthProvider = ({ children }) => {
     } finally {
       localStorage.removeItem('user');
       localStorage.removeItem('token');
+      localStorage.removeItem('remembered_email');
+      localStorage.removeItem('pending_quote_data');
+      sessionStorage.clear();
+
+      document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
       setUser(null);
       setIsAuthenticated(false);
       disconnectSocket();

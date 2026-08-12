@@ -29,6 +29,7 @@ const Home = () => {
   const [cityName, setCityName] = useState('Dubai');
   const [area, setArea] = useState('');
   const [urgency, setUrgency] = useState('');
+  const [vinNumber, setVinNumber] = useState('');
 
   // Catalog states
   const [catalogBrands, setCatalogBrands] = useState([]);
@@ -92,11 +93,6 @@ const Home = () => {
       toast.warning('Admin accounts cannot place quote requests.');
       return;
     }
-    if (!isAuthenticated) {
-      toast.info("Please sign in or register first to submit a quote request.");
-      navigate('/login');
-      return;
-    }
 
     const form = e.target;
     const formData = new FormData(form);
@@ -111,100 +107,54 @@ const Home = () => {
     const problem_title = formData.get('problem_title');
     const phone = formData.get('phone');
     const urgency = formData.get('urgency');
+    const vin_number = formData.get('vin_number') || vinNumber;
 
     try {
-            const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token');
+      const payload = {
+        category,
+        subCategory,
+        carBrand,
+        carModel,
+        carYear,
+        cityName: city_name,
+        area,
+        problemTitle: problem_title,
+        phone,
+        urgency,
+        vinNumber: vin_number
+      };
 
-      // 1. Register vehicle
-      const vehicleRes = await fetch(`${API_BASE}/api/vehicles`, {
+      const res = await fetch(`${API_BASE}/api/requests/submit-quote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({
-          make: car_brand || 'Toyota',
-          model: car_model || 'Camry',
-          year: parseInt(car_year) || 2020,
-          registrationNumber: `DXB-${Math.floor(Math.random() * 90000 + 10000)}`
-        })
+        body: JSON.stringify(payload)
       });
-      const vehicleData = await vehicleRes.json();
-      if (!vehicleRes.ok || !vehicleData.success) {
-        throw new Error(vehicleData.message || 'Failed to register vehicle.');
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        if (data.requireAuth) {
+          localStorage.setItem('pending_quote_token', data.quoteToken);
+          localStorage.setItem('pending_quote_data', JSON.stringify(payload));
+          toast.info('Please sign in or create an account to finalize your quote.');
+          navigate('/login', { state: { quoteToken: data.quoteToken } });
+          return;
+        }
+
+        if (data.request) {
+          toast.success('Quote request submitted successfully!');
+          navigate(data.redirectUrl || `/payment/${data.request._id}`);
+          return;
+        }
       }
 
-      const vehicleId = vehicleData.vehicle._id;
-
-      // 2. Map service code
-      const serviceTypeMap = {
-        oil_change: 'minor_service',
-        brake_repair: 'brake_repair',
-        battery: 'battery',
-        engine: 'other',
-        tyre: 'other',
-        ac: 'ac_repair',
-        full_detailing: 'other',
-        towing: 'other',
-        other: 'other'
-      };
-      const serviceTypeCode = serviceTypeMap[sub_category] || 'other';
-
-      // 3. Create preferred date
-      let preferredDateObj = new Date();
-      if (urgency === 'today') {
-        preferredDateObj.setHours(preferredDateObj.getHours() + 2);
-      } else if (urgency === 'this_week') {
-        preferredDateObj.setDate(preferredDateObj.getDate() + 3);
-      } else {
-        preferredDateObj.setDate(preferredDateObj.getDate() + 1); // tomorrow
-      }
-
-      const subCategoryLabels = {
-        oil_change: 'Oil Change',
-        brake_repair: 'Brake Repair',
-        battery: 'Battery Service',
-        engine: 'Engine Repair',
-        tyre: 'Tyre Service',
-        ac: 'AC Gas & Repair',
-        full_detailing: 'Full Detailing',
-        towing: 'Towing Service',
-        other: 'Other General Service'
-      };
-      const subCategoryLabel = subCategoryLabels[sub_category] || sub_category;
-
-      // 4. Submit booking request (with garageId: null for general unassigned quote request)
-      const requestRes = await fetch(`${API_BASE}/api/requests`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          vehicleId,
-          serviceType: serviceTypeCode,
-          subCategory: subCategoryLabel || sub_category,
-          description: problem_title || `Requesting quote for ${subCategoryLabel || sub_category || category || 'general service'}`,
-          preferredDate: preferredDateObj,
-          urgency: urgency || 'flexible',
-          location: {
-            address: `${area || ''}, ${city_name || ''}`.trim() || 'Dubai',
-            lat: 25.2048,
-            lng: 55.2708
-          },
-          garageId: null // None selected yet. Admin must assign manually.
-        })
-      });
-
-      const requestData = await requestRes.json();
-      if (!requestRes.ok || !requestData.success) {
-        throw new Error(requestData.message || 'Failed to submit quote request.');
-      }
-
-      toast.success('Quote request submitted successfully! Redirecting to payment...');
-      navigate(`/payment?quoteId=${requestData.quoteId}`);
+      throw new Error(data.message || 'Failed to submit quote.');
     } catch (err) {
-      toast.error(err.message || 'An error occurred during submission.');
+      console.error(err);
+      toast.error(err.message || 'Error submitting request. Please try again.');
     }
   };
 
@@ -326,16 +276,20 @@ const Home = () => {
                 />
               </div>
 
-              {/* Row 3: Issue, Contact, Time, Submit */}
-              <div className="col-md-4">
+              {/* Row 3: Issue, Contact, VIN, Time, Submit */}
+              <div className="col-md-3">
                 <div className="qform-label"><span className="material-icons-round">description</span> {t('describe_issue')}</div>
                 <input type="text" name="problem_title" className="qform-input" placeholder={t('desc_placeholder')} />
               </div>
-              <div className="col-md-3">
+              <div className="col-md-2">
                 <div className="qform-label"><span className="material-icons-round">phone</span> {t('contact_info')}</div>
                 <input type="tel" name="phone" className="qform-input" placeholder={t('phone_placeholder')} />
               </div>
               <div className="col-md-3">
+                <div className="qform-label"><span className="material-icons-round">subtitles</span> VIN / Chassis No. (Optional)</div>
+                <input type="text" name="vin_number" className="qform-input" placeholder="e.g. 17-digit VIN" value={vinNumber} onChange={(e) => setVinNumber(e.target.value)} />
+              </div>
+              <div className="col-md-2">
                 <div className="qform-label"><span className="material-icons-round">access_time</span> {t('preferred_time')}</div>
                 <CustomDropdown
                   name="urgency"
@@ -352,22 +306,9 @@ const Home = () => {
                 />
               </div>
               <div className="col-md-2 d-flex align-items-end flex-column justify-content-end" style={{ gap: '6px' }}>
-                {isGuest && (
-                  <p style={{ margin: 0, fontSize: '11px', color: '#93c5fd', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
-                    Log in as a customer to submit
-                  </p>
-                )}
-                {isReadOnly && (
-                  <p style={{ margin: 0, fontSize: '11px', color: '#fb923c', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
-                    Admin accounts cannot place requests
-                  </p>
-                )}
                 <button
                   type="submit"
                   className="btn-quote-submit"
-                  disabled={!canSubmit}
-                  title={isGuest ? 'Log in as a customer to submit' : !canSubmit ? 'Your account type cannot place quote requests' : ''}
-                  style={!canSubmit ? { opacity: 0.45, cursor: 'not-allowed', filter: 'grayscale(40%)', pointerEvents: 'none' } : {}}
                 >
                   {t('get_a_quote')}
                 </button>
@@ -415,6 +356,28 @@ const Home = () => {
                 </div>
                 <div className="hiw-name">{t('step3_title')}</div>
                 <div className="hiw-desc">{t('step3_desc')}</div>
+              </div>
+            </div>
+            <div className="col-auto hiw-connector"><span className="material-icons-round">arrow_forward</span></div>
+            <div className="col">
+              <div className="hiw-card">
+                <div className="hiw-num">04</div>
+                <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#8b5cf6,#6d28d9)' }}>
+                  <span className="material-icons-round">build_circle</span>
+                </div>
+                <div className="hiw-name">{t('step4_title')}</div>
+                <div className="hiw-desc">{t('step4_desc')}</div>
+              </div>
+            </div>
+            <div className="col-auto hiw-connector"><span className="material-icons-round">arrow_forward</span></div>
+            <div className="col">
+              <div className="hiw-card">
+                <div className="hiw-num">05</div>
+                <div className="hiw-icon-wrap" style={{ background: 'linear-gradient(135deg,#06b6d4,#0891b2)' }}>
+                  <span className="material-icons-round">task_alt</span>
+                </div>
+                <div className="hiw-name">{t('step5_title')}</div>
+                <div className="hiw-desc">{t('step5_desc')}</div>
               </div>
             </div>
           </div>

@@ -21,9 +21,15 @@ import {
   LuChevronRight,
   LuPhone,
   LuMail,
-  LuStar
+  LuStar,
+  LuFileText,
+  LuPlus,
+  LuUpload,
+  LuExternalLink
 } from 'react-icons/lu';
 import CustomMultiSelect from '../components/CustomMultiSelect';
+import CustomDropdown from '../components/CustomDropdown';
+import DocumentDropzone from '../components/DocumentDropzone';
 import AdminSidebar from '../components/AdminSidebar';
 
 const GarageManagement = () => {
@@ -34,10 +40,21 @@ const GarageManagement = () => {
   const [garages, setGarages] = useState([]);
   const [loading, setLoading] = useState(true);
 
-
-  
   const [serviceOptions, setServiceOptions] = useState([]);
   const [areaOptions, setAreaOptions] = useState([]);
+
+  const documentTypesList = [
+    'Trade License',
+    'Commercial Registration (CR)',
+    'VAT / Tax Registration Certificate',
+    'Civil Defense Safety Permit',
+    'Garage Insurance Policy',
+    'Owner / Manager Emirates ID',
+    'Bank Account / IBAN Letter',
+    'Environmental & Municipality Clearance',
+    'Workplace Health & Safety Certificate',
+    'Other Compliance Document'
+  ];
 
   // Modal control
   const [isOpen, setIsOpen] = useState(false);
@@ -50,6 +67,7 @@ const GarageManagement = () => {
     commissionPercent: 10,
     services: [],
     areas: [],
+    documents: [],
     status: 'active',
     lat: 25.2048,
     lng: 55.2708
@@ -58,7 +76,7 @@ const GarageManagement = () => {
 
   const fetchCatalogData = async () => {
     try {
-            const [servicesRes, locationsRes] = await Promise.all([
+      const [servicesRes, locationsRes] = await Promise.all([
         fetch(`${API_BASE}/api/vehicles/catalog/services`),
         fetch(`${API_BASE}/api/vehicles/catalog/locations`)
       ]);
@@ -90,7 +108,7 @@ const GarageManagement = () => {
 
   const fetchGarages = async () => {
     try {
-            const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token');
       const res = await fetch(`${API_BASE}/api/garages`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -120,6 +138,7 @@ const GarageManagement = () => {
       commissionPercent: 10,
       services: [],
       areas: [],
+      documents: [],
       status: 'active',
       lat: 25.2048,
       lng: 55.2708
@@ -129,6 +148,13 @@ const GarageManagement = () => {
 
   const handleOpenEditModal = (garage) => {
     setEditGarageId(garage._id);
+    const formattedDocs = (garage.documents || []).map(doc => {
+      if (typeof doc === 'string') {
+        return { docType: doc, fileUrl: '', fileName: '' };
+      }
+      return doc;
+    });
+
     setFormData({
       name: garage.name || '',
       contactPerson: garage.contactPerson || '',
@@ -137,11 +163,96 @@ const GarageManagement = () => {
       commissionPercent: garage.commissionPercent ?? 10,
       services: garage.services || [],
       areas: garage.areas || [],
+      documents: formattedDocs,
       status: garage.status || 'active',
       lat: garage.location?.lat ?? 25.2048,
       lng: garage.location?.lng ?? 55.2708
     });
     setIsOpen(true);
+  };
+
+  // Document row actions inside nested table
+  const handleAddDocumentRow = () => {
+    setFormData(prev => ({
+      ...prev,
+      documents: [
+        ...prev.documents,
+        { docType: 'Trade License', fileUrl: '', fileName: '', uploading: false }
+      ]
+    }));
+  };
+
+  const handleRemoveDocumentRow = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      documents: prev.documents.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleDocumentTypeChange = (index, value) => {
+    setFormData(prev => {
+      const updated = [...prev.documents];
+      updated[index] = { ...updated[index], docType: value };
+      return { ...prev, documents: updated };
+    });
+  };
+
+  const handleClearDocumentFile = (index) => {
+    setFormData(prev => {
+      const updated = [...prev.documents];
+      updated[index] = { ...updated[index], fileUrl: '', fileName: '' };
+      return { ...prev, documents: updated };
+    });
+  };
+
+  const handleDocumentFileChange = async (index, file) => {
+    if (!file) return;
+
+    // Set row uploading state
+    setFormData(prev => {
+      const updated = [...prev.documents];
+      updated[index] = { ...updated[index], uploading: true };
+      return { ...prev, documents: updated };
+    });
+
+    try {
+      const token = localStorage.getItem('token');
+      const body = new FormData();
+      body.append('file', file);
+
+      const res = await fetch(`${API_BASE}/api/garages/upload-document`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'File upload failed');
+      }
+
+      toast.success('Document file uploaded!');
+
+      setFormData(prev => {
+        const updated = [...prev.documents];
+        updated[index] = {
+          ...updated[index],
+          fileUrl: data.fileUrl,
+          fileName: data.fileName || file.name,
+          uploading: false
+        };
+        return { ...prev, documents: updated };
+      });
+    } catch (err) {
+      toast.error(err.message);
+      setFormData(prev => {
+        const updated = [...prev.documents];
+        updated[index] = { ...updated[index], uploading: false };
+        return { ...prev, documents: updated };
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -153,7 +264,7 @@ const GarageManagement = () => {
 
     setSubmitting(true);
     try {
-            const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token');
 
       const payload = {
         name: formData.name,
@@ -163,6 +274,7 @@ const GarageManagement = () => {
         commissionPercent: Number(formData.commissionPercent),
         services: formData.services,
         areas: formData.areas,
+        documents: formData.documents.map(({ docType, fileUrl, fileName }) => ({ docType, fileUrl, fileName })),
         status: formData.status,
         location: {
           lat: Number(formData.lat),
@@ -186,204 +298,217 @@ const GarageManagement = () => {
       });
 
       const data = await res.json();
-      if (res.ok && data.success) {
-        toast.success(editGarageId ? 'Garage updated successfully!' : 'Garage created successfully!');
-        setIsOpen(false);
-        fetchGarages();
-      } else {
-        toast.error(data.message || 'Failed to save garage.');
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to save garage');
       }
+
+      toast.success(editGarageId ? 'Garage updated successfully!' : 'Garage added successfully!');
+      setIsOpen(false);
+      fetchGarages();
     } catch (err) {
-      console.error(err);
-      toast.error('An error occurred.');
+      toast.error(err.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleToggleStatus = async (garageId) => {
+  const handleToggleStatus = async (id) => {
     try {
-            const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/garages/${garageId}/status`, {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/garages/${id}/toggle-status`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success(`Garage status toggled successfully!`);
+        toast.success(data.message || 'Status updated');
         fetchGarages();
       } else {
-        toast.error(data.message || 'Failed to toggle status.');
+        toast.error(data.message || 'Failed to update status');
       }
     } catch (err) {
-      toast.error('An error occurred.');
+      toast.error(err.message);
     }
   };
 
-  const handleDelete = (garageId, garageName) => {
-    confirm({
-      title: 'Remove Garage',
-      message: `Are you sure you want to permanently delete "${garageName}"? This action cannot be undone.`,
-      confirmText: 'Yes, Delete',
-      cancelText: 'Cancel',
-      isDelete: true,
-      onConfirm: async () => {
-        try {
-                    const token = localStorage.getItem('token');
-          const res = await fetch(`${API_BASE}/api/garages/${garageId}`, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          const data = await res.json();
-          if (res.ok && data.success) {
-            toast.success('Garage removed successfully.');
-            fetchGarages();
-          } else {
-            toast.error(data.message || 'Failed to remove garage.');
-          }
-        } catch (err) {
-          toast.error('An error occurred.');
-        }
+  const handleDelete = async (id, name) => {
+    const isConfirmed = await confirm(`Are you sure you want to delete ${name}?`);
+    if (!isConfirmed) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/garages/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Garage deleted successfully');
+        fetchGarages();
+      } else {
+        toast.error(data.message || 'Failed to delete garage');
       }
-    });
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
+  // Quick Stats
   const stats = {
     total: garages.length,
     active: garages.filter(g => g.status === 'active').length,
-    inactive: garages.filter(g => g.status !== 'active').length,
-    avgComm: garages.length ? Math.round(garages.reduce((sum, g) => sum + (g.commissionPercent || 10), 0) / garages.length) : 10
+    avgComm: garages.length ? (garages.reduce((acc, g) => acc + (g.commissionPercent || 0), 0) / garages.length).toFixed(1) : 0
   };
 
   return (
-    <div className="dash-wrapper">
-      {/* ── SIDEBAR ── */}
-      <AdminSidebar />
+    <div className="admin-page-container d-flex">
+      <style>{`
+        .custom-modal-no-scrollbar {
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+        .custom-modal-no-scrollbar::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+          height: 0 !important;
+        }
+      `}</style>
 
-      {/* ── MAIN CONTENT ── */}
-      <main className="dash-main">
-        <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <div className="dash-title d-flex align-items-center gap-2"><LuStore /> {t('manage_partner_garages')}</div>
-            <div className="dash-subtitle">{t('register_configure_workshops')}</div>
-          </div>
-          <div className="d-flex align-items-center gap-3">
-            <button onClick={handleOpenAddModal} className="btn-primary-garro py-2 px-4 fw-bold shadow-sm" style={{ borderRadius: '10px' }}>
-              + {t('add_new_garage')}
+      <AdminSidebar activeTab="garages" />
+
+      {/* Main Content Area */}
+      <main className="admin-main-content flex-grow-1 p-4" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+        <div className="container-fluid max-w-7xl mx-auto">
+          
+          {/* Header */}
+          <div className="d-flex align-items-center justify-content-between mb-4">
+            <div>
+              <h2 className="fw-bold text-dark mb-1">{t('garages')}</h2>
+              <p className="text-muted small mb-0">{t('manage_garages_sub')}</p>
+            </div>
+            <button onClick={handleOpenAddModal} className="btn btn-primary d-flex align-items-center gap-2 px-3 py-2 fw-semibold" style={{ borderRadius: '10px' }}>
+              <LuStore size={18} /> {t('add_garage')}
             </button>
           </div>
-        </div>
 
-        {/* Stats */}
-        <div className="row g-4 mb-4">
-          <div className="col-12 col-md-3">
-            <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
-              <div className="text-muted small fw-bold uppercase">{t('total_garages')}</div>
-              <div className="fs-2 fw-bold text-dark mt-1">{stats.total}</div>
+          {/* Quick Stats Cards */}
+          <div className="row g-3 mb-4">
+            <div className="col-12 col-md-4">
+              <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
+                <div className="text-muted small fw-bold uppercase">{t('total_garages')}</div>
+                <div className="fs-2 fw-bold text-dark mt-1">{stats.total}</div>
+              </div>
+            </div>
+            <div className="col-12 col-md-4">
+              <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
+                <div className="text-muted small fw-bold uppercase">{t('active_garages')}</div>
+                <div className="fs-2 fw-bold text-success mt-1">{stats.active}</div>
+              </div>
+            </div>
+            <div className="col-12 col-md-4">
+              <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
+                <div className="text-muted small fw-bold uppercase">{t('avg_commission')}</div>
+                <div className="fs-2 fw-bold text-dark mt-1">{stats.avgComm}%</div>
+              </div>
             </div>
           </div>
-          <div className="col-12 col-md-3">
-            <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
-              <div className="text-muted small fw-bold uppercase" style={{ color: '#10b981' }}>{t('active_partners')}</div>
-              <div className="fs-2 fw-bold text-success mt-1">{stats.active}</div>
-            </div>
-          </div>
-          <div className="col-12 col-md-3">
-            <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
-              <div className="text-muted small fw-bold uppercase" style={{ color: '#f59e0b' }}>{t('suspended_inactive')}</div>
-              <div className="fs-2 fw-bold text-warning mt-1">{stats.inactive}</div>
-            </div>
-          </div>
-          <div className="col-12 col-md-3">
-            <div className="card border-0 shadow-sm p-4" style={{ borderRadius: '16px', background: 'white', maxWidth: 'none' }}>
-              <div className="text-muted small fw-bold uppercase">{t('avg_commission')}</div>
-              <div className="fs-2 fw-bold text-dark mt-1">{stats.avgComm}%</div>
-            </div>
-          </div>
-        </div>
 
-        {/* Garages List Table */}
-        <div className="card border-0 shadow-sm" style={{ borderRadius: '16px', maxWidth: 'none' }}>
-          <div className="card-body p-0">
-            <div className="table-responsive">
-              <table className="table align-middle mb-0" style={{ minWidth: '800px' }}>
-                <thead className="table-light">
-                  <tr>
-                    <th className="ps-4 py-3">{t('workshop_name')}</th>
-                    <th className="py-3">{t('contact')}</th>
-                    <th className="py-3">{t('areas_covered')}</th>
-                    <th className="py-3">{t('rating')}</th>
-                    <th className="py-3">{t('commission')}</th>
-                    <th className="py-3">{t('status')}</th>
-                    <th className="py-3 text-end pe-4">{t('actions')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {loading ? (
+          {/* Garages List Table */}
+          <div className="card border-0 shadow-sm" style={{ borderRadius: '16px', maxWidth: 'none' }}>
+            <div className="card-body p-0">
+              <div className="table-responsive">
+                <table className="table align-middle mb-0" style={{ minWidth: '950px' }}>
+                  <thead className="table-light">
                     <tr>
-                      <td colSpan="7" className="text-center py-5">
-                        <div className="spinner-border text-primary" role="status"></div>
-                        <div className="mt-2 text-muted">Fetching workshops...</div>
-                      </td>
+                      <th className="ps-4 py-3">{t('workshop_name')}</th>
+                      <th className="py-3">{t('contact')}</th>
+                      <th className="py-3">Attached Documents</th>
+                      <th className="py-3">{t('rating')}</th>
+                      <th className="py-3">{t('commission')}</th>
+                      <th className="py-3">{t('status')}</th>
+                      <th className="py-3 text-end pe-4">{t('actions')}</th>
                     </tr>
-                  ) : garages.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="text-center py-5">
-                        <div style={{ fontSize: '3rem', color: '#ff5c1a' }}><LuStore /></div>
-                        <div className="fw-bold text-dark fs-5 mt-2">No garages registered yet</div>
-                        <p className="text-muted small mt-1">Get started by adding your first service garage workshop.</p>
-                      </td>
-                    </tr>
-                  ) : (
-                    garages.map(g => (
-                      <tr key={g._id}>
-                        <td className="ps-4">
-                          <div className="fw-bold text-dark">{g.name}</div>
-                          <div className="text-muted small">ID: {g._id}</div>
-                        </td>
-                        <td>
-                          <div className="fw-semibold text-dark">{g.contactPerson || 'N/A'}</div>
-                           <div className="text-muted small d-flex align-items-center gap-1"><LuPhone size={12} /> {g.phone}</div>
-                           <div className="text-muted small d-flex align-items-center gap-1"><LuMail size={12} /> {g.email || 'N/A'}</div>
-                        </td>
-                        <td style={{ maxWidth: '200px' }}>
-                          <span className="small text-muted d-block text-truncate" title={g.areas?.join(', ')}>
-                            {g.areas?.join(', ') || 'N/A'}
-                          </span>
-                        </td>
-                        <td>
-                           <div className="d-flex align-items-center text-warning fw-bold gap-1">
-                             <LuStar size={14} /> {g.rating?.toFixed(1) || '0.0'}
-                           </div>
-                        </td>
-                        <td>{g.commissionPercent ?? 10}%</td>
-                        <td>
-                          <span className={`badge py-2 px-3 fs-8 ${g.status === 'active' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
-                            {g.status === 'active' ? t('active').toUpperCase() : t('inactive').toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="text-end pe-4">
-                          <div className="d-flex justify-content-end gap-2">
-                            <button onClick={() => handleOpenEditModal(g)} className="btn btn-sm btn-outline-secondary py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
-                              <LuPencil className="me-1" /> {t('edit')}
-                            </button>
-                            <button onClick={() => handleToggleStatus(g._id)} className="btn btn-sm btn-outline-warning py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
-                              <LuRefreshCw className="me-1" /> {t('toggle_active')}
-                            </button>
-                            <button onClick={() => handleDelete(g._id, g.name)} className="btn btn-sm btn-outline-danger py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
-                              <LuTrash2 className="me-1" /> {t('delete')}
-                            </button>
-                          </div>
+                  </thead>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan="7" className="text-center py-5">
+                          <div className="spinner-border text-primary" role="status"></div>
+                          <div className="mt-2 text-muted">Fetching workshops...</div>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : garages.length === 0 ? (
+                      <tr>
+                        <td colSpan="7" className="text-center py-5">
+                          <div style={{ fontSize: '3rem', color: '#ff5c1a' }}><LuStore /></div>
+                          <div className="fw-bold text-dark fs-5 mt-2">No garages registered yet</div>
+                          <p className="text-muted small mt-1">Get started by adding your first service garage workshop.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      garages.map(g => (
+                        <tr key={g._id}>
+                          <td className="ps-4">
+                            <div className="fw-bold text-dark">{g.name}</div>
+                            <div className="text-muted small">ID: {g._id}</div>
+                          </td>
+                          <td>
+                            <div className="fw-semibold text-dark">{g.contactPerson || 'N/A'}</div>
+                            <div className="text-muted small d-flex align-items-center gap-1"><LuPhone size={12} /> {g.phone}</div>
+                          </td>
+                          <td style={{ maxWidth: '220px' }}>
+                            {g.documents && g.documents.length > 0 ? (
+                              <div className="d-flex flex-wrap gap-1">
+                                {g.documents.map((doc, dIdx) => {
+                                  const label = typeof doc === 'string' ? doc : doc.docType;
+                                  const url = typeof doc === 'object' ? doc.fileUrl : null;
+                                  return (
+                                    <span key={dIdx} className="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 small">
+                                      {url ? (
+                                        <a href={url} target="_blank" rel="noreferrer" className="text-primary text-decoration-none d-inline-flex align-items-center gap-1">
+                                          <LuFileText size={11} /> {label} <LuExternalLink size={10} />
+                                        </a>
+                                      ) : (
+                                        <><LuFileText size={11} className="me-1" /> {label}</>
+                                      )}
+                                    </span>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-muted small">None</span>
+                            )}
+                          </td>
+                          <td>
+                            <div className="d-flex align-items-center text-warning fw-bold gap-1">
+                              <LuStar size={14} /> {g.rating?.toFixed(1) || '0.0'}
+                            </div>
+                          </td>
+                          <td>{g.commissionPercent ?? 10}%</td>
+                          <td>
+                            <span className={`badge py-2 px-3 fs-8 ${g.status === 'active' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
+                              {g.status === 'active' ? t('active').toUpperCase() : t('inactive').toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="text-end pe-4">
+                            <div className="d-flex justify-content-end gap-2">
+                              <button onClick={() => handleOpenEditModal(g)} className="btn btn-sm btn-outline-secondary py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
+                                <LuPencil className="me-1" /> {t('edit')}
+                              </button>
+                              <button onClick={() => handleToggleStatus(g._id)} className="btn btn-sm btn-outline-warning py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
+                                <LuRefreshCw className="me-1" /> {t('toggle_active')}
+                              </button>
+                              <button onClick={() => handleDelete(g._id, g.name)} className="btn btn-sm btn-outline-danger py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
+                                <LuTrash2 className="me-1" /> {t('delete')}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -392,7 +517,17 @@ const GarageManagement = () => {
       {/* ── Add / Edit Garage Modal ── */}
       {isOpen && (
         <div className="custom-modal-overlay" onClick={() => setIsOpen(false)}>
-          <div className="custom-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '650px', textAlign: 'left' }}>
+          <div 
+            className="custom-modal custom-modal-no-scrollbar" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              maxWidth: '880px', 
+              width: '92%', 
+              maxHeight: '88vh', 
+              overflowY: 'auto', 
+              textAlign: 'left' 
+            }}
+          >
             <h3 className="modal-title mb-4 d-flex align-items-center gap-2">
               {editGarageId ? <><LuPencil /> Edit Garage Workshop</> : <><LuStore /> Add Garage Workshop</>}
             </h3>
@@ -487,6 +622,73 @@ const GarageManagement = () => {
                     loading={areaOptions.length === 0}
                   />
                 </div>
+
+                {/* ── Nested Garage Documents Upload Table ── */}
+                <div className="col-12 mt-3">
+                  <div className="d-flex align-items-center justify-content-between mb-2">
+                    <label className="form-label small fw-bold text-light mb-0">Garage Compliance Documents</label>
+                    <button
+                      type="button"
+                      onClick={handleAddDocumentRow}
+                      className="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 py-1 px-2.5"
+                      style={{ fontSize: '12px', borderRadius: '8px' }}
+                    >
+                      <LuPlus size={14} /> Add Document
+                    </button>
+                  </div>
+
+                  {formData.documents.length === 0 ? (
+                    <div className="p-3 text-center rounded-3 mb-2" style={{ background: '#0f172a', border: '1px dashed rgba(255,255,255,0.15)', color: '#94a3b8', fontSize: '13px' }}>
+                      No garage documents added yet. Click <strong className="text-warning">+ Add Document</strong> to select document types and upload document files.
+                    </div>
+                  ) : (
+                    <div className="mb-2" style={{ background: '#0f172a', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', padding: '10px', overflow: 'visible' }}>
+                      <table className="table table-dark table-borderless align-middle mb-0" style={{ fontSize: '13px', overflow: 'visible' }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8', fontSize: '12px' }}>
+                            <th style={{ width: '42%' }}>Document Type</th>
+                            <th style={{ width: '46%' }}>Uploaded Document File</th>
+                            <th style={{ width: '12%', textAlign: 'right' }}>Action</th>
+                          </tr>
+                        </thead>
+                        <tbody style={{ overflow: 'visible' }}>
+                          {formData.documents.map((doc, idx) => (
+                            <tr key={idx} style={{ overflow: 'visible' }}>
+                              <td style={{ minWidth: '220px', overflow: 'visible', position: 'relative' }}>
+                                <CustomDropdown
+                                  options={documentTypesList}
+                                  value={doc.docType || 'Trade License'}
+                                  onChange={(val) => handleDocumentTypeChange(idx, val)}
+                                  placeholder="Select document type..."
+                                />
+                              </td>
+                              <td style={{ minWidth: '320px' }}>
+                                <DocumentDropzone
+                                  doc={doc}
+                                  docType={doc.docType}
+                                  onFileUpload={(file) => handleDocumentFileChange(idx, file)}
+                                  onClearFile={() => handleClearDocumentFile(idx)}
+                                />
+                              </td>
+                              <td className="text-end">
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDocumentRow(idx)}
+                                  className="btn btn-sm btn-outline-danger p-1"
+                                  title="Remove Document Row"
+                                  style={{ borderRadius: '6px' }}
+                                >
+                                  <LuTrash2 size={14} />
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
                 <div className="col-md-6">
                   <label className="form-label small fw-bold text-light">Latitude (coordinates)</label>
                   <input 

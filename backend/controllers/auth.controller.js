@@ -6,6 +6,7 @@ import Otp from '../models/Otp.js';
 import BlockedIp from '../models/BlockedIp.js';
 import RefreshToken from '../models/RefreshToken.js';
 import { logActivity } from '../utils/audit.js';
+import { claimPendingQuote } from './request.controller.js';
 
 const signToken = (user) => jwt.sign(
   { id: user._id, role: user.role },
@@ -26,7 +27,8 @@ const generateAndSetRefreshToken = async (res, userId) => {
   res.cookie('refreshToken', tokenStr, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    path: '/',
     maxAge: 30 * 24 * 60 * 60 * 1000
   });
 
@@ -205,11 +207,18 @@ export const verifyOtp = async (req, res) => {
     // Log Activity
     await logActivity(user._id, 'verify_otp', 'User', user._id, { email: user.email, phone: user.phone });
 
+    let claimedRequest = null;
+    if (req.body.quoteToken) {
+      claimedRequest = await claimPendingQuote(req.body.quoteToken, user);
+    }
+
     res.json({
       success: true,
       message: 'Account verified successfully',
       token,
-      user: { id: user._id, name: user.name, email: user.email, role: user.role }
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      claimedRequest,
+      redirectUrl: claimedRequest ? `/payment/${claimedRequest._id}` : null
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -268,7 +277,18 @@ export const login = async (req, res) => {
     // Log Activity
     await logActivity(user._id, 'login', 'User', user._id, { email: user.email });
 
-    res.json({ success: true, token, user: { id: user._id, name: user.name, email: user.email, role: user.role } });
+    let claimedRequest = null;
+    if (req.body.quoteToken) {
+      claimedRequest = await claimPendingQuote(req.body.quoteToken, user);
+    }
+
+    res.json({
+      success: true,
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role },
+      claimedRequest,
+      redirectUrl: claimedRequest ? `/payment/${claimedRequest._id}` : null
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -277,14 +297,43 @@ export const login = async (req, res) => {
 // POST /api/auth/logout
 export const logout = async (req, res) => {
   try {
-    const { refreshToken } = req.cookies;
+    const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
     if (refreshToken) {
-      await RefreshToken.deleteOne({ token: refreshToken });
+      await RefreshToken.deleteMany({ token: refreshToken });
     }
+
+    let userId = req.user?.id;
+    if (!userId && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      try {
+        const tokenStr = req.headers.authorization.split(' ')[1];
+        const decoded = jwt.verify(tokenStr, process.env.JWT_SECRET);
+        if (decoded?.id) userId = decoded.id;
+      } catch (e) {
+        // Token expired or invalid, proceed with cookie clear
+      }
+    }
+
+    if (userId) {
+      await RefreshToken.deleteMany({ userId });
+    }
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+      path: '/'
+    };
+
+    res.clearCookie('refreshToken', cookieOptions);
     res.clearCookie('refreshToken');
-    res.json({ success: true, message: 'Logged out' });
+    res.clearCookie('token', { path: '/' });
+    res.clearCookie('token');
+    res.clearCookie('connect.sid', { path: '/' });
+    res.clearCookie('connect.sid');
+
+    return res.status(200).json({ success: true, message: 'Logged out successfully' });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 

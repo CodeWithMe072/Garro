@@ -31,7 +31,7 @@ const validateRegister = [
 
 router.post('/register',   validateRegister, register);
 router.post('/login',      login);
-router.post('/logout',     auth, logout);
+router.post('/logout',     logout);
 router.post('/send-otp',   checkIpBlock, sendOtp);
 router.post('/verify-otp', checkIpBlock, verifyOtp);
 router.post('/refresh',    refresh);

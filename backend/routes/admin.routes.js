@@ -14,6 +14,7 @@ router.get('/reports/revenue',                    ctrl.getRevenueReport);
 router.get('/reports/revenue/export',             ctrl.exportRevenueReport);
 router.get('/reports/garages',                    ctrl.getGarageReport);
 router.get('/reports/garages/export',             ctrl.exportGarageReport);
+router.get('/job-time-analytics',                 ctrl.getJobTimeAnalytics);
 router.post('/reports/email',                      ctrl.emailReport);
 router.get('/available-helpers',                  ctrl.getAvailableHelpers);
 router.get('/helpers/:helperId/schedule',         ctrl.getHelperSchedule);

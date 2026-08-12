@@ -67,7 +67,6 @@ import {
           cleanSrv.includes(reqService) ||
           reqService.includes(cleanSrv) ||
           (reqSub && (cleanSrv.includes(reqSub) || reqSub.includes(cleanSrv))) ||
-          cleanSrv === 'emergency_pickup' ||
           cleanSrv === 'roadside_assistance' ||
           cleanSrv === 'towing' ||
           cleanSrv.includes('general') ||
@@ -645,7 +644,7 @@ import {
                   }}
                   required
                 />
-                {selectedRequest && !['emergency_pickup','roadside_assistance'].includes(selectedRequest.serviceType) && selectedRequest.urgency !== 'asap' && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
+                {selectedRequest && selectedRequest.serviceType !== 'roadside_assistance' && selectedRequest.urgency !== 'asap' && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
                   <p className="text-danger small mt-1">
                     <LuTriangleAlert style={{ verticalAlign: 'middle', marginRight: '4px' }} /> No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.area || selectedRequest.location?.city || 'Dubai'}"</strong>.
                   </p>

@@ -3,51 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
-import { useLanguage } from '../context/LanguageContext';
-import { LuGlobe, LuChevronDown, LuCheck } from 'react-icons/lu';
-
-
-const localT = {
-  en: {
-    verify_account: "Verify Your Account",
-    verify_desc: "Enter the 6-digit OTP to activate your Garro account",
-    demo_mode: "Demo Mode — Your OTP is:",
-    click_autofill: "Click to auto-fill ↓",
-    verifying: "Verifying...",
-    verify_continue: "Verify & Continue",
-    didnt_receive: "Didn't receive it? ",
-    resend_otp: "Resend OTP",
-    back_to_signup: "Back to Sign Up",
-    resend_success: "A new OTP verification code has been sent.",
-    resend_failed: "Failed to resend verification email."
-  },
-  ar: {
-    verify_account: "تحقق من حسابك",
-    verify_desc: "أدخل رمز التحقق المكون من 6 أرقام لتنشيط حسابك في غارو",
-    demo_mode: "وضع التجريب - رمز التحقق الخاص بك هو:",
-    click_autofill: "انقر للتعبئة التلقائية ↓",
-    verifying: "جاري التحقق...",
-    verify_continue: "التحقق والمتابعة",
-    didnt_receive: "لم تستلم الرمز؟ ",
-    resend_otp: "إعادة إرسال الرمز",
-    back_to_signup: "العودة لإنشاء الحساب",
-    resend_success: "تم إرسال رمز تحقق جديد.",
-    resend_failed: "فشل إعادة إرسال البريد الإلكتروني للتحقق."
-  },
-  ur: {
-    verify_account: "اپنا اکاؤنٹ تصدیق کریں",
-    verify_desc: "اپنا گارو اکاؤنٹ فعال کرنے کے لیے 6 ہندسوں کا OTP درج کریں",
-    demo_mode: "ڈیمو موڈ - آپ کا OTP ہے:",
-    click_autofill: "خودکار فل کرنے کے لیے کلک کریں ↓",
-    verifying: "تصدیق ہو رہی ہے...",
-    verify_continue: "تصدیق کریں اور جاری رکھیں",
-    didnt_receive: "موصول نہیں ہوا؟ ",
-    resend_otp: "دوبارہ OTP بھیجیں",
-    back_to_signup: "سائن اپ پر واپس جائیں",
-    resend_success: "ایک نیا OTP تصدیقی کوڈ بھیجا گیا ہے۔",
-    resend_failed: "تصدیقی ای میل دوبارہ بھیجنے میں ناکامی۔"
-  }
-};
+import { processPendingQuoteIfAny } from '../utils/pendingQuote';
 
 const VerifyOtp = () => {
   const { lang, changeLanguage } = useLanguage();
@@ -153,11 +109,12 @@ const VerifyOtp = () => {
     setError('');
 
     try {
-            const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
+            const quoteToken = location.state?.quoteToken || localStorage.getItem('pending_quote_token');
+      const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, code: otpValue })
+        body: JSON.stringify({ email, code: otpValue, quoteToken })
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -184,12 +141,22 @@ const VerifyOtp = () => {
       login(userData, data.token);
       toast.success(`Account verified! Welcome to Garro, ${userData.firstName}!`);
 
+      if (data.redirectUrl) {
+        localStorage.removeItem('pending_quote_token');
+        localStorage.removeItem('pending_quote_data');
+        navigate(data.redirectUrl);
+        return;
+      }
+
       if (role === 'superadmin' || role === 'manager') {
         navigate('/admin');
       } else if (role === 'staff') {
         navigate('/admin/staff');
       } else {
-        navigate('/home', { replace: true });
+        const processed = await processPendingQuoteIfAny(data.token, navigate, toast);
+        if (!processed) {
+          navigate('/home', { replace: true });
+        }
       }
     } catch (err) {
       setError(err.message || 'Invalid OTP code. Please try again.');

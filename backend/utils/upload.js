@@ -27,8 +27,12 @@ if (hasR2Credentials) {
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4'];
-  allowed.includes(file.mimetype) ? cb(null, true) : cb(new Error('Invalid file type'), false);
+  const allowed = [
+    'image/jpeg', 'image/png', 'image/webp', 'video/mp4',
+    'application/pdf', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
+  allowed.includes(file.mimetype) ? cb(null, true) : cb(new Error('Invalid file type. Allowed: PDF, JPG, PNG, WEBP, DOC, DOCX'), false);
 };
 
 export const upload = multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });

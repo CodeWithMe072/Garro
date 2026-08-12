@@ -306,3 +306,135 @@ export const notifyGarage = async (garage, job, request) => {
     // Never throw — notification failures must not break main flow
   }
 };
+
+/**
+ * Notify customer when garage requests a scope revision (mid-job additional work)
+ */
+export const notifyScopeRevision = async (customer, job, scopeRevision) => {
+  try {
+    if (!customer || (!customer.email && !customer.phone)) return;
+
+    const amountStr = Number(scopeRevision.additionalAmount).toFixed(2);
+    const requiresApproval = scopeRevision.requiresApproval;
+    const actionText = requiresApproval
+      ? 'Action Required: Cost addition exceeds 20%. Please log in to approve or reject.'
+      : 'Information: Additional work added to job scope.';
+
+    const waMessage =
+      `⚠️ Scope Change Notification — Garro\n\n` +
+      `Hi ${customer.name},\n` +
+      `Additional work has been requested for your job.\n\n` +
+      `📝 Justification: ${scopeRevision.justification}\n` +
+      `💰 Additional Amount: AED ${amountStr}\n` +
+      `📌 ${actionText}\n\n` +
+      `Track/Approve in Garro app:\n` +
+      `${process.env.FRONTEND_URL || 'https://garro.ae'}/track/${job._id || job.requestId}`;
+
+    const emailHtml = `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;background:#f5f5f5">
+  <div style="background:#185FA5;padding:24px 28px;border-radius:10px 10px 0 0;text-align:center">
+    <h1 style="color:white;margin:0;font-size:28px;font-weight:900">GARRO</h1>
+    <p style="color:#a8d4f5;margin:4px 0 0;font-size:13px">Scope Change Notification</p>
+  </div>
+  <div style="background:#ffffff;padding:28px;border-radius:0 0 10px 10px;border:1px solid #e0e0e0">
+    <h2 style="color:#0f172a;margin:0 0 16px;font-size:18px">Scope Revision Requested</h2>
+    <p style="color:#555;font-size:14px;margin:0 0 20px">Hi <strong>${customer.name}</strong>,</p>
+    <p style="color:#555;font-size:14px;margin:0 0 20px">${actionText}</p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+      <tr style="background:#f8fafc">
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Justification</td>
+        <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #f0f0f0">${scopeRevision.justification}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Additional Parts</td>
+        <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #f0f0f0">AED ${Number(scopeRevision.additionalPartsCost).toFixed(2)}</td>
+      </tr>
+      <tr style="background:#f8fafc">
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Additional Labor</td>
+        <td style="padding:10px 14px;font-size:13px;border-bottom:1px solid #f0f0f0">AED ${Number(scopeRevision.additionalLaborCost).toFixed(2)}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;color:#888;font-size:13px">Total Additional</td>
+        <td style="padding:10px 14px;font-weight:700;font-size:16px;color:#e11d48">AED ${amountStr}</td>
+      </tr>
+    </table>
+    <div style="text-align:center;margin:24px 0">
+      <a href="${process.env.FRONTEND_URL || 'https://garro.ae'}/track/${job._id || job.requestId}"
+         style="background:#185FA5;color:white;padding:14px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;display:inline-block">
+        ${requiresApproval ? 'Review & Approve Scope' : 'View Job Status'}
+      </a>
+    </div>
+  </div>
+</div>`;
+
+    await Promise.allSettled([
+      sendEmail(customer.email, `Garro — Scope Revision Notification (AED ${amountStr})`, emailHtml),
+      customer.phone ? sendWhatsApp(customer.phone, waMessage) : Promise.resolve()
+    ]);
+  } catch (err) {
+    console.error('[notifyScopeRevision] Error:', err.message);
+  }
+};
+
+/**
+ * Issue 4 — Notify founder/admin when delegate approves or rejects a scope revision on their behalf
+ */
+export const notifyFounderDelegateAction = async (founderUserOrEmail, job, delegateName, action, scopeRevision) => {
+  try {
+    const targetEmail = typeof founderUserOrEmail === 'string'
+      ? founderUserOrEmail
+      : (founderUserOrEmail?.email || process.env.FOUNDER_EMAIL || 'admin@garro.ae');
+
+    const targetPhone = typeof founderUserOrEmail === 'object' ? founderUserOrEmail?.phone : null;
+    const amountStr = Number(scopeRevision?.additionalAmount || 0).toFixed(2);
+    const jobIdStr = job?._id ? job._id.toString().slice(-6).toUpperCase() : 'N/A';
+
+    const waMessage =
+      `🔔 Founder Alert: Delegate Action Taken\n\n` +
+      `Delegate ${delegateName} has ${action.toUpperCase()} a scope revision of AED ${amountStr} for Job #${jobIdStr}.\n\n` +
+      `Justification: ${scopeRevision?.justification || 'N/A'}\n` +
+      `Audit log recorded with actedAsDelegate: true.`;
+
+    const emailHtml = `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:20px;background:#f5f5f5">
+  <div style="background:#0f172a;padding:24px 28px;border-radius:10px 10px 0 0;text-align:center">
+    <h1 style="color:white;margin:0;font-size:28px;font-weight:900">GARRO ADMIN</h1>
+    <p style="color:#94a3b8;margin:4px 0 0;font-size:13px">Delegate Action Notification</p>
+  </div>
+  <div style="background:#ffffff;padding:28px;border-radius:0 0 10px 10px;border:1px solid #e0e0e0">
+    <h2 style="color:#0f172a;margin:0 0 16px;font-size:18px">Delegate ${action === 'approved' ? 'Approved' : 'Rejected'} Scope Revision</h2>
+    <p style="color:#555;font-size:14px;margin:0 0 20px">
+      Your backup contact <strong>${delegateName}</strong> acted on a pending scope change while delegate mode was active.
+    </p>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+      <tr style="background:#f8fafc">
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Job ID</td>
+        <td style="padding:10px 14px;font-weight:700;font-size:13px;border-bottom:1px solid #f0f0f0">#${jobIdStr}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Action Taken</td>
+        <td style="padding:10px 14px;font-weight:700;font-size:13px;color:${action === 'approved' ? '#059669' : '#dc2626'};border-bottom:1px solid #f0f0f0;text-transform:uppercase">${action}</td>
+      </tr>
+      <tr style="background:#f8fafc">
+        <td style="padding:10px 14px;color:#888;font-size:13px;border-bottom:1px solid #f0f0f0">Amount</td>
+        <td style="padding:10px 14px;font-weight:700;font-size:15px;border-bottom:1px solid #f0f0f0">AED ${amountStr}</td>
+      </tr>
+      <tr>
+        <td style="padding:10px 14px;color:#888;font-size:13px">Justification</td>
+        <td style="padding:10px 14px;font-size:13px">${scopeRevision?.justification || 'N/A'}</td>
+      </tr>
+    </table>
+    <p style="font-size:12px;color:#64748b;margin:0">
+      Recorded in full audit trail with <code>actedAsDelegate: true</code>.
+    </p>
+  </div>
+</div>`;
+
+    await Promise.allSettled([
+      sendEmail(targetEmail, `Garro Alert — Delegate ${delegateName} ${action} Scope Revision (AED ${amountStr})`, emailHtml),
+      targetPhone ? sendWhatsApp(targetPhone, waMessage) : Promise.resolve()
+    ]);
+  } catch (err) {
+    console.error('[notifyFounderDelegateAction] Error:', err.message);
+  }
+};

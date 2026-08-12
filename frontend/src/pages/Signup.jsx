@@ -15,7 +15,7 @@ const localT = {
     unlock_quotes_desc: "Compare prices before you commit",
     unlock_insurance_title: "Insurance & Protection Plans",
     unlock_insurance_desc: "Comprehensive cover at the best rates",
-    unlock_roadside_title: "24/7 Roadside Assistance",
+    unlock_roadside_title: "Same Day Roadside Assistance",
     unlock_roadside_desc: "Towing, jump starts, flat tyre & more",
     discount_title: "20% OFF your first booking",
     discount_desc: "Automatically applied at checkout",
@@ -79,7 +79,7 @@ const localT = {
     unlock_quotes_desc: "بکنگ سے پہلے قیمتوں کا موازنہ کریں",
     unlock_insurance_title: "انشورنس اور پروٹیکشن پلانز",
     unlock_insurance_desc: "بہترین نرخوں پر جامع کوریج",
-    unlock_roadside_title: "24/7 سڑک کنارے مدد",
+    unlock_roadside_title: "خدمة المساعدة على الطريق في نفس اليوم",
     unlock_roadside_desc: "ٹونگ، جمپ اسٹارٹ، فلیٹ ٹائر اور بہت کچھ",
     discount_title: "آپ کی پہلی بکنگ پر 20% رعایت",
     discount_desc: "چیک آؤٹ پر خود بخود لاگو ہوتا ہے",
@@ -140,9 +140,17 @@ const Signup = () => {
       return;
     }
 
-    const cleanPhone = formData.phone.trim();
+    let cleanPhone = formData.phone.trim().replace(/\s+/g, '');
+    if (cleanPhone.startsWith('05')) {
+      cleanPhone = '+971' + cleanPhone.slice(1);
+    } else if (cleanPhone.startsWith('5') && cleanPhone.length === 9) {
+      cleanPhone = '+971' + cleanPhone;
+    } else if (!cleanPhone.startsWith('+')) {
+      cleanPhone = '+' + cleanPhone;
+    }
+
     if (!/^\+\d{8,15}$/.test(cleanPhone)) {
-      setError('Phone number must start with country code (e.g. +971501234567)');
+      setError('Please enter a valid phone number (e.g. 0501234567 or +971501234567)');
       return;
     }
 
@@ -327,25 +335,12 @@ const Signup = () => {
           transform: translateX(-3px) !important;
         }
         html[lang="ar"] .auth-back:hover, html[lang="ur"] .auth-back:hover {
-          transform: translateX(3px) !important;
-        }
-        
-        /* RTL overrides for input elements padding */
-        html[lang="ar"] .auth-iw input, html[lang="ur"] .auth-iw input {
-          padding: 12px 42px 12px 14px !important;
-        }
-        html[lang="ar"] .auth-input-icon, html[lang="ur"] .auth-input-icon {
-          right: 13px !important;
-          left: auto !important;
-        }
-        html[lang="ar"] .auth-eye, html[lang="ur"] .auth-eye {
-          left: 12px !important;
-          right: auto !important;
+          transform: translateX(-3px) !important;
         }
       `}</style>
 
       {/* Floating Language Switcher */}
-      <div style={{ position: 'absolute', top: '24px', insetInlineEnd: '24px', zIndex: 1000 }}>
+      <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 1000 }}>
         <button
           type="button"
           onClick={() => setIsLangOpen(!isLangOpen)}
@@ -558,7 +553,7 @@ const Signup = () => {
               055 283 0456
             </a>
             <span style={{ fontSize: '10px', color: '#64748b' }}>
-              {lang === 'ar' ? 'دعم 24/7' : lang === 'ur' ? '24/7 سپورٹ' : '24/7 Support'}
+              {lang === 'ar' ? 'دعم نفس اليوم' : 'Same Day Support'}
             </span>
           </div>
         </div>

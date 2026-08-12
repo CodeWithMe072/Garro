@@ -124,7 +124,7 @@ const Roadside = () => {
               {/* Action Button */}
               <div style={{ marginBottom: '32px' }}>
                 <Link
-                  to="/emergency-pickup"
+                  to="/get-quote"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -207,105 +207,6 @@ const Roadside = () => {
                   }}
                 />
 
-                {/* Floating Callout 1: Battery Jump Start */}
-                <div className="d-none d-sm-block" style={{
-                  position: 'absolute',
-                  top: '5%',
-                  left: '0%',
-                  background: '#ffffff',
-                  border: '1.5px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '8px 14px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
-                  zIndex: 4,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '185px'
-                }}>
-                  <div style={{ color: '#ff5c1a', background: '#fff4ef', padding: '6px', borderRadius: '8px' }}>
-                    <LuZap size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Battery Jump</div>
-                    <div style={{ fontSize: '9.5px', color: '#64748b' }}>Get back on the road quick</div>
-                  </div>
-                </div>
-
-                {/* Floating Callout 2: Flat Tire Assistance */}
-                <div className="d-none d-sm-block" style={{
-                  position: 'absolute',
-                  top: '5%',
-                  right: '0%',
-                  background: '#ffffff',
-                  border: '1.5px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '8px 14px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
-                  zIndex: 4,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '185px'
-                }}>
-                  <div style={{ color: '#ff8c42', background: '#fff4ef', padding: '6px', borderRadius: '8px' }}>
-                    <LuWrench size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Flat Tyre Assist</div>
-                    <div style={{ fontSize: '9.5px', color: '#64748b' }}>On-spot tire replacement</div>
-                  </div>
-                </div>
-
-                {/* Floating Callout 3: Fuel Delivery */}
-                <div className="d-none d-sm-block" style={{
-                  position: 'absolute',
-                  bottom: '12%',
-                  left: '0%',
-                  background: '#ffffff',
-                  border: '1.5px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '8px 14px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
-                  zIndex: 4,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '185px'
-                }}>
-                  <div style={{ color: '#3b82f6', background: '#eff6ff', padding: '6px', borderRadius: '8px' }}>
-                    <LuFuel size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Fuel Delivery</div>
-                    <div style={{ fontSize: '9.5px', color: '#64748b' }}>We deliver fuel to you</div>
-                  </div>
-                </div>
-
-                {/* Floating Callout 4: Towing Service */}
-                <div className="d-none d-sm-block" style={{
-                  position: 'absolute',
-                  bottom: '12%',
-                  right: '0%',
-                  background: '#ffffff',
-                  border: '1.5px solid #e2e8f0',
-                  borderRadius: '12px',
-                  padding: '8px 14px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.04)',
-                  zIndex: 4,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  width: '185px'
-                }}>
-                  <div style={{ color: '#8b5cf6', background: '#f5f3ff', padding: '6px', borderRadius: '8px' }}>
-                    <LuTruck size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '11px', color: '#0f172a' }}>Towing Service</div>
-                    <div style={{ fontSize: '9.5px', color: '#64748b' }}>Safe towing to location</div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -331,9 +232,9 @@ const Roadside = () => {
                 <div style={{ color: '#ff5c1a', marginBottom: '20px' }}>
                   <LuClock size={32} strokeWidth={1.5} />
                 </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>24x7 Support</h3>
+                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Same Day Support</h3>
                 <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
-                  Available round the clock, every day of the year.
+                  Available same day, every day of the year.
                 </p>
                 <div style={{ position: 'absolute', bottom: 0, left: '28px', right: '28px', height: '4px', background: '#ff5c1a', borderRadius: '2px 2px 0 0' }}></div>
               </div>
@@ -411,112 +312,7 @@ const Roadside = () => {
         </div>
       </section>
 
-      {/* ══ WHAT'S COMING SECTION ══ */}
-      <section style={{ padding: '60px 0', background: '#f8fafc', borderTop: '1px solid #e2e8f0', borderBottom: '1px solid #e2e8f0' }}>
-        <div className="container">
-          <div className="text-center mb-5">
-            <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a' }}>What's Coming?</h2>
-            <div style={{ width: '40px', height: '3px', background: '#ff5c1a', margin: '8px auto 0', borderRadius: '2px' }}></div>
-          </div>
 
-          <div className="row align-items-center g-5">
-            {/* Checkpoints Checklist */}
-            <div className="col-lg-6">
-              <div className="row g-4">
-                {[
-                  "24x7 Roadside Support", "Fuel Delivery Service",
-                  "Towing & Vehicle Recovery", "Lockout Assistance",
-                  "Flat Tyre Assistance", "On-Spot Minor Repairs",
-                  "Battery Jump Start", "Live Request Tracking"
-                ].map((item, idx) => (
-                  <div className="col-sm-6" key={idx}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '50%',
-                        background: '#fff4ef',
-                        border: '1px solid #ffecd5',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#ff5c1a',
-                        flexShrink: 0
-                      }}>
-                        <LuCheck size={14} strokeWidth={3} />
-                      </div>
-                      <span style={{ fontSize: '13.5px', fontWeight: 600, color: '#334155' }}>{item}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Illustration Mockup */}
-            <div className="col-lg-6">
-              <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '24px',
-                padding: '32px',
-                boxShadow: '0 8px 30px rgba(0,0,0,0.03)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '20px',
-                position: 'relative',
-                overflow: 'hidden'
-              }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    display: 'inline-block',
-                    background: '#fff4ef',
-                    color: '#ff5c1a',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '4px 10px',
-                    borderRadius: '50px',
-                    marginBottom: '12px',
-                    textTransform: 'uppercase'
-                  }}>
-                    Live Tracker
-                  </div>
-                  <h4 style={{ fontWeight: 800, fontSize: '17px', color: '#0f172a', marginBottom: '8px' }}>Real-time Dispatch</h4>
-                  <p style={{ fontSize: '12.5px', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
-                    We are engineering a seamless GPS request flow. Track the allocated tow operator live on your phone till they reach you.
-                  </p>
-                </div>
-                
-                {/* Mobile Device mockup */}
-                <div style={{
-                  background: '#f1f5f9',
-                  border: '2px solid #cbd5e1',
-                  borderRadius: '24px',
-                  width: '130px',
-                  height: '200px',
-                  padding: '16px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
-                  position: 'relative',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <div style={{ width: '40px', height: '4px', background: '#94a3b8', borderRadius: '2px', position: 'absolute', top: '10px' }}></div>
-                  <div style={{ textAlign: 'center' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#ff5c1a', marginBottom: '4px' }}>HELP</div>
-                    <div style={{ fontSize: '24px', fontWeight: 900, color: '#1e293b', lineHeight: 1 }}>24/7</div>
-                    <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff5c1a', margin: '14px auto 0' }}>
-                      <LuClock size={16} />
-                    </div>
-                  </div>
-                  <div style={{ width: '12px', height: '12px', border: '2px solid #cbd5e1', borderRadius: '50%', position: 'absolute', bottom: '8px' }}></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
 
       {/* ══ FAQ SECTION ══ */}
@@ -573,24 +369,7 @@ const Roadside = () => {
         </div>
       </section>
 
-      {/* ══ LAUNCHING SOON FOOTER BANNER ══ */}
-      <section style={{ padding: '0 0 60px' }}>
-        <div className="container">
-          <div style={{ background: 'linear-gradient(135deg, #fffcf9, #fff8f2)', border: '1.5px solid #ffe8dd', borderRadius: '24px', padding: '36px', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '24px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', zIndex: 2 }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: '#fff4ef', border: '1px solid #ffe3d5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff5c1a', flexShrink: 0 }}>
-                <LuTruck size={28} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>Launching Soon</h3>
-                <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-                  Garro Roadside Assistance is currently under development. Stay tuned for updates!
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+
     </div>
   );
 };

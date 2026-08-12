@@ -10,6 +10,7 @@ router.get('/', auth, ctrl.getGarages);
 router.get('/:id', auth, ctrl.getGarageById);
 
 // Admin only
+router.post('/upload-document', auth, role('admin'), upload.single('file'), ctrl.uploadGarageDocument);
 router.post('/', auth, role('admin'), ctrl.createGarage);
 router.put('/:id', auth, role('admin'), ctrl.updateGarage);
 router.patch('/:id/status', auth, role('admin'), ctrl.toggleStatus);

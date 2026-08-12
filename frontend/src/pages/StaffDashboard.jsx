@@ -258,7 +258,7 @@ const StaffDashboard = () => {
       area_city_address: b.location?.address || '',
       lat: b.location?.lat,
       lng: b.location?.lng,
-      is_emergency: b.serviceType === 'emergency_pickup' || b.serviceType === 'roadside_assistance' || b.urgency === 'asap',
+      is_emergency: b.serviceType === 'roadside_assistance' || b.urgency === 'asap',
       estimated_end: j.estimatedEndDate ? new Date(j.estimatedEndDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'TBC',
       notes: b.description || ''
     };

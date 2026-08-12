@@ -20,15 +20,23 @@ const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SEC
 // Called when customer clicks "Pay Now" after approving a quote
 export const createPaymentIntent = async (req, res) => {
   try {
-    const { quoteId } = req.body;
-    if (!quoteId) return error(res, 'quoteId is required', 400);
+    const targetId = req.body.quoteId || req.body.requestId;
+    if (!targetId) return error(res, 'quoteId is required', 400);
 
-    let quote = await Quote.findById(quoteId).populate('requestId');
+    let quote = await Quote.findById(targetId).populate('requestId');
     if (!quote) {
-      quote = await Quote.findOne({ requestId: quoteId }).populate('requestId');
+      quote = await Quote.findOne({ requestId: targetId }).populate('requestId');
+    }
+    if (!quote) {
+      const requestObj = await Request.findById(targetId);
+      if (requestObj && requestObj.quoteId) {
+        quote = await Quote.findById(requestObj.quoteId).populate('requestId');
+      }
     }
     if (!quote) return error(res, 'Quote not found', 404);
     if (quote.status !== 'approved') return error(res, 'Quote must be approved before payment', 400);
+
+    const quoteId = quote._id;
 
     // Prevent double-payment
     const existingPaid = await Invoice.findOne({ quoteId, status: 'paid' });
@@ -418,14 +426,22 @@ export const getPaymentStatus = async (req, res) => {
 // POST /api/payments/bypass-pay
 export const bypassPayment = async (req, res) => {
   try {
-    const { quoteId } = req.body;
-    if (!quoteId) return error(res, 'quoteId is required', 400);
+    const targetId = req.body.quoteId || req.body.requestId;
+    if (!targetId) return error(res, 'quoteId is required', 400);
 
-    let quote = await Quote.findById(quoteId);
+    let quote = await Quote.findById(targetId);
     if (!quote) {
-      quote = await Quote.findOne({ requestId: quoteId });
+      quote = await Quote.findOne({ requestId: targetId });
+    }
+    if (!quote) {
+      const requestObj = await Request.findById(targetId);
+      if (requestObj && requestObj.quoteId) {
+        quote = await Quote.findById(requestObj.quoteId);
+      }
     }
     if (!quote) return error(res, 'Quote not found', 404);
+
+    const quoteId = quote._id;
 
     const customerId = req.user.id;
     const customer = await User.findById(customerId);
@@ -442,7 +458,7 @@ export const bypassPayment = async (req, res) => {
 
     // Check we haven't already processed this payment
     let invoice = await Invoice.findOne({
-      $or: [{ quoteId: quote._id }, { quoteId }],
+      $or: [{ quoteId: quote._id }, { quoteId: targetId }],
       status: 'paid'
     });
 

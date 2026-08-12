@@ -1836,7 +1836,9 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
 }
 .custom-modal .c-dropdown-menu {
   background-color: #1e293b !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  z-index: 9999 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
 }
 .custom-modal .c-dropdown-item {
   color: #ffffff !important;
@@ -1852,55 +1854,7 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
   color: rgba(255, 255, 255, 0.4) !important;
 }
 
-/* RTL Text direction for Arabic/Urdu (no layout mirroring) */
-html[lang="ar"] p, html[lang="ur"] p,
-html[lang="ar"] label, html[lang="ur"] label,
-html[lang="ar"] span, html[lang="ur"] span,
-html[lang="ar"] h1, html[lang="ur"] h1,
-html[lang="ar"] h2, html[lang="ur"] h2,
-html[lang="ar"] h3, html[lang="ur"] h3,
-html[lang="ar"] h4, html[lang="ur"] h4,
-html[lang="ar"] h5, html[lang="ur"] h5,
-html[lang="ar"] h6, html[lang="ur"] h6,
-html[lang="ar"] input, html[lang="ur"] input,
-html[lang="ar"] textarea, html[lang="ur"] textarea,
-html[lang="ar"] li, html[lang="ur"] li,
-html[lang="ar"] option, html[lang="ur"] option,
-html[lang="ar"] strong, html[lang="ur"] strong,
-html[lang="ar"] em, html[lang="ur"] em,
-html[lang="ar"] b, html[lang="ur"] b,
-html[lang="ar"] i, html[lang="ur"] i,
-html[lang="ar"] small, html[lang="ur"] small,
-.rtl-text {
-  direction: rtl;
-}
-
-/* Force structural layout elements (links, buttons, table cells, flex/grid containers) to stay LTR */
-html[lang="ar"] a, html[lang="ur"] a,
-html[lang="ar"] button, html[lang="ur"] button,
-html[lang="ar"] td, html[lang="ur"] td,
-html[lang="ar"] th, html[lang="ur"] th,
-html[lang="ar"] .d-flex, html[lang="ur"] .d-flex,
-html[lang="ar"] .flex, html[lang="ur"] .flex {
-  direction: ltr !important;
-}
-
-/* Ensure inner elements/text blocks inside structural components shape correctly in RTL */
-html[lang="ar"] a *, html[lang="ur"] a *,
-html[lang="ar"] button *, html[lang="ur"] button *,
-html[lang="ar"] td *, html[lang="ur"] td *,
-html[lang="ar"] th *, html[lang="ur"] th * {
-  direction: rtl;
-}
-
-/* Maintain English LTR order for icons inside links or buttons specifically */
-html[lang="ar"] a .icon, html[lang="ur"] a .icon,
-html[lang="ar"] button .icon {
-  direction: ltr !important;
-}
-
-/* RTL Text alignment for block text elements, inputs, and default alignment */
-html[lang="ar"] body, html[lang="ur"] body,
+/* RTL Text direction for Arabic/Urdu (strictly text content only, zero layout structural mirroring) */
 html[lang="ar"] p, html[lang="ur"] p,
 html[lang="ar"] label, html[lang="ur"] label,
 html[lang="ar"] h1, html[lang="ur"] h1,
@@ -1909,16 +1863,30 @@ html[lang="ar"] h3, html[lang="ur"] h3,
 html[lang="ar"] h4, html[lang="ur"] h4,
 html[lang="ar"] h5, html[lang="ur"] h5,
 html[lang="ar"] h6, html[lang="ur"] h6,
-html[lang="ar"] input, html[lang="ur"] input,
 html[lang="ar"] textarea, html[lang="ur"] textarea,
-html[lang="ar"] li, html[lang="ur"] li,
-html[lang="ar"] td, html[lang="ur"] td,
-html[lang="ar"] th, html[lang="ur"] th,
-html[lang="ar"] option, html[lang="ur"] option,
-.rtl-text {
+html[lang="ar"] .rtl-text, html[lang="ur"] .rtl-text {
+  direction: rtl;
   text-align: right;
+  unicode-bidi: embed;
 }
 
+/* Structural containers, navigation, buttons, badges, and layout rows MUST remain LTR */
+html[lang="ar"] body, html[lang="ur"] body,
+html[lang="ar"] nav, html[lang="ur"] nav,
+html[lang="ar"] header, html[lang="ur"] header,
+html[lang="ar"] footer, html[lang="ur"] footer,
+html[lang="ar"] button, html[lang="ur"] button,
+html[lang="ar"] a, html[lang="ur"] a,
+html[lang="ar"] .d-flex, html[lang="ur"] .d-flex,
+html[lang="ar"] .flex, html[lang="ur"] .flex,
+html[lang="ar"] .row, html[lang="ur"] .row,
+html[lang="ar"] table, html[lang="ur"] table,
+html[lang="ar"] form, html[lang="ur"] form,
+html[lang="ar"] .dropdown-menu, html[lang="ur"] .dropdown-menu {
+  direction: ltr !important;
+}
+
+/* Input placeholder text alignment */
 html[lang="ar"] input::placeholder, html[lang="ur"] input::placeholder,
 html[lang="ar"] textarea::placeholder, html[lang="ur"] textarea::placeholder {
   direction: rtl;

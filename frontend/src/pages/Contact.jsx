@@ -21,7 +21,7 @@ const Contact = () => {
   const contactInfo = [
     {
       icon: LuPhone, title: 'Phone', detail: '055 283 0456',
-      sub: 'Support Available 24/7', color: '#ff5c1a'
+      sub: 'Support Available Same Day', color: '#ff5c1a'
     },
     {
       icon: LuMail, title: 'Email', detail: 'contact.noorrmannwaliya@gmail.com',
@@ -32,7 +32,7 @@ const Contact = () => {
       sub: 'Also serving Kerala, India', color: '#10b981'
     },
     {
-      icon: LuClock, title: 'Working Hours', detail: '24/7 Support',
+      icon: LuClock, title: 'Working Hours', detail: 'Same Day Support',
       sub: 'Open 365 Days a Year', color: '#8b5cf6'
     },
   ];

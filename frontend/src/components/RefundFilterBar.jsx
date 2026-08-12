@@ -28,7 +28,6 @@ const RefundFilterBar = ({ filters, onFilterChange, onResetFilters }) => {
   const serviceOptions = [
     { value: 'all', label: 'Service: All Services' },
     { value: 'battery', label: 'Battery Replacement' },
-    { value: 'emergency_pickup', label: 'Emergency Pickup' },
     { value: 'minor_service', label: 'Minor Service' },
     { value: 'major_service', label: 'Major Service' },
     { value: 'ac_repair', label: 'AC Repair' },

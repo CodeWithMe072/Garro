@@ -33,46 +33,6 @@ const EndOfLife = () => {
       service: 'Trade-In Valuation',
       color: '#ff5c1a',
     },
-    {
-      icon: LuBadgeCheck,
-      title: 'Certified Scrapping',
-      desc: 'We follow government-approved scrapping process and issue valid End-of-Life Certificates.',
-      btnLabel: 'Get Certificate',
-      service: 'Certified Car Scrapping',
-      color: '#10b981',
-    },
-    {
-      icon: LuTruck,
-      title: 'Free Vehicle Pickup',
-      desc: 'We offer free pickup service anywhere in UAE — at your home, office or workshop.',
-      btnLabel: 'Schedule Pickup',
-      service: 'General Inquiry',
-      color: '#3b82f6',
-    },
-    {
-      icon: LuLeaf,
-      title: 'Eco-Friendly Disposal',
-      desc: 'Environment-safe dismantling and recycling to reduce pollution and promote sustainability.',
-      btnLabel: 'Learn More',
-      service: 'Eco-Friendly Disposal',
-      color: '#059669',
-    },
-    {
-      icon: LuWrench,
-      title: 'Parts Salvage',
-      desc: 'Usable parts are salvaged and reused to add more value and produce more waste.',
-      btnLabel: 'Learn More',
-      service: 'Parts Salvage',
-      color: '#8b5cf6',
-    },
-    {
-      icon: LuFileText,
-      title: 'Deregistration Assistance',
-      desc: 'We handle all documentation for deregistration of a vehicle for a hassle-free experience.',
-      btnLabel: 'Get Help',
-      service: 'Deregistration Support',
-      color: '#f59e0b',
-    },
   ];
 
   const steps = [
@@ -199,19 +159,6 @@ const EndOfLife = () => {
                 >
                   <LuTag size={18} /> Get Valuation
                 </button>
-                <button
-                  onClick={() => handleOpenModal('General Inquiry')}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '8px',
-                    background: '#fff', color: '#0f172a',
-                    border: '1.5px solid #e2e8f0', borderRadius: '12px',
-                    padding: '13px 28px', fontWeight: 700, fontSize: '14.5px',
-                    cursor: 'pointer', transition: 'all 0.2s',
-                    fontFamily: "'Poppins', sans-serif"
-                  }}
-                >
-                  <LuTruck size={18} /> Free Pickup
-                </button>
               </div>
             </div>
 
@@ -233,66 +180,7 @@ const EndOfLife = () => {
                   }}
                 />
 
-                {/* Floating callouts */}
-                <div className="d-none d-sm-block" style={{
-                  position: 'absolute', top: '8%', left: '0%', zIndex: 4,
-                  background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '12px',
-                  padding: '8px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
-                  display: 'flex', alignItems: 'center', gap: '8px'
-                }}>
-                  <div style={{ background: '#fff4ef', color: '#ff5c1a', padding: '6px', borderRadius: '8px' }}>
-                    <LuTag size={15} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Instant Valuation</div>
-                    <div style={{ fontSize: '9.5px', color: '#64748b' }}>Get the best price for your vehicle</div>
-                  </div>
-                </div>
 
-                <div className="d-none d-sm-block" style={{
-                  position: 'absolute', top: '8%', right: '0%', zIndex: 4,
-                  background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '12px',
-                  padding: '8px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
-                  display: 'flex', alignItems: 'center', gap: '8px'
-                }}>
-                  <div style={{ background: '#eff6ff', color: '#3b82f6', padding: '6px', borderRadius: '8px' }}>
-                    <LuTruck size={15} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Free Pickup</div>
-                    <div style={{ fontSize: '9.5px', color: '#64748b' }}>We pick your vehicle from your location</div>
-                  </div>
-                </div>
-
-                <div className="d-none d-sm-block" style={{
-                  position: 'absolute', bottom: '10%', left: '0%', zIndex: 4,
-                  background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '12px',
-                  padding: '8px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
-                  display: 'flex', alignItems: 'center', gap: '8px'
-                }}>
-                  <div style={{ background: '#f0fdf4', color: '#10b981', padding: '6px', borderRadius: '8px' }}>
-                    <LuLeaf size={15} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Eco-Friendly Disposal</div>
-                    <div style={{ fontSize: '9.5px', color: '#64748b' }}>Safe and responsible recycling process</div>
-                  </div>
-                </div>
-
-                <div className="d-none d-sm-block" style={{
-                  position: 'absolute', bottom: '10%', right: '0%', zIndex: 4,
-                  background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '12px',
-                  padding: '8px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.05)',
-                  display: 'flex', alignItems: 'center', gap: '8px'
-                }}>
-                  <div style={{ background: '#faf5ff', color: '#8b5cf6', padding: '6px', borderRadius: '8px' }}>
-                    <LuFileText size={15} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Deregistration Support</div>
-                    <div style={{ fontSize: '9.5px', color: '#64748b' }}>Complete paperwork with RTA assistance</div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -311,9 +199,9 @@ const EndOfLife = () => {
             <p style={{ color: '#64748b', fontSize: '14.5px' }}>Everything handled — from pickup to final certificate</p>
           </div>
 
-          <div className="row g-4">
+          <div className="row g-4 justify-content-center">
             {services.map(({ icon: Icon, title, desc, btnLabel, service, color }) => (
-              <div className="col-md-6 col-lg-4" key={title}>
+              <div className="col-12" key={title}>
                 <div style={{
                   background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '20px',
                   padding: '28px', height: '100%', transition: 'all 0.25s',
@@ -404,42 +292,13 @@ const EndOfLife = () => {
               </div>
             </div>
 
-            {/* Why Choose Garro */}
-            <div className="col-lg-6">
-              <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#0f172a', marginBottom: '6px' }}>Why Choose Garro?</h2>
-              <div style={{ width: '36px', height: '3px', background: '#ff5c1a', borderRadius: '2px', marginBottom: '28px' }} />
-
-              <div className="row g-3 mb-4">
-                {whyChoose.map(({ icon: Icon, title, desc }) => (
-                  <div className="col-12" key={title}>
-                    <div style={{
-                      display: 'flex', gap: '14px', alignItems: 'flex-start',
-                      background: '#fff', border: '1.5px solid #e2e8f0', borderRadius: '14px',
-                      padding: '14px 18px'
-                    }}>
-                      <div style={{
-                        width: '38px', height: '38px', borderRadius: '10px',
-                        background: 'rgba(255,92,26,0.08)', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center',
-                        color: '#ff5c1a', flexShrink: 0
-                      }}>
-                        <Icon size={18} />
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '14px', color: '#0f172a' }}>{title}</div>
-                        <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '2px' }}>{desc}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Scrap yard image */}
-              <div style={{ borderRadius: '18px', overflow: 'hidden', border: '1.5px solid #e2e8f0' }}>
+            {/* Certified Scrap Yard Image */}
+            <div className="col-lg-6 d-flex align-items-center">
+              <div style={{ borderRadius: '20px', overflow: 'hidden', border: '1.5px solid #e2e8f0', width: '100%', boxShadow: '0 8px 30px rgba(0,0,0,0.04)' }}>
                 <img
                   src="https://images.unsplash.com/photo-1530046339160-ce3e530c7d2f?q=80&w=900&auto=format&fit=crop"
                   alt="Garro certified scrap yard"
-                  style={{ width: '100%', height: '200px', objectFit: 'cover', display: 'block' }}
+                  style={{ width: '100%', height: '360px', objectFit: 'cover', display: 'block' }}
                 />
               </div>
             </div>
@@ -448,128 +307,7 @@ const EndOfLife = () => {
         </div>
       </section>
 
-      {/* ══ FAQ SECTION ══ */}
-      <section style={{ padding: '72px 0', background: '#ffffff' }}>
-        <div className="container">
-          <div className="text-center mb-5">
-            <h2 style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a', marginBottom: '8px' }}>
-              End-of-Life &amp; Scrap – FAQ
-            </h2>
-            <div style={{ width: '44px', height: '3px', background: '#ff5c1a', margin: '0 auto', borderRadius: '2px' }} />
-          </div>
 
-          <div className="row g-3">
-            {faqs.map((faq, index) => {
-              const isOpen = activeFaq === index;
-              return (
-                <div className="col-md-6" key={index}>
-                  <div style={{
-                    border: '1.5px solid #e2e8f0', borderRadius: '14px',
-                    overflow: 'hidden', transition: 'all 0.2s',
-                    ...(isOpen ? { borderColor: '#ff5c1a' } : {})
-                  }}>
-                    <button
-                      onClick={() => toggleFaq(index)}
-                      style={{
-                        width: '100%', background: isOpen ? '#fff4ef' : '#fff',
-                        border: 'none', padding: '16px 20px',
-                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        textAlign: 'left', cursor: 'pointer', fontWeight: 700,
-                        fontSize: '13.5px', color: isOpen ? '#ff5c1a' : '#0f172a',
-                        transition: 'all 0.2s', fontFamily: "'Poppins', sans-serif"
-                      }}
-                    >
-                      <span>{faq.q}</span>
-                      {isOpen ? <LuChevronUp size={16} /> : <LuChevronDown size={16} />}
-                    </button>
-                    {isOpen && (
-                      <div style={{
-                        padding: '14px 20px', background: '#fff',
-                        fontSize: '13px', color: '#64748b', lineHeight: 1.7,
-                        borderTop: '1px solid #ffe8dd'
-                      }}>
-                        {faq.a}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ══ BOTTOM CTA BANNER ══ */}
-      <section style={{ padding: '0 0 72px' }}>
-        <div className="container">
-          <div style={{
-            background: 'linear-gradient(135deg, #fffcf9, #fff8f2)',
-            border: '1.5px solid #ffe8dd', borderRadius: '24px',
-            padding: '40px 40px', display: 'flex',
-            alignItems: 'center', justifyContent: 'space-between',
-            flexWrap: 'wrap', gap: '24px', position: 'relative', overflow: 'hidden'
-          }}>
-            {/* Decorative recycle icon */}
-            <div style={{
-              position: 'absolute', right: '200px', top: '50%', transform: 'translateY(-50%)',
-              opacity: 0.06
-            }} className="d-none d-lg-block">
-              <LuRecycle size={160} color="#ff5c1a" />
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', zIndex: 2 }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '18px',
-                background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', flexShrink: 0,
-                boxShadow: '0 8px 24px rgba(255,92,26,0.3)'
-              }}>
-                <LuRecycle size={28} />
-              </div>
-              <div>
-                <h3 style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', marginBottom: '6px' }}>
-                  Ready to Scrap Your Vehicle?
-                </h3>
-                <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0 }}>
-                  Get the best value for your vehicle with free pickup and hassle-free paperwork.
-                </p>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', zIndex: 2 }}>
-              <button
-                onClick={() => handleOpenModal('Trade-In Valuation')}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)',
-                  color: '#fff', border: 'none', borderRadius: '12px',
-                  padding: '13px 26px', fontWeight: 700, fontSize: '14px',
-                  cursor: 'pointer', boxShadow: '0 6px 20px rgba(255,92,26,0.3)',
-                  fontFamily: "'Poppins', sans-serif", transition: 'all 0.2s'
-                }}
-              >
-                <LuTag size={17} /> Get Valuation
-              </button>
-              <a
-                href="tel:8004277"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  background: '#fff', color: '#0f172a',
-                  border: '1.5px solid #e2e8f0', borderRadius: '12px',
-                  padding: '13px 26px', fontWeight: 700, fontSize: '14px',
-                  textDecoration: 'none', fontFamily: "'Poppins', sans-serif",
-                  transition: 'all 0.2s'
-                }}
-              >
-                <LuPhone size={16} color="#ff5c1a" /> Contact Us
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
     </>
   );
 };

@@ -13,7 +13,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), ctrl.stripeWe
 router.use(express.json());
 
 router.post('/create-intent',               auth, ctrl.createPaymentIntent);
-router.post('/bypass-pay',                  auth, role('admin'), (req, res, next) => {
+router.post('/bypass-pay',                  auth, (req, res, next) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({ success: false, message: 'Bypass payment is disabled in production' });
   }

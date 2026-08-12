@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 
 const SERVICE_TYPES = ['minor_service', 'major_service', 'ac_repair', 'brake_repair',
-  'electrical', 'diagnostics', 'battery', 'emergency_pickup', 'roadside_assistance', 'other'];
+  'electrical', 'diagnostics', 'battery', 'roadside_assistance', 'other'];
 
 const STATUS_STEPS = [
   'pending_payment', 'new', 'assigned', 'quote_pending', 'quote_sent', 'quote_approved',
-  'pickup_scheduled', 'picked_up', 'in_garage', 'repair_in_progress',
-  'work_complete', 'ready_for_delivery', 'delivered', 'closed', 'cancelled',
+  'pickup_scheduled', 'arrived_at_customer', 'picked_up', 'in_garage', 'inspection_done', 'repair_in_progress',
+  'service_done', 'work_complete', 'ready_for_delivery', 'delivered', 'closed', 'cancelled',
   'cancellation_requested'
 ];
 
@@ -15,6 +15,7 @@ const requestSchema = new mongoose.Schema({
   vehicleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Vehicle', required: true },
   serviceType: { type: String, enum: SERVICE_TYPES, required: true },
   subCategory: { type: String },
+  vinNumber: { type: String, default: '' },
   description: { type: String, required: true },
   status: { type: String, enum: STATUS_STEPS, default: 'pending_payment' },
   previousStatus: { type: String, default: null },

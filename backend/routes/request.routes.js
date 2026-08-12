@@ -5,6 +5,18 @@ import role from '../middleware/role.middleware.js';
 import * as ctrl from '../controllers/request.controller.js';
 import { upload  } from '../utils/upload.js';
 
+router.post('/submit-quote', ctrl.submitQuote);
+router.post('/claim-quote', auth, async (req, res) => {
+  try {
+    const { quoteToken } = req.body;
+    const request = await ctrl.claimPendingQuote(quoteToken, req.user);
+    if (!request) return res.status(400).json({ success: false, message: 'Invalid or expired quote token.' });
+    return res.status(200).json({ success: true, request, redirectUrl: `/payment/${request._id}` });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.use(auth);
 router.post('/', role('customer'), upload.array('photos', 10), ctrl.createRequest);
 router.get('/customer/dashboard-stats', ctrl.getCustomerDashboardStats);

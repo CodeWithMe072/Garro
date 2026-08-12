@@ -274,9 +274,7 @@ const MyRequests = () => {
     { key: 'all',       label: t('all_requests') },
     { key: 'active',    label: t('active_requests') },
     { key: 'completed', label: `✅ ${t('completed') || 'Completed'} (${requests.filter(r => ['delivered', 'completed', 'closed'].includes(r.status)).length})` },
-    { key: 'quotes',    label: `✉️ ${t('my_service_quotes') || 'Pending Quotes'} (${quotes.length})` },
-    { key: 'invoices',  label: `📄 ${t('invoices')} (${invoices.length})` },
-    { key: 'transactions', label: `💳 Transaction History` }
+    { key: 'invoices',  label: `📄 My Invoices (${invoices.length})` }
   ];
 
   const activeStatuses = [
@@ -465,61 +463,8 @@ const MyRequests = () => {
           )
         )}
 
-        {/* Transaction History Tab */}
-        {activeTab === 'transactions' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div style={{
-              background: 'white', borderRadius: 16, padding: '24px',
-              boxShadow: '0 2px 12px rgba(0,0,0,0.06)', overflowX: 'auto'
-            }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: 600 }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid #e2e8f0', color: '#64748b', fontSize: 13, fontWeight: 600 }}>
-                    <th style={{ padding: '12px 16px' }}>Transaction ID</th>
-                    <th style={{ padding: '12px 16px' }}>Date</th>
-                    <th style={{ padding: '12px 16px' }}>Reference</th>
-                    <th style={{ padding: '12px 16px' }}>Payment Method</th>
-                    <th style={{ padding: '12px 16px' }}>Amount</th>
-                    <th style={{ padding: '12px 16px' }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mockTransactions.map(txn => (
-                    <tr key={txn.id} style={{ borderBottom: '1px solid #f1f5f9', fontSize: 13.5, color: '#334155' }}>
-                      <td style={{ padding: '16px 16px', fontWeight: 700, color: '#0f172a' }}>
-                        #{txn.id}
-                      </td>
-                      <td style={{ padding: '16px 16px' }}>
-                        {new Date(txn.date).toLocaleDateString('en-AE', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </td>
-                      <td style={{ padding: '16px 16px' }}>
-                        #{txn.bookingId} ({txn.service})
-                      </td>
-                      <td style={{ padding: '16px 16px' }}>
-                        {txn.method}
-                      </td>
-                      <td style={{ padding: '16px 16px', fontWeight: 700, color: '#0f172a' }}>
-                        AED {txn.amount.toFixed(2)}
-                      </td>
-                      <td style={{ padding: '16px 16px' }}>
-                        <span style={{
-                          padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                          background: txn.status === 'success' ? '#dcfce7' : '#fee2e2',
-                          color:      txn.status === 'success' ? '#16a34a' : '#dc2626'
-                        }}>
-                          {txn.status.toUpperCase()}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Requests & Quotes Tabs Content */}
-        {activeTab !== 'invoices' && activeTab !== 'transactions' && (
+        {/* Requests Tabs Content */}
+        {activeTab !== 'invoices' && (
           filteredRequests.length === 0 ? (
             <div style={{
               background: 'white', borderRadius: 16, padding: 48, textAlign: 'center',

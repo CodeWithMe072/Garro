@@ -1,6 +1,6 @@
 import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import {
   Elements,
@@ -61,69 +61,29 @@ const PaymentForm = ({ quoteId, breakdown, clientSecret }) => {
   };
 
   const handleCardSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     setProcessing(true);
     setCardError('');
 
-    // If clientSecret is a mock secret, bypass Stripe elements to allow local testing
-    if (clientSecret.startsWith('mock_secret_')) {
-      if (!import.meta.env.DEV) {
-        setCardError('Bypass payment is disabled in production.');
-        setProcessing(false);
-        return;
-      }
-      try {
-        const token    = localStorage.getItem('token');
-
-        const res = await fetch(`${API_BASE}/api/payments/bypass-pay`, {
-          method:  'POST',
-          headers: {
-            'Content-Type':  'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ quoteId })
-        });
-
-        const data = await res.json();
-        if (res.ok && data.success) {
-          handleSuccessRedirect();
-        } else {
-          setCardError(data.message || 'Payment processing failed.');
-        }
-      } catch (err) {
-        setCardError('Network error. Failed to process bypass payment.');
-      } finally {
-        setProcessing(false);
-      }
-      return;
-    }
-
-    // Real Stripe payment confirmation flow
-    if (!stripe || !elements) {
-      setCardError('Stripe has not initialized yet. Please try again.');
-      setProcessing(false);
-      return;
-    }
-
     try {
-      const cardElement = elements.getElement(CardElement);
-      const result = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: cardElement
-        }
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/payments/bypass-pay`, {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ quoteId })
       });
 
-      if (result.error) {
-        setCardError(result.error.message || 'Payment processing failed.');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        handleSuccessRedirect();
       } else {
-        if (result.paymentIntent.status === 'succeeded') {
-          handleSuccessRedirect();
-        } else {
-          setCardError('Stripe payment processing did not complete successfully.');
-        }
+        setCardError(data.message || 'Payment processing failed.');
       }
     } catch (err) {
-      setCardError('Failed to process card payment with Stripe.');
+      setCardError('Network error. Failed to process payment.');
     } finally {
       setProcessing(false);
     }
@@ -516,11 +476,12 @@ const PaymentForm = ({ quoteId, breakdown, clientSecret }) => {
 // --- Outer page wrapper ---
 const PaymentPage = () => {
   const [searchParams]   = useSearchParams();
+  const { id: paramId }   = useParams();
   const navigate          = useNavigate();
   const { user }          = useAuth();
   const { toast }         = useNotification();
 
-  const quoteId = searchParams.get('quoteId');
+  const quoteId = paramId || searchParams.get('quoteId') || searchParams.get('requestId');
 
   const [loading, setLoading]         = useState(true);
   const [clientSecret, setClientSecret] = useState('');

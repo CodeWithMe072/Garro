@@ -51,7 +51,6 @@ const formatServiceName = (serviceType, subCategory) => {
   if (!val) return 'General Service';
   const map = {
     'ac_repair': 'AC Repair',
-    'emergency_pickup': 'Emergency Pickup',
     'minor_service': 'Minor Service',
     'major_service': 'Major Service',
     'brake_repair': 'Brake Repair',
@@ -191,7 +190,6 @@ const AdminDashboard = () => {
           cleanSrv.includes(reqService) ||
           reqService.includes(cleanSrv) ||
           (reqSub && (cleanSrv.includes(reqSub) || reqSub.includes(cleanSrv))) ||
-          cleanSrv === 'emergency_pickup' ||
           cleanSrv === 'roadside_assistance' ||
           cleanSrv === 'towing' ||
           cleanSrv.includes('general') ||
@@ -874,7 +872,6 @@ const AdminDashboard = () => {
             {/* 🚨 ACTIVE EMERGENCY PICKUP REQUESTS DISPATCH PANEL */}
             {(() => {
               const activeEmg = recentBookings.filter(r => (
-                r.serviceType === 'emergency_pickup' ||
                 r.serviceType === 'roadside_assistance' ||
                 r.urgency === 'asap'
               ) && !['completed', 'closed', 'delivered', 'cancelled'].includes(r.status));
@@ -1594,7 +1591,7 @@ const AdminDashboard = () => {
 
               <div style={{ marginTop: '14px', background: '#eff6ff', border: '1.5px solid #bfdbfe', borderRadius: '12px', padding: '12px 16px' }}>
                 {/* Emergency badge */}
-                {(selectedRequest.serviceType === 'emergency_pickup' || selectedRequest.serviceType === 'roadside_assistance' || selectedRequest.urgency === 'asap') && (
+                {(selectedRequest.serviceType === 'roadside_assistance' || selectedRequest.urgency === 'asap') && (
                   <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#dc2626', color: 'white', fontSize: '10.5px', fontWeight: 800, padding: '2px 10px', borderRadius: '12px', marginBottom: '8px' }}>
                     🚨 EMERGENCY DISPATCH
                   </div>
@@ -1667,7 +1664,7 @@ const AdminDashboard = () => {
                   }}
                   required
                 />
-                {selectedRequest && !['emergency_pickup','roadside_assistance'].includes(selectedRequest.serviceType) && selectedRequest.urgency !== 'asap' && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
+                {selectedRequest && selectedRequest.serviceType !== 'roadside_assistance' && selectedRequest.urgency !== 'asap' && getMatchingGarages(selectedRequest, garagesList).length === 0 && (
                   <p className="text-danger small mt-1" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <LuTriangleAlert size={12} /> <span>No garages found supporting <strong>{(selectedRequest.subCategory || selectedRequest.serviceType)?.replace('_',' ')}</strong> in area <strong>"{selectedRequest.location?.area ? `${selectedRequest.location.area}, ` : ''}{selectedRequest.location?.city || 'Dubai'}"</strong>.</span>
                   </p>

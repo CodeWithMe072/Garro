@@ -941,3 +941,99 @@ export const getActivityLogs = async (req, res) => {
     error(res, err.message, 500);
   }
 };
+
+// Change 4 — GET /api/admin/job-time-analytics
+export const getJobTimeAnalytics = async (req, res) => {
+  try {
+    const jobs = await Job.find()
+      .populate('quoteId')
+      .populate({
+        path: 'requestId',
+        populate: [
+          { path: 'userId', select: 'name phone' },
+          { path: 'vehicleId', select: 'make model year' }
+        ]
+      })
+      .populate('garageId', 'name');
+
+    // Pre-migration Filter: Exclude legacy jobs lacking valid booking timestamp
+    const validJobs = jobs.filter(job => {
+      const bookingTime = job.stageTimestamps?.booking || job.createdAt;
+      return Boolean(bookingTime && (job.stageTimestamps?.delivery || job.actualEndDate || job.status === 'delivered' || job.status === 'closed'));
+    });
+
+    let cleanTotalHours = 0;
+    let cleanCount = 0;
+    let edgeTotalHours = 0;
+    let edgeCount = 0;
+
+    const edgeCaseBreakdown = {
+      payment_retry: 0,
+      scope_change: 0,
+      dispute: 0
+    };
+
+    const stageDurations = {
+      bookingToContact: [],
+      contactToQuote: [],
+      quoteToApproval: [],
+      approvalToDelivery: []
+    };
+
+    validJobs.forEach(job => {
+      const bookingTime = new Date(job.stageTimestamps?.booking || job.createdAt).getTime();
+      const deliveryTime = new Date(job.stageTimestamps?.delivery || job.actualEndDate || job.updatedAt).getTime();
+      const totalHours = Math.max(0, parseFloat(((deliveryTime - bookingTime) / (1000 * 60 * 60)).toFixed(2)));
+
+      const isEdge = Boolean(job.isEdgeCase || (job.edgeCaseFlags && job.edgeCaseFlags.length > 0));
+
+      if (isEdge) {
+        edgeTotalHours += totalHours;
+        edgeCount++;
+        (job.edgeCaseFlags || []).forEach(flag => {
+          if (edgeCaseBreakdown[flag.type] !== undefined) {
+            edgeCaseBreakdown[flag.type]++;
+          }
+        });
+      } else {
+        cleanTotalHours += totalHours;
+        cleanCount++;
+      }
+
+      // Stage duration calculations
+      if (job.stageTimestamps) {
+        const { booking, contact, quote, approval, delivery } = job.stageTimestamps;
+        if (booking && contact) stageDurations.bookingToContact.push((new Date(contact) - new Date(booking)) / (1000 * 60 * 60));
+        if (contact && quote) stageDurations.contactToQuote.push((new Date(quote) - new Date(contact)) / (1000 * 60 * 60));
+        if (quote && approval) stageDurations.quoteToApproval.push((new Date(approval) - new Date(quote)) / (1000 * 60 * 60));
+        if (approval && delivery) stageDurations.approvalToDelivery.push((new Date(delivery) - new Date(approval)) / (1000 * 60 * 60));
+      }
+    });
+
+    const calcAvg = arr => arr.length ? parseFloat((arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(2)) : 0;
+
+    const summary = {
+      totalAnalyzedJobs: validJobs.length,
+      cleanJobs: {
+        count: cleanCount,
+        avgDurationHours: cleanCount ? parseFloat((cleanTotalHours / cleanCount).toFixed(2)) : 0
+      },
+      edgeCaseJobs: {
+        count: edgeCount,
+        avgDurationHours: edgeCount ? parseFloat((edgeTotalHours / edgeCount).toFixed(2)) : 0,
+        breakdown: edgeCaseBreakdown
+      },
+      stageAveragesHours: {
+        bookingToContact: calcAvg(stageDurations.bookingToContact),
+        contactToQuote: calcAvg(stageDurations.contactToQuote),
+        quoteToApproval: calcAvg(stageDurations.quoteToApproval),
+        approvalToDelivery: calcAvg(stageDurations.approvalToDelivery)
+      }
+    };
+
+    success(res, { analytics: summary });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+

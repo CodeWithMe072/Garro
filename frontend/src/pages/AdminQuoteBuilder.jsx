@@ -211,10 +211,15 @@ const AdminQuoteBuilder = () => {
                   {/* Details grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '32px', borderBottom: '1px solid #e2e8f0', paddingBottom: '20px' }}>
                     <div>
-                      <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>{lang === 'ar' ? 'المركبة' : (lang === 'ur' ? 'گاڑی' : 'Vehicle')}</h5>
+                      <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>{lang === 'ar' ? 'المركبة' : 'Vehicle'}</h5>
                       <p style={{ margin: 0, fontSize: '14px', fontWeight: '600' }}>
                         {selectedReq.vehicleId ? `${selectedReq.vehicleId.make} ${selectedReq.vehicleId.model} (${selectedReq.vehicleId.year})` : 'N/A'}
                       </p>
+                      {(selectedReq.vinNumber || selectedReq.vehicleId?.VIN) && (
+                        <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#ff5c1a', fontWeight: '600' }}>
+                          VIN: {selectedReq.vinNumber || selectedReq.vehicleId?.VIN}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <h5 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#64748b', marginBottom: '6px' }}>{lang === 'ar' ? 'العميل' : (lang === 'ur' ? 'کسٹمر' : 'Customer')}</h5>

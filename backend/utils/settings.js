@@ -3,7 +3,8 @@ import Settings from '../models/Settings.js';
 let settingsCache = {
   vatPercentage: 5,
   serviceFeePercentage: 10,
-  assignMode: 'manual'
+  assignMode: 'manual',
+  minMarginThreshold: 0.15
 };
 
 export const loadSettings = async () => {

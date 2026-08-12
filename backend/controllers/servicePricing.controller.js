@@ -10,7 +10,6 @@ const DEFAULT_PRICES = [
   { serviceType: 'ac_repair',     label: 'AC Gas Topup & Repair',          partsCost: 50,  laborCost: 199, durationHours: 1 },
   { serviceType: 'electrical',    label: 'Electrical Diagnostics & Repair',partsCost: 0,   laborCost: 249, durationHours: 3 },
   { serviceType: 'diagnostics',   label: 'Engine Diagnostics',             partsCost: 0,   laborCost: 99,  durationHours: 1 },
-  { serviceType: 'emergency_pickup', label: 'Emergency Towing & Pickup',   partsCost: 0,   laborCost: 150, durationHours: 1 },
   { serviceType: 'roadside_assistance', label: 'Roadside Assistance',      partsCost: 0,   laborCost: 150, durationHours: 1 },
   { serviceType: 'other',         label: 'General Mechanical Repair',      partsCost: 0,   laborCost: 199, durationHours: 3 },
 ];
@@ -73,7 +72,7 @@ export const getPriceForServiceType = async (serviceType) => {
   const fallback = {
     minor_service: 299, major_service: 599, brake_repair: 399,
     battery: 499, ac_repair: 249, electrical: 249, diagnostics: 99,
-    emergency_pickup: 150, roadside_assistance: 150, other: 199
+    roadside_assistance: 150, other: 199
   };
   const total = fallback[serviceType] || 199;
   return { partsCost: 0, laborCost: total, total };

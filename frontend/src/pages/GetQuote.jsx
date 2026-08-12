@@ -29,6 +29,7 @@ const GetQuote = () => {
   const [cityName, setCityName] = useState('Dubai');
   const [area, setArea] = useState('');
   const [urgency, setUrgency] = useState('');
+  const [vinNumber, setVinNumber] = useState('');
 
   const [catalogBrands, setCatalogBrands] = useState([]);
   const [catalogServices, setCatalogServices] = useState([]);
@@ -123,11 +124,6 @@ const GetQuote = () => {
       toast.warning('Admin accounts cannot place quote requests.');
       return;
     }
-    if (!isAuthenticated) {
-      toast.info("Please sign in or register first to submit a quote request.");
-      navigate('/login');
-      return;
-    }
 
     const form = e.target;
     const formData = new FormData(form);
@@ -144,138 +140,72 @@ const GetQuote = () => {
     const urgency = formData.get('urgency');
 
     try {
-      const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const token = localStorage.getItem('token');
-
-      // 1. Register vehicle
-      const vehicleRes = await fetch(`${API_BASE}/api/vehicles`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          make: car_brand || 'Toyota',
-          model: car_model || 'Camry',
-          year: parseInt(car_year) || 2020,
-          registrationNumber: `DXB-${Math.floor(Math.random() * 90000 + 10000)}`
-        })
-      });
-      const vehicleData = await vehicleRes.json();
-      if (!vehicleRes.ok || !vehicleData.success) {
-        throw new Error(vehicleData.message || 'Failed to register vehicle.');
-      }
-
-      const vehicleId = vehicleData.vehicle._id;
-
-      // 2. Map service code
-      const serviceTypeMap = {
-        // Mechanical Repair
-        engine_repair: 'other',
-        brake_repair: 'brake_repair',
-        suspension_repair: 'other',
-        transmission_service: 'other',
-        steering_repair: 'other',
-
-        // Electrical & AC
-        ac_repair: 'ac_repair',
-        battery_replacement: 'battery',
-        diagnostics: 'diagnostics',
-        electrical_fix: 'electrical',
-
-        // Body & Paint
-        scratch_removal: 'other',
-        dent_repair: 'other',
-        ceramic_coating: 'other',
-        window_tinting: 'other',
-        full_detailing: 'other',
-
-        // General Maintenance
-        minor_service: 'minor_service',
-        major_service: 'major_service',
-        oil_change: 'minor_service',
-        safety_inspection: 'diagnostics',
-        annual_inspection: 'diagnostics',
-
-        other: 'other'
+      const payload = {
+        category,
+        subCategory: sub_category,
+        carBrand: car_brand,
+        carModel: car_model,
+        carYear: car_year,
+        cityName: city_name,
+        area,
+        problemTitle: problem_title,
+        phone,
+        urgency,
+        vinNumber: formData.get('vin_number') || vinNumber || ''
       };
-      const serviceTypeCode = serviceTypeMap[sub_category] || 'other';
 
-      // 3. Create preferred date
-      let preferredDateObj = new Date();
-      if (urgency === 'today') {
-        preferredDateObj.setHours(preferredDateObj.getHours() + 2);
-      } else if (urgency === 'this_week') {
-        preferredDateObj.setDate(preferredDateObj.getDate() + 3);
-      } else {
-        preferredDateObj.setDate(preferredDateObj.getDate() + 1); // tomorrow
-      }
-
-      // 4. Submit booking request
-      // Find human-readable subcategory name
-      let subCategoryLabel = '';
-      if (sub_category) {
-        const foundSub = catalogServices
-          .flatMap(c => c.subCategories || [])
-          .find(s => s.slug === sub_category);
-        if (foundSub) {
-          subCategoryLabel = foundSub.name;
-        }
-      }
-
-      // 4. Submit booking request
-      const requestRes = await fetch(`${API_BASE}/api/requests`, {
+      const res = await fetch(`${API_BASE}/api/requests/submit-quote`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify({
-          vehicleId,
-          serviceType: serviceTypeCode,
-          subCategory: subCategoryLabel || sub_category,
-          description: problem_title || `Requesting quote for ${subCategoryLabel || sub_category || category || 'general service'}`,
-          preferredDate: preferredDateObj,
-          urgency: urgency || 'flexible',
-          location: {
-            address: `${area || ''}, ${city_name || ''}`.trim() || 'Dubai',
-            lat: 25.2048,
-            lng: 55.2708
-          },
-          garageId: null
-        })
+        body: JSON.stringify(payload)
       });
+      const data = await res.json();
 
-      const requestData = await requestRes.json();
-      if (!requestRes.ok || !requestData.success) {
-        throw new Error(requestData.message || 'Failed to submit quote request.');
-      }
+      if (res.ok && data.success) {
+        if (data.requireAuth) {
+          localStorage.setItem('pending_quote_token', data.quoteToken);
+          localStorage.setItem('pending_quote_data', JSON.stringify(payload));
+          toast.info('Please sign in or create an account to finalize your quote.');
+          navigate('/login', { state: { quoteToken: data.quoteToken } });
+          return;
+        }
 
-      // Save favorite location if selected
-      if (saveAsFavorite && favoriteLabel) {
-        try {
-          await fetch(`${API_BASE}/api/users/me/favorite-locations`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-              label: favoriteLabel,
-              address: `${area || ''}, ${city_name || ''}`.trim() || 'Dubai',
-              lat: 25.2048,
-              lng: 55.2708
-            })
-          });
-        } catch (fErr) {
-          console.error('Failed to save favorite location:', fErr);
+        if (data.request) {
+          toast.success('Quote request submitted successfully!');
+          navigate(data.redirectUrl || `/payment/${data.request._id}`);
+          
+          // Save favorite location if selected
+          if (saveAsFavorite && favoriteLabel) {
+            try {
+              await fetch(`${API_BASE}/api/users/me/favorite-locations`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  label: favoriteLabel,
+                  address: `${area || ''}, ${city_name || ''}`.trim() || 'Dubai',
+                  lat: 25.2048,
+                  lng: 55.2708
+                })
+              });
+            } catch (fErr) {
+              console.error('Failed to save favorite location:', fErr);
+            }
+          }
+          return;
         }
       }
 
-      toast.success('Quote request submitted successfully! Redirecting to payment...');
-      navigate(`/payment?quoteId=${requestData.quoteId}`);
+      throw new Error(data.message || 'Failed to submit quote request.');
     } catch (err) {
-      toast.error(err.message || 'An error occurred during submission.');
+      console.error(err);
+      toast.error(err.message || 'Error submitting request. Please try again.');
     }
   };
 
@@ -450,8 +380,8 @@ const GetQuote = () => {
                 </div>
               )}
 
-              {/* Row 4: Describe Issue, Preferred Time, Contact Info */}
-              <div className="col-md-6">
+              {/* Row 4: Describe Issue, Preferred Time, Contact Info, VIN */}
+              <div className="col-md-4">
                 <div className="qform-label"><span className="material-icons-round">description</span> {t('describe_issue')}</div>
                 <input
                   type="text"
@@ -463,6 +393,18 @@ const GetQuote = () => {
                 />
               </div>
               <div className="col-md-3 col-sm-6">
+                <div className="qform-label"><span className="material-icons-round">subtitles</span> VIN / Chassis No. (Optional)</div>
+                <input
+                  type="text"
+                  name="vin_number"
+                  className="qform-input"
+                  placeholder="e.g. 17-digit VIN"
+                  value={vinNumber}
+                  onChange={(e) => setVinNumber(e.target.value)}
+                  style={{ height: '48px', borderRadius: '12px' }}
+                />
+              </div>
+              <div className="col-md-2 col-sm-6">
                 <div className="qform-label"><span className="material-icons-round">access_time</span> {t('preferred_time')}</div>
                 <CustomDropdown
                   name="urgency"
@@ -491,32 +433,19 @@ const GetQuote = () => {
               </div>
 
               {/* Row 5: Action Button & Info */}
-              <div className="col-12 d-flex flex-column align-items-center justify-content-center mt-4" style={{ gap: '10px' }}>
-                {isGuest && (
-                  <p style={{ margin: 0, fontSize: '12px', color: '#ff5c1a', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
-                    Log in as a customer to submit
-                  </p>
-                )}
-                {isReadOnly && (
-                  <p style={{ margin: 0, fontSize: '12px', color: '#ea580c', fontWeight: 600, textAlign: 'center', lineHeight: '1.3' }}>
-                    Admin accounts cannot place requests
-                  </p>
-                )}
+              <div className="col-12 mt-4 d-flex align-items-center flex-column justify-content-center" style={{ gap: '10px' }}>
                 <button
                   type="submit"
                   className="btn-quote-submit"
-                  disabled={!canSubmit}
-                  title={isGuest ? 'Log in as a customer to submit' : !canSubmit ? 'Your account type cannot place quote requests' : ''}
                   style={{
                     maxWidth: '340px',
                     padding: '14px 48px',
                     borderRadius: '12px',
                     fontSize: '15px',
                     height: 'auto',
-                    cursor: canSubmit ? 'pointer' : 'not-allowed',
-                    opacity: canSubmit ? 1 : 0.5,
-                    filter: canSubmit ? 'none' : 'grayscale(40%)',
-                    pointerEvents: canSubmit ? 'auto' : 'none'
+                    cursor: 'pointer',
+                    opacity: 1,
+                    pointerEvents: 'auto'
                   }}
                 >
                   {t('get_a_quote')}

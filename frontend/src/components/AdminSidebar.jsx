@@ -17,11 +17,16 @@ import {
   LuTrendingUp,
   LuChevronLeft,
   LuChevronRight,
-  LuSlidersHorizontal
+  LuSlidersHorizontal,
+  LuLogOut
 } from 'react-icons/lu';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const AdminSidebar = ({ pendingBookings }) => {
   const { t } = useLanguage();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
 
   // Load collapsed state from localStorage
@@ -147,10 +152,6 @@ const AdminSidebar = ({ pendingBookings }) => {
           <span className="icon"><LuSlidersHorizontal /></span>
           <span className="link-text">{t('system_catalog')}</span>
         </Link>
-        <Link to="/admin/quote-builder" className={`sidebar-link ${isActive('/admin/quote-builder')}`}>
-          <span className="icon"><LuDollarSign /></span>
-          <span className="link-text">{t('quote_builder')}</span>
-        </Link>
         <Link to="/admin/service-pricing" className={`sidebar-link ${isActive('/admin/service-pricing')}`}>
           <span className="icon"><LuDollarSign /></span>
           <span className="link-text">Service Pricing</span>
@@ -218,6 +219,17 @@ const AdminSidebar = ({ pendingBookings }) => {
           <span className="icon"><LuGlobe /></span>
           <span className="link-text">{t('back_to_site')}</span>
         </Link>
+        <button
+          onClick={async () => {
+            await logout();
+            navigate('/login', { replace: true });
+          }}
+          className="sidebar-link text-danger border-0 bg-transparent w-100 text-start"
+          style={{ cursor: 'pointer' }}
+        >
+          <span className="icon"><LuLogOut /></span>
+          <span className="link-text">{t('sign_out') || 'Sign Out'}</span>
+        </button>
       </div>
     </aside>
   );

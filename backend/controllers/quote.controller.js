@@ -1,16 +1,17 @@
-import Quote from '../models/Quote.js';
+import Quote, { computeMargin } from '../models/Quote.js';
 import Request from '../models/Request.js';
 import Job from '../models/Job.js';
 import Helper from '../models/Helper.js';
-import { success, error  } from '../utils/response.js';
-import { notifyCustomer  } from '../utils/notify.js';
+import { success, error } from '../utils/response.js';
+import { notifyCustomer } from '../utils/notify.js';
 import { generatePDF, quoteTemplate } from '../utils/pdf.js';
 import { logActivity } from '../utils/audit.js';
+import { getSetting } from '../utils/settings.js';
 
 // POST /api/quotes — admin creates quote for an assigned request
 export const createQuote = async (req, res) => {
   try {
-    const { requestId, garageId, partsCost, laborCost } = req.body;
+    const { requestId, garageId, partsCost, laborCost, servicePrice, machineCostPerService } = req.body;
 
     const request = await Request.findById(requestId);
     if (!request) return error(res, 'Request not found', 404);
@@ -25,6 +26,8 @@ export const createQuote = async (req, res) => {
       garageId, 
       partsCost, 
       laborCost,
+      servicePrice: Number(servicePrice) || 0,
+      machineCostPerService: Number(machineCostPerService) || 0,
       status: 'sent' 
     });
 
@@ -87,6 +90,44 @@ export const getQuote = async (req, res) => {
   }
 };
 
+// POST /api/quotes/calculate-margin — Live Quote Builder Margin Calculation (Single Source of Truth)
+export const calculateMargin = async (req, res) => {
+  try {
+    const partsCost = Number(req.body.partsCost) || 0;
+    const laborCost = Number(req.body.laborCost) || 0;
+    const servicePrice = Number(req.body.servicePrice) || 0;
+    const machineCostPerService = Number(req.body.machineCostPerService) || 0;
+    const subtotal = partsCost + laborCost + servicePrice + machineCostPerService;
+
+    const serviceFeePercent = getSetting('serviceFeePercentage', 10);
+    const vatPercent = getSetting('vatPercentage', 5);
+    const minMarginThreshold = getSetting('minMarginThreshold', 0.15);
+
+    const serviceFee = parseFloat((subtotal * (serviceFeePercent / 100)).toFixed(2));
+    const vat = parseFloat(((subtotal + serviceFee) * (vatPercent / 100)).toFixed(2));
+    const customerTotal = parseFloat((subtotal + serviceFee + vat).toFixed(2));
+    const margin = computeMargin(subtotal, customerTotal);
+
+    const isBelowThreshold = margin < minMarginThreshold;
+
+    success(res, {
+      partsCost,
+      laborCost,
+      servicePrice,
+      machineCostPerService,
+      subtotal,
+      serviceFee,
+      vat,
+      customerTotal,
+      margin,
+      minMarginThreshold,
+      isBelowThreshold
+    });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
 // PUT /api/quotes/:id/approve — customer approves → auto-create Job
 export const approveQuote = async (req, res) => {
   try {
@@ -103,13 +144,22 @@ export const approveQuote = async (req, res) => {
     quote.status = 'approved';
     await quote.save();
 
-    // Auto-create Job record
+    // Auto-create Job record with initial margin and stageTimestamps
     const job = await Job.create({
       quoteId:          quote._id,
       requestId:        quote.requestId._id,
       garageId:         quote.garageId,
       helperId:         quote.requestId.helperId,
       status:           'pickup_scheduled',
+      quotedMargin:         quote.margin || 0,
+      actualMargin:         quote.margin || 0,
+      revisedSubtotal:      quote.subtotal || 0,
+      revisedCustomerTotal: quote.customerTotal || 0,
+      stageTimestamps: {
+        booking:  quote.requestId?.createdAt || new Date(),
+        quote:    quote.createdAt || new Date(),
+        approval: new Date()
+      },
       estimatedArrival: new Date(Date.now() + 4 * 60 * 60 * 1000) // 4 hrs from now
     });
 

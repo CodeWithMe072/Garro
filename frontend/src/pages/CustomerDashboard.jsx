@@ -176,9 +176,75 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
+      {/* Quick Actions (Horizontal full width) */}
+      <div className="card border-0 rounded-4 shadow-sm p-4 mb-4" style={{ background: '#ffffff' }}>
+        <h5 className="fw-bold text-slate-800 mb-3">Quick Actions</h5>
+        <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+          <div className="col">
+            <Link to="/get-quote" className="g-quick-action-link h-100">
+              <div className="d-flex align-items-center gap-3 me-2">
+                <div className="action-icon-box flex-shrink-0">
+                  <LuPlus size={20} />
+                </div>
+                <div>
+                  <div className="fw-semibold text-slate-800" style={{ fontSize: '0.88rem' }}>Schedule New Service</div>
+                  <div className="text-secondary" style={{ fontSize: '0.73rem' }}>Request custom quotes</div>
+                </div>
+              </div>
+              <LuChevronRight size={16} className="chevron ms-auto flex-shrink-0" />
+            </Link>
+          </div>
+
+          <div className="col">
+            <Link to="/my-requests" className="g-quick-action-link h-100">
+              <div className="d-flex align-items-center gap-3 me-2">
+                <div className="action-icon-box flex-shrink-0">
+                  <LuList size={20} />
+                </div>
+                <div>
+                  <div className="fw-semibold text-slate-800" style={{ fontSize: '0.88rem' }}>View All Requests</div>
+                  <div className="text-secondary" style={{ fontSize: '0.73rem' }}>Track list of all bookings</div>
+                </div>
+              </div>
+              <LuChevronRight size={16} className="chevron ms-auto flex-shrink-0" />
+            </Link>
+          </div>
+
+          <div className="col">
+            <Link to="/my-requests" state={{ activeTab: 'quotes' }} className="g-quick-action-link h-100">
+              <div className="d-flex align-items-center gap-3 me-2">
+                <div className="action-icon-box flex-shrink-0">
+                  <LuFileText size={20} />
+                </div>
+                <div>
+                  <div className="fw-semibold text-slate-800" style={{ fontSize: '0.88rem' }}>Check My Quotes</div>
+                  <div className="text-secondary" style={{ fontSize: '0.73rem' }}>Approve garage prices</div>
+                </div>
+              </div>
+              <LuChevronRight size={16} className="chevron ms-auto flex-shrink-0" />
+            </Link>
+          </div>
+
+          <div className="col">
+            <Link to="/my-vehicles" className="g-quick-action-link h-100">
+              <div className="d-flex align-items-center gap-3 me-2">
+                <div className="action-icon-box flex-shrink-0">
+                  <LuCar size={20} />
+                </div>
+                <div>
+                  <div className="fw-semibold text-slate-800" style={{ fontSize: '0.88rem' }}>Manage Vehicles</div>
+                  <div className="text-secondary" style={{ fontSize: '0.73rem' }}>Update your vehicle assets</div>
+                </div>
+              </div>
+              <LuChevronRight size={16} className="chevron ms-auto flex-shrink-0" />
+            </Link>
+          </div>
+        </div>
+      </div>
+
       <div className="row g-4">
-        {/* Activity & Appointments (Left side) */}
-        <div className="col-lg-8">
+        {/* Activity & Appointments */}
+        <div className="col-12">
           {/* Upcoming Appointments */}
           <div className="card border-0 rounded-4 shadow-sm p-4 mb-4" style={{ background: '#ffffff' }}>
             <div className="d-flex align-items-center justify-content-between mb-3">
@@ -195,7 +261,7 @@ const CustomerDashboard = () => {
                 {upcomingAppointments.map(app => (
                   <div key={app._id} className="d-flex align-items-center justify-content-between p-3 rounded-3 bg-light border-0">
                     <div>
-                       <div className="fw-semibold text-slate-800" style={{ fontSize: '0.95rem' }}>
+                      <div className="fw-semibold text-slate-800" style={{ fontSize: '0.95rem' }}>
                         {app.subCategory || app.serviceType.replace(/_/g, ' ').toUpperCase()}
                       </div>
                       <div className="text-secondary" style={{ fontSize: '0.85rem' }}>
@@ -268,66 +334,6 @@ const CustomerDashboard = () => {
                 </table>
               </div>
             )}
-          </div>
-        </div>
-
-        {/* Quick Actions (Right side) */}
-        <div className="col-lg-4">
-          <div className="card border-0 rounded-4 shadow-sm p-4" style={{ background: '#ffffff' }}>
-            <h5 className="fw-bold text-slate-800 mb-3">Quick Actions</h5>
-            <div className="d-flex flex-column gap-2">
-              <Link to="/get-quote" className="g-quick-action-link">
-                <div className="d-flex align-items-center gap-3">
-                  <div className="action-icon-box">
-                    <LuPlus size={20} />
-                  </div>
-                  <div>
-                    <div className="fw-semibold text-slate-800" style={{ fontSize: '0.9rem' }}>Schedule New Service</div>
-                    <div className="text-secondary" style={{ fontSize: '0.75rem' }}>Request custom/emergency quotes</div>
-                  </div>
-                </div>
-                <LuChevronRight size={16} className="chevron" />
-              </Link>
-
-              <Link to="/my-requests" className="g-quick-action-link">
-                <div className="d-flex align-items-center gap-3">
-                  <div className="action-icon-box">
-                    <LuList size={20} />
-                  </div>
-                  <div>
-                    <div className="fw-semibold text-slate-800" style={{ fontSize: '0.9rem' }}>View All Requests</div>
-                    <div className="text-secondary" style={{ fontSize: '0.75rem' }}>Track list of all bookings</div>
-                  </div>
-                </div>
-                <LuChevronRight size={16} className="chevron" />
-              </Link>
-
-              <Link to="/my-requests" state={{ activeTab: 'quotes' }} className="g-quick-action-link">
-                <div className="d-flex align-items-center gap-3">
-                  <div className="action-icon-box">
-                    <LuFileText size={20} />
-                  </div>
-                  <div>
-                    <div className="fw-semibold text-slate-800" style={{ fontSize: '0.9rem' }}>Check My Quotes</div>
-                    <div className="text-secondary" style={{ fontSize: '0.75rem' }}>Approve or review garage prices</div>
-                  </div>
-                </div>
-                <LuChevronRight size={16} className="chevron" />
-              </Link>
-
-              <Link to="/my-vehicles" className="g-quick-action-link">
-                <div className="d-flex align-items-center gap-3">
-                  <div className="action-icon-box">
-                    <LuCar size={20} />
-                  </div>
-                  <div>
-                    <div className="fw-semibold text-slate-800" style={{ fontSize: '0.9rem' }}>Manage Vehicles</div>
-                    <div className="text-secondary" style={{ fontSize: '0.75rem' }}>Add or update your garage assets</div>
-                  </div>
-                </div>
-                <LuChevronRight size={16} className="chevron" />
-              </Link>
-            </div>
           </div>
         </div>
       </div>

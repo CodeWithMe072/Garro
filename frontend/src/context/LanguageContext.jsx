@@ -75,12 +75,16 @@ const translations = {
     // How It Works
     how_it_works: "How Garro Works",
     how_sub: "Simple steps to get your car back on track with trusted service.",
-    step1_title: "Tell us what you need",
-    step1_desc: "Describe your car's issue in a few simple words.",
+    step1_title: "Select Your Service",
+    step1_desc: "Choose a service or describe your car's issue in simple words.",
     step2_title: "We get you a quote",
     step2_desc: "Get transparent prices from verified garages.",
-    step3_title: "Free pickup & delivery",
-    step3_desc: "We collect, service, and return your car safely.",
+    step3_title: "Free Vehicle Pickup",
+    step3_desc: "We collect your car safely from your specified location.",
+    step4_title: "Service Done",
+    step4_desc: "Certified mechanics complete all requested repairs & checks.",
+    step5_title: "Delivered",
+    step5_desc: "Your repaired car is delivered right back to your doorstep.",
     get_quote_now: "Get a Quote Now",
 
     // Dark Stats
@@ -192,7 +196,6 @@ const translations = {
     footer_desc: "UAE's most trusted car help platform. Fast, reliable & certified car service across Dubai and all UAE emirates.",
     quick_links: "Quick Links",
     support_title: "Support",
-    emergency_pickup: "Emergency Pickup",
     get_offers: "Get Offers & Updates",
     your_email: "Your email",
     subscribed_msg: "✓ Subscribed! Watch your inbox.",
@@ -371,12 +374,16 @@ const translations = {
     // How It Works
     how_it_works: "كيف يعمل قارو",
     how_sub: "خطوات بسيطة لإصلاح سيارتك وإعادتها للطريق بخدمات موثوقة.",
-    step1_title: "أخبرنا بما تحتاجه",
-    step1_desc: "صف مشكلة سيارتك ببضع كلمات بسيطة.",
+    step1_title: "اختر خدمتك",
+    step1_desc: "حدد الخدمة المطلوب أو صف مشكلة سيارتك ببساطة.",
     step2_title: "نوفر لك عرض سعر",
     step2_desc: "احصل على أسعار شفافة من كراجات معتمدة.",
-    step3_title: "استلام وتوصيل مجاني",
-    step3_desc: "نستلم سيارتك، ونصلحها، ونعيدها إليك بأمان.",
+    step3_title: "استلام السيارة مجاناً",
+    step3_desc: "نستلم سيارتك بأمان من موقعك المحدد.",
+    step4_title: "إنجاز الخدمة",
+    step4_desc: "فنيون معتمدون ينفذون جميع الإصلاحات والفحوصات.",
+    step5_title: "التوصيل والتسليم",
+    step5_desc: "يتم توصيل سيارتك الجاهزة مباشرة إلى باب منزلك.",
     get_quote_now: "احصل على عرض سعر الآن",
 
     // Dark Stats
@@ -488,7 +495,6 @@ const translations = {
     footer_desc: "منصة مساعدة السيارات الأكثر موثوقية في الإمارات. خدمة سيارات سريعة وموثوقة ومعتمدة في دبي وجميع إمارات الدولة.",
     quick_links: "روابط سريعة",
     support_title: "الدعم",
-    emergency_pickup: "نقل طوارئ",
     get_offers: "احصل على العروض والتحديثات",
     your_email: "بريدك الإلكتروني",
     subscribed_msg: "✓ تم الاشتراك بنجاح! تابع صندوق الوارد.",
@@ -722,7 +728,7 @@ export const LanguageProvider = ({ children }) => {
 
   useEffect(() => {
     localStorage.setItem('lang', lang);
-    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.dir = 'ltr';
     document.documentElement.lang = lang;
   }, [lang]);
 

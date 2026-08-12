@@ -6,7 +6,6 @@ const formatServiceName = (serviceType, subCategory) => {
   if (!val) return 'General Service';
   const map = {
     'ac_repair': 'AC Repair',
-    'emergency_pickup': 'Emergency Pickup',
     'minor_service': 'Minor Service',
     'major_service': 'Major Service',
     'brake_repair': 'Brake Repair',

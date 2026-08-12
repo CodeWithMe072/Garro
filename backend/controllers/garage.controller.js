@@ -6,8 +6,21 @@ import Review from '../models/Review.js';
 import Request from '../models/Request.js';
 import Quote from '../models/Quote.js';
 import GaragePayout from '../models/GaragePayout.js';
-import { uploadBufferToR2 } from '../utils/upload.js';
+import { uploadBufferToR2, uploadToR2 } from '../utils/upload.js';
 import { success, error  } from '../utils/response.js';
+
+export const uploadGarageDocument = async (req, res) => {
+  try {
+    if (!req.file) return error(res, 'No file provided', 400);
+    const fileUrl = await uploadToR2(req.file);
+    success(res, {
+      fileUrl,
+      fileName: req.file.originalname
+    });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
 
 export const createGarage = async (req, res) => {
   try {

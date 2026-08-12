@@ -17,6 +17,10 @@ import ExcelJS from 'exceljs';
 import { generatePDF } from '../utils/pdf.js';
 import Stripe from 'stripe';
 import { aedToFils } from '../utils/currency.js';
+import PendingQuote from '../models/PendingQuote.js';
+import User from '../models/User.js';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 // POST /api/requests
 export const createRequest = async (req, res) => {
@@ -1049,7 +1053,6 @@ export const exportRefundReport = async (req, res) => {
       if (!val) return 'General Service';
       const map = {
         'ac_repair': 'AC Repair',
-        'emergency_pickup': 'Emergency Pickup',
         'minor_service': 'Minor Service',
         'major_service': 'Major Service',
         'brake_repair': 'Brake Repair',
@@ -1248,5 +1251,182 @@ export const exportRefundReport = async (req, res) => {
     }
   } catch (err) {
     return error(res, err.message, 500);
+  }
+};
+
+// Helper function to process/claim pending quote
+export const claimPendingQuote = async (quoteToken, user) => {
+  if (!quoteToken || !user) return null;
+
+  const pending = await PendingQuote.findOne({ quoteToken });
+  if (!pending) return null;
+
+  let vehicle = await Vehicle.findOne({
+    userId: user._id,
+    make: pending.carBrand || 'Toyota',
+    model: pending.carModel || 'Camry'
+  });
+
+  if (!vehicle) {
+    vehicle = await Vehicle.create({
+      userId: user._id,
+      make: pending.carBrand || 'Toyota',
+      model: pending.carModel || 'Camry',
+      year: parseInt(pending.carYear) || 2020,
+      VIN: pending.vinNumber || '',
+      registrationNumber: `DXB-${Math.floor(Math.random() * 90000 + 10000)}`
+    });
+  }
+
+  const serviceTypeMap = {
+    oil_change: 'minor_service',
+    brake_repair: 'brake_repair',
+    battery: 'battery',
+    engine: 'other',
+    tyre: 'other',
+    ac: 'ac_repair',
+    full_detailing: 'other',
+    towing: 'other',
+    other: 'other'
+  };
+  const serviceTypeCode = serviceTypeMap[pending.subCategory] || 'other';
+
+  const request = await Request.create({
+    userId: user._id,
+    vehicleId: vehicle._id,
+    serviceType: serviceTypeCode,
+    subCategory: pending.subCategory || 'General Service',
+    description: pending.problemTitle || `Requesting quote for ${pending.subCategory || pending.category || 'general service'}`,
+    urgency: pending.urgency || 'flexible',
+    vinNumber: pending.vinNumber || '',
+    assignMode: 'manual',
+    status: 'pending_payment'
+  });
+
+  const { partsCost, laborCost } = await getPriceForServiceType(request.serviceType);
+  const quote = await Quote.create({
+    requestId: request._id,
+    partsCost,
+    laborCost,
+    status: 'approved'
+  });
+  request.quoteId = quote._id;
+  await request.save();
+
+  await PendingQuote.deleteOne({ _id: pending._id });
+
+  return request;
+};
+
+// POST /api/requests/submit-quote
+export const submitQuote = async (req, res) => {
+  try {
+    const {
+      category,
+      subCategory,
+      carBrand,
+      carModel,
+      carYear,
+      cityName,
+      area,
+      problemTitle,
+      phone,
+      urgency,
+      vinNumber
+    } = req.body;
+
+    const authHeader = req.headers.authorization;
+    let currentUser = req.user;
+
+    if (!currentUser && authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded?.id) {
+          currentUser = await User.findById(decoded.id);
+        }
+      } catch (e) {
+        // Token expired/invalid
+      }
+    }
+
+    if (currentUser) {
+      let vehicle = await Vehicle.create({
+        userId: currentUser._id,
+        make: carBrand || 'Toyota',
+        model: carModel || 'Camry',
+        year: parseInt(carYear) || 2020,
+        VIN: vinNumber || '',
+        registrationNumber: `DXB-${Math.floor(Math.random() * 90000 + 10000)}`
+      });
+
+      const serviceTypeMap = {
+        oil_change: 'minor_service',
+        brake_repair: 'brake_repair',
+        battery: 'battery',
+        engine: 'other',
+        tyre: 'other',
+        ac: 'ac_repair',
+        full_detailing: 'other',
+        towing: 'other',
+        other: 'other'
+      };
+      const serviceTypeCode = serviceTypeMap[subCategory] || 'other';
+
+      const request = await Request.create({
+        userId: currentUser._id,
+        vehicleId: vehicle._id,
+        serviceType: serviceTypeCode,
+        subCategory: subCategory || 'General Service',
+        description: problemTitle || `Requesting quote for ${subCategory || category || 'general service'}`,
+        urgency: urgency || 'flexible',
+        vinNumber: vinNumber || '',
+        assignMode: 'manual',
+        status: 'pending_payment'
+      });
+
+      const { partsCost, laborCost } = await getPriceForServiceType(request.serviceType);
+      const quote = await Quote.create({
+        requestId: request._id,
+        partsCost,
+        laborCost,
+        status: 'approved'
+      });
+      request.quoteId = quote._id;
+      await request.save();
+
+      return res.status(200).json({
+        success: true,
+        requireAuth: false,
+        request,
+        redirectUrl: `/payment/${request._id}`
+      });
+    }
+
+    // Save draft quote under token
+    const quoteToken = 'qt_' + crypto.randomBytes(16).toString('hex');
+    await PendingQuote.create({
+      quoteToken,
+      category,
+      subCategory,
+      carBrand,
+      carModel,
+      carYear: parseInt(carYear) || 2020,
+      cityName,
+      area,
+      problemTitle,
+      phone,
+      urgency,
+      vinNumber
+    });
+
+    return res.status(200).json({
+      success: true,
+      requireAuth: true,
+      quoteToken,
+      message: 'Quote saved. Please sign in or create an account to finalize.'
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
   }
 };

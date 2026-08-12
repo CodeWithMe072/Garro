@@ -2,105 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-import { useLanguage } from '../context/LanguageContext';
-import { LuGlobe, LuChevronDown, LuCheck, LuUser, LuLock, LuEye, LuEyeOff, LuArrowLeft, LuLogIn, LuUserPlus, LuShield, LuChevronRight, LuCircleAlert, LuClock, LuTag, LuHeadphones } from 'react-icons/lu';
-
-
-const localT = {
-  en: {
-    trusted_platform: "UAE'S MODERN CAR SERVICE PLATFORM",
-    welcome_back: "Welcome back",
-    sign_in_sub: "Sign in to continue to your account",
-    premium_garages: "Premium Garages",
-    avg_rating: "Average Rating",
-    avg_response: "Avg. Response Time",
-    emergency_support: "Emergency Support",
-    recent_bookings: "Recent Bookings",
-    booked: "booked",
-    got_insurance: "got Comprehensive Insurance",
-    ago: "ago",
-    back_to_site: "Back to Garro",
-    sign_in: "Sign in",
-    enter_details: "Enter your email or phone number",
-    email_or_phone: "Email or Phone Number",
-    password: "Password",
-    forgot_password: "Forgot password?",
-    remember_me: "Remember me",
-    sign_in_btn: "Sign In",
-    signing_in: "Signing in...",
-    or: "or",
-    create_account: "Create New Account",
-    demo_dubai: "Dubai",
-    demo_abudhabi: "Abu Dhabi",
-    minutes: "minutes",
-    ticker_ahmed: "Ahmed booked Oil Change",
-    ticker_sara: "Sara got Comprehensive Insurance",
-    time_2m: "2 minutes ago · Dubai",
-    time_15m: "15 minutes ago · Abu Dhabi"
-  },
-  ar: {
-    trusted_platform: "منصة خدمات السيارات الحديثة في الإمارات",
-    welcome_back: "مرحبًا بك مجددًا",
-    sign_in_sub: "سجل الدخول للمتابعة إلى حسابك",
-    premium_garages: "كراجات متميزة",
-    avg_rating: "متوسط التقييم",
-    avg_response: "متوسط وقت الاستجابة",
-    emergency_support: "دعم الطوارئ",
-    recent_bookings: "الحجوزات الأخيرة",
-    booked: "حجز",
-    got_insurance: "حصل على تأمين شامل",
-    ago: "منذ",
-    back_to_site: "العودة إلى غارو",
-    sign_in: "تسجيل الدخول",
-    enter_details: "أدخل بريدك الإلكتروني أو رقم هاتفك",
-    email_or_phone: "البريد الإلكتروني أو رقم الهاتف",
-    password: "كلمة المرور",
-    forgot_password: "هل نسيت كلمة المرور؟",
-    remember_me: "تذكرني",
-    sign_in_btn: "تسجيل الدخول",
-    signing_in: "جاري تسجيل الدخول...",
-    or: "أو",
-    create_account: "إنشاء حساب جديد",
-    demo_dubai: "دبي",
-    demo_abudhabi: "أبو ظبي",
-    minutes: "دقائق",
-    ticker_ahmed: "أحمد حجز خدمة تغيير الزيت",
-    ticker_sara: "سارة حصلت على تأمين شامل",
-    time_2m: "منذ دقيقتين · دبي",
-    time_15m: "منذ 15 دقيقة · أبو ظبي"
-  },
-  ur: {
-    trusted_platform: "یو اے ای کا جدید کار سروس پلیٹ فارم",
-    welcome_back: "دوبارہ خوش آمدید",
-    sign_in_sub: "اپنے اکاؤنٹ میں جاری رکھنے کے لیے سائن ان کریں",
-    premium_garages: "پریمیم گیراجز",
-    avg_rating: "اوسط درجہ بندی",
-    avg_response: "اوسط جواب کا وقت",
-    emergency_support: "ہنگامی مدد",
-    recent_bookings: "حالیہ بکنگز",
-    booked: "نے بک کیا",
-    got_insurance: "نے جامع انشورنس حاصل کیا",
-    ago: "پہلے",
-    back_to_site: "گارو پر واپس جائیں",
-    sign_in: "سائن ان کریں",
-    enter_details: "اپنا ای میل یا فون نمبر درج کریں",
-    email_or_phone: "ای میل یا فون نمبر",
-    password: "پاس ورڈ",
-    forgot_password: "پاس ورڈ بھول گئے؟",
-    remember_me: "مجھے یاد رکھیں",
-    sign_in_btn: "سائن ان کریں",
-    signing_in: "سائن ان ہو رہا ہے...",
-    or: "یا",
-    create_account: "نیا اکاؤنٹ بنائیں",
-    demo_dubai: "دبئی",
-    demo_abudhabi: "ابو ظہبی",
-    minutes: "منٹ",
-    ticker_ahmed: "احمد نے آئل چینج بک کیا",
-    ticker_sara: "سارہ نے جامع انشورنس حاصل کیا",
-    time_2m: "2 منٹ پہلے · دبئی",
-    time_15m: "15 منٹ پہلے · ابو ظہبی"
-  }
-};
+import { processPendingQuoteIfAny } from '../utils/pendingQuote';
 
 const Login = () => {
   const [identifier, setIdentifier] = useState('');
@@ -132,11 +34,12 @@ const Login = () => {
 
     try {
       const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const quoteToken = location.state?.quoteToken || localStorage.getItem('pending_quote_token');
       const response = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email: identifier, password })
+        body: JSON.stringify({ email: identifier, password, quoteToken })
       });
 
       const data = await response.json();
@@ -182,6 +85,13 @@ const Login = () => {
       login(userData, data.token);
       toast.success(`Welcome back, ${userData.firstName}!`);
 
+      if (data.redirectUrl) {
+        localStorage.removeItem('pending_quote_token');
+        localStorage.removeItem('pending_quote_data');
+        navigate(data.redirectUrl);
+        return;
+      }
+
       if (role === 'superadmin' || role === 'manager') {
         navigate('/admin');
       } else if (role === 'staff') {
@@ -189,8 +99,11 @@ const Login = () => {
       } else if (role === 'garage') {
         navigate('/garage-portal');
       } else {
-        const from = location.state?.from?.pathname || '/home';
-        navigate(from, { replace: true });
+        const processed = await processPendingQuoteIfAny(data.token, navigate, toast);
+        if (!processed) {
+          const from = location.state?.from?.pathname || '/home';
+          navigate(from, { replace: true });
+        }
       }
     } catch (err) {
       setError(err.message || 'Invalid email or password.');
@@ -350,25 +263,12 @@ const Login = () => {
           transform: translateX(-3px) !important;
         }
         html[lang="ar"] .auth-back:hover, html[lang="ur"] .auth-back:hover {
-          transform: translateX(3px) !important;
-        }
-        
-        /* RTL overrides for input elements padding */
-        html[lang="ar"] .auth-iw input, html[lang="ur"] .auth-iw input {
-          padding: 12px 42px 12px 14px !important;
-        }
-        html[lang="ar"] .auth-input-icon, html[lang="ur"] .auth-input-icon {
-          right: 13px !important;
-          left: auto !important;
-        }
-        html[lang="ar"] .auth-eye, html[lang="ur"] .auth-eye {
-          left: 12px !important;
-          right: auto !important;
+          transform: translateX(-3px) !important;
         }
       `}</style>
 
       {/* Floating Language Switcher */}
-      <div style={{ position: 'absolute', top: '24px', insetInlineEnd: '24px', zIndex: 1000 }}>
+      <div style={{ position: 'absolute', top: '24px', right: '24px', zIndex: 1000 }}>
         <button
           type="button"
           onClick={() => setIsLangOpen(!isLangOpen)}
@@ -581,7 +481,7 @@ const Login = () => {
               055 283 0456
             </a>
             <span style={{ fontSize: '10px', color: '#64748b' }}>
-              {lang === 'ar' ? 'دعم 24/7' : lang === 'ur' ? '24/7 سپورٹ' : '24/7 Support'}
+              {lang === 'ar' ? 'دعم نفس اليوم' : 'Same Day Support'}
             </span>
           </div>
         </div>

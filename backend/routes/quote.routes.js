@@ -5,6 +5,7 @@ import role from '../middleware/role.middleware.js';
 import * as ctrl from '../controllers/quote.controller.js';
 
 router.use(auth);
+router.post('/calculate-margin',                         ctrl.calculateMargin);
 router.post('/',              role('admin'),              ctrl.createQuote);
 router.get('/',                                           ctrl.getQuotes);
 router.get('/:id',                                        ctrl.getQuote);

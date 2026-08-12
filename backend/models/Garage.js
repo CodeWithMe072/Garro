@@ -8,6 +8,7 @@ const garageSchema = new mongoose.Schema({
   commissionPercent:{ type: Number, default: 10 },
   services:         [{ type: String }],
   areas:            [{ type: String }],
+  documents:        [{ type: mongoose.Schema.Types.Mixed }],
   status:           { type: String, enum: ['active', 'inactive', 'suspended'], default: 'active' },
   rating:           { type: Number, default: 0 },
   location: {

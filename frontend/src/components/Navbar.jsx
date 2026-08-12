@@ -185,17 +185,6 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {/* Emergency Pickup CTA */}
-              {!hideHomeInsurance && (
-                <Link
-                  to="/emergency-pickup"
-                  className="btn-nav-quote d-none d-md-inline-flex"
-                  style={{ background: 'linear-gradient(135deg,#ef4444,#dc2626)', boxShadow: '0 4px 14px rgba(239,68,68,0.3)', marginRight: '8px' }}
-                >
-                  <LuSiren size={15} /> Emergency Pickup
-                </Link>
-              )}
-
               {/* Language Selector */}
               <div ref={langRef} style={{ position: 'relative', marginRight: '12px' }}>
                 <button
@@ -215,7 +204,7 @@ const Navbar = () => {
                     boxShadow: '0 10px 24px rgba(0,0,0,0.08)', zIndex: 1000,
                     minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
                   }}>
-                    {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }, { code: 'ur', label: 'اردو' }].map(({ code, label }) => (
+                    {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }].map(({ code, label }) => (
                       <button
                         key={code}
                         onClick={() => { changeLanguage(code); setIsLangOpen(false); }}

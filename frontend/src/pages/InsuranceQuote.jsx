@@ -11,7 +11,7 @@ const plansData = {
     icon: 'shield',
     icon_bg: 'linear-gradient(135deg,#10b981,#059669)',
     short_desc: 'The ultimate protection for your vehicle, offering extensive coverage against unforeseen events.',
-    features: ['Accidental damage cover', 'Theft & fire protection', '24/7 roadside assistance', 'Natural disaster coverage'],
+    features: ['Accidental damage cover', 'Theft & fire protection', 'Same day roadside assistance', 'Natural disaster coverage'],
     extra_field_label: 'Current Insurer (If any)',
     extra_field_placeholder: 'e.g. AXA, Oman Insurance'
   },
@@ -39,7 +39,7 @@ const defaultPlan = {
   icon: 'verified_user',
   icon_bg: 'linear-gradient(135deg,#ff5c1a,#ff8c42)',
   short_desc: 'Comprehensive coverage customized to your needs.',
-  features: ['Customized Coverage', 'Fast Claims', '24/7 Support'],
+  features: ['Customized Coverage', 'Fast Claims', 'Same Day Support'],
   extra_field_label: 'Additional Info',
   extra_field_placeholder: 'Any specific requests'
 };

@@ -6,11 +6,12 @@ import {
   LuLayoutDashboard,
   LuClipboardList,
   LuTrendingUp,
-  LuGlobe
+  LuGlobe,
+  LuLogOut
 } from 'react-icons/lu';
 
 const StaffSidebar = ({ pendingJobsCount }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { t, lang } = useLanguage();
   const location = useLocation();
 
@@ -40,13 +41,24 @@ const StaffSidebar = ({ pendingJobsCount }) => {
       {['manager', 'superadmin', 'admin'].includes(user?.role) && (
         <>
           <div className="sb-divider"></div>
-          <span className="sb-label">{lang === 'ar' ? 'وصول المسؤول' : (lang === 'ur' ? 'ایڈمن رسائی' : 'Admin Access')}</span>
+          <span className="sb-label">{lang === 'ar' ? 'وصول المسؤول' : 'Admin Access'}</span>
           <Link to="/admin" className={`sb-link ${isActive('/admin')}`}>
             <span className="si"><LuTrendingUp /></span>{t('full_dashboard')}
           </Link>
         </>
       )}
 
+      <div className="sb-divider"></div>
+      <button
+        onClick={async () => {
+          await logout();
+          window.location.href = '/login';
+        }}
+        className="sb-link text-danger border-0 bg-transparent w-100 text-start"
+        style={{ cursor: 'pointer' }}
+      >
+        <span className="si"><LuLogOut /></span>{t('sign_out') || 'Sign Out'}
+      </button>
     </aside>
   );
 };

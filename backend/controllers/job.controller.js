@@ -1,12 +1,14 @@
+import crypto from 'crypto';
 import Job from '../models/Job.js';
 import Helper from '../models/Helper.js';
 import HelperBookingSlot from '../models/HelperBookingSlot.js';
 import Invoice from '../models/Invoice.js';
-import Quote from '../models/Quote.js';
+import Quote, { computeMargin } from '../models/Quote.js';
 import Request from '../models/Request.js';
 import VCR from '../models/VehicleConditionReport.js';
+import User from '../models/User.js';
 import { success, error } from '../utils/response.js';
-import { notifyCustomer } from '../utils/notify.js';
+import { notifyCustomer, notifyScopeRevision, notifyFounderDelegateAction } from '../utils/notify.js';
 import { uploadToR2 } from '../utils/upload.js';
 import { logActivity } from '../utils/audit.js';
 
@@ -16,9 +18,8 @@ const STATUS_FLOW = {
   picked_up:          ['in_garage'],
   in_garage:          ['inspection_done', 'repair_in_progress'],
   inspection_done:    ['repair_in_progress'],
-  repair_in_progress: ['work_complete'],
-  work_complete:      ['ready_for_delivery'],
-  ready_for_delivery: ['delivered'],
+  repair_in_progress: ['service_done'],
+  service_done:       ['delivered'],
   delivered:          ['closed']
 };
 
@@ -29,8 +30,7 @@ const STATUS_ROLES = {
   in_garage:          ['admin', 'helper', 'garage'],
   inspection_done:    ['admin', 'helper', 'garage'],
   repair_in_progress: ['admin', 'helper', 'garage'],
-  work_complete:      ['admin', 'helper', 'garage'],
-  ready_for_delivery: ['admin', 'helper', 'garage'],
+  service_done:       ['admin', 'helper', 'garage'],
   delivered:          ['admin', 'helper', 'garage'],
   closed:             ['admin']
 };
@@ -48,7 +48,7 @@ export const getJobs = async (req, res) => {
       .populate({
         path: 'requestId',
         populate: [
-          { path: 'userId', select: 'name phone' },
+          { path: 'userId', select: 'name phone email' },
           { path: 'vehicleId', select: 'make model year registrationNumber' }
         ]
       })
@@ -66,7 +66,13 @@ export const getJob = async (req, res) => {
   try {
     const job = await Job.findById(req.params.id)
       .populate('quoteId')
-      .populate('requestId')
+      .populate({
+        path: 'requestId',
+        populate: [
+          { path: 'userId', select: 'name phone email' },
+          { path: 'vehicleId', select: 'make model year registrationNumber' }
+        ]
+      })
       .populate('garageId')
       .populate('helperId');
     if (!job) return error(res, 'Job not found', 404);
@@ -82,6 +88,11 @@ export const updateStatus = async (req, res) => {
     const { status } = req.body;
     const job = await Job.findById(req.params.id);
     if (!job) return error(res, 'Job not found', 404);
+
+    // Block status updates if a scope revision >20% is pending customer approval
+    if (job.isScopeApprovalPending) {
+      return error(res, 'Job progress is blocked pending customer approval for scope revision exceeding 20% threshold', 400);
+    }
 
     // Normalize user role mapping so all management/staff roles gain admin rights
     let userRole = req.user.role;
@@ -107,6 +118,15 @@ export const updateStatus = async (req, res) => {
     }
 
     job.status = status;
+
+    // Record Stage Timestamps
+    if (!job.stageTimestamps) job.stageTimestamps = {};
+    if (['picked_up', 'in_garage'].includes(status) && !job.stageTimestamps.contact) {
+      job.stageTimestamps.contact = new Date();
+    }
+    if (['delivered', 'closed'].includes(status) && !job.stageTimestamps.delivery) {
+      job.stageTimestamps.delivery = new Date();
+    }
     if (status === 'picked_up') {
       job.startDate = new Date();
       await HelperBookingSlot.updateMany({ bookingId: job.requestId, status: 'reserved' }, { status: 'in_progress' });
@@ -135,14 +155,23 @@ export const updateStatus = async (req, res) => {
     // Auto-create invoice when job is closed
     if (status === 'closed') {
       const quote = await Quote.findById(job.quoteId);
-      await Invoice.create({
-        jobId:   job._id,
-        amount:  quote.subtotal,
-        vat:     quote.vat,
-        total:   quote.customerTotal,
-        status:  'pending',
-        dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-      });
+      const reqDoc = await Request.findById(job.requestId);
+      if (quote) {
+        await Invoice.create({
+          jobId:      job._id,
+          quoteId:    quote._id,
+          customerId: reqDoc?.userId || job.requestId,
+          garageId:   job.garageId,
+          partsCost:   quote.partsCost || 0,
+          laborCost:   quote.laborCost || 0,
+          subtotal:    quote.subtotal || 0,
+          vatAmount:   quote.vat || 0,
+          totalAmount: quote.customerTotal || 0,
+          serviceFeeAmount: quote.serviceFee || 0,
+          status:     'pending',
+          dueDate:    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+        });
+      }
       // Free up helper (fail-safe)
       if (job.helperId) {
         await Helper.findByIdAndUpdate(job.helperId, { isAvailable: true, activeJobId: null });
@@ -306,4 +335,384 @@ export const extendJobTime = async (req, res) => {
     error(res, err.message, 500);
   }
 };
+
+// Change 1 — POST /api/jobs/:id/scope-revision
+export const requestScopeRevision = async (req, res) => {
+  try {
+    const { additionalPartsCost, additionalLaborCost, justification } = req.body;
+    const partsCost = Number(additionalPartsCost) || 0;
+    const laborCost = Number(additionalLaborCost) || 0;
+    const additionalAmount = partsCost + laborCost;
+
+    if (!justification) {
+      return error(res, 'Justification is required for scope revision', 400);
+    }
+    if (additionalAmount <= 0) {
+      return error(res, 'Valid additional parts or labor cost is required', 400);
+    }
+
+    const job = await Job.findById(req.params.id).populate('quoteId');
+    if (!job) return error(res, 'Job not found', 404);
+
+    const originalQuoteAmount = job.quoteId ? (job.quoteId.customerTotal || job.quoteId.subtotal || 1) : 1;
+    const percentageIncrease = parseFloat(((additionalAmount / originalQuoteAmount) * 100).toFixed(2));
+    const requiresApproval = percentageIncrease > 20;
+
+    let photoUrls = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        photoUrls.push(await uploadToR2(file));
+      }
+    } else if (req.body.photos) {
+      photoUrls = Array.isArray(req.body.photos) ? req.body.photos : [req.body.photos];
+    }
+
+    const newRevision = {
+      additionalPartsCost: partsCost,
+      additionalLaborCost: laborCost,
+      additionalAmount,
+      photos: photoUrls,
+      justification,
+      originalQuoteAmount,
+      percentageIncrease,
+      requiresApproval,
+      status: requiresApproval ? 'pending' : 'approved',
+      requestedBy: req.user?.id || null,
+      requestedAt: new Date()
+    };
+
+    job.scopeRevisions.push(newRevision);
+    if (requiresApproval) {
+      job.isScopeApprovalPending = true;
+    }
+
+    // Auto-flag scope_change edge case (deduped per job)
+    job.isEdgeCase = true;
+    if (!job.edgeCaseFlags) job.edgeCaseFlags = [];
+    const existingEdgeFlag = job.edgeCaseFlags.find(f => f.type === 'scope_change');
+    if (existingEdgeFlag) {
+      existingEdgeFlag.flaggedAt = new Date();
+      existingEdgeFlag.details = `Scope revision requested (+AED ${additionalAmount}, ${percentageIncrease}%)`;
+    } else {
+      job.edgeCaseFlags.push({
+        type: 'scope_change',
+        flaggedAt: new Date(),
+        details: `Scope revision requested (+AED ${additionalAmount}, ${percentageIncrease}%)`
+      });
+    }
+
+    await job.save();
+
+    // Universal Customer Notification — always notify regardless of %
+    try {
+      const request = await Request.findById(job.requestId).populate('userId');
+      if (request && request.userId) {
+        await notifyScopeRevision(request.userId, job, newRevision);
+      }
+    } catch (notifyErr) {
+      console.error('Scope revision notification error:', notifyErr.message);
+    }
+
+    await logActivity(req.user?.id, 'scope_revision_requested', 'Job', job._id, {
+      additionalAmount,
+      percentageIncrease,
+      requiresApproval
+    });
+
+    success(res, { job, revision: job.scopeRevisions[job.scopeRevisions.length - 1] }, 201);
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// Change 1 — PUT /api/jobs/:id/scope-revision/:revisionId/respond
+export const respondScopeRevision = async (req, res) => {
+  try {
+    const { action } = req.body; // 'approved' or 'rejected'
+    if (!['approved', 'rejected'].includes(action)) {
+      return error(res, 'Action must be "approved" or "rejected"', 400);
+    }
+
+    const job = await Job.findById(req.params.id).populate('quoteId');
+    if (!job) return error(res, 'Job not found', 404);
+
+    const revision = job.scopeRevisions.id(req.params.revisionId);
+    if (!revision) return error(res, 'Scope revision not found', 404);
+    if (revision.status !== 'pending') {
+      return error(res, `Scope revision is already ${revision.status}`, 400);
+    }
+
+    revision.status = action;
+    revision.actedBy = req.user?.id || null;
+    revision.actedAt = new Date();
+
+    // Unblock job if no other pending revisions requiring approval remain
+    const remainingPending = job.scopeRevisions.some(r => r.requiresApproval && r.status === 'pending');
+    job.isScopeApprovalPending = remainingPending;
+
+    // Recalculate actual margin on approval & store revised customer total
+    if (action === 'approved') {
+      const approvedRevisionsSum = job.scopeRevisions
+        .filter(r => r.status === 'approved')
+        .reduce((sum, r) => sum + r.additionalAmount, 0);
+
+      const origSubtotal = job.quoteId?.subtotal || job.revisedSubtotal || 1000;
+      const origCustomerTotal = job.quoteId?.customerTotal || job.revisedCustomerTotal || 1155;
+
+      const revisedSubtotal = origSubtotal + approvedRevisionsSum;
+      const revisedCustomerTotal = origCustomerTotal + approvedRevisionsSum;
+
+      job.revisedSubtotal = revisedSubtotal;
+      job.revisedCustomerTotal = revisedCustomerTotal;
+      job.actualMargin = parseFloat(((revisedCustomerTotal - revisedSubtotal) / revisedCustomerTotal).toFixed(4));
+    }
+
+    await job.save();
+
+    await logActivity(req.user?.id, `scope_revision_${action}`, 'Job', job._id, {
+      revisionId: req.params.revisionId,
+      action
+    });
+
+    success(res, { job, message: `Scope revision ${action} successfully.` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// Change 2 — PUT /api/jobs/:id/direct-contact-flag
+export const toggleDirectContactFlag = async (req, res) => {
+  try {
+    const { directContactFlag, directContactNotes } = req.body;
+    const job = await Job.findById(req.params.id);
+    if (!job) return error(res, 'Job not found', 404);
+
+    job.directContactFlag = Boolean(directContactFlag);
+    job.directContactNotes = directContactNotes || '';
+    job.directContactFlaggedAt = new Date();
+    job.directContactFlaggedBy = req.user?.id || null;
+
+    await job.save();
+
+    await logActivity(req.user?.id, 'direct_contact_flag_updated', 'Job', job._id, {
+      directContactFlag: job.directContactFlag,
+      notes: job.directContactNotes
+    });
+
+    success(res, { job, message: 'Direct contact flag updated successfully.' });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// Change 5 — PUT /api/jobs/:id/delegate
+export const assignDelegate = async (req, res) => {
+  try {
+    const { name, email, phone } = req.body;
+    if (!name || !email || !phone) {
+      return error(res, 'Name, email, and phone are required for delegate assignment', 400);
+    }
+
+    const job = await Job.findById(req.params.id);
+    if (!job) return error(res, 'Job not found', 404);
+
+    const accessCode = crypto.randomBytes(32).toString('hex'); // 64 char high-entropy token
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 day expiry
+
+    job.delegate = {
+      name,
+      email,
+      phone,
+      assignedAt: new Date(),
+      expiresAt,
+      accessCode,
+      assignedBy: req.user?.id || null
+    };
+
+    await job.save();
+
+    await logActivity(req.user?.id, 'delegate_assigned', 'Job', job._id, {
+      delegateName: name,
+      accessCode
+    });
+
+    success(res, {
+      job,
+      delegate: job.delegate,
+      accessCode,
+      message: 'Delegate assigned successfully.'
+    });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// Change 5 — DELETE /api/jobs/:id/delegate (Revoke access)
+export const revokeDelegate = async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    if (!job) return error(res, 'Job not found', 404);
+
+    job.delegate = undefined;
+    await job.save();
+
+    await logActivity(req.user?.id, 'delegate_revoked', 'Job', job._id, {});
+
+    success(res, { job, message: 'Delegate access revoked successfully.' });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// Change 5 — GET /api/jobs/delegate-view/:accessCode (Unprotected + rate limited + strictly scoped payload)
+export const getDelegateView = async (req, res) => {
+  try {
+    const { accessCode } = req.params;
+    if (!accessCode || accessCode.length < 32) {
+      return error(res, 'Invalid delegate access code format', 400);
+    }
+
+    const job = await Job.findOne({ 'delegate.accessCode': accessCode })
+      .populate({
+        path: 'requestId',
+        populate: [
+          { path: 'userId', select: 'name phone' },
+          { path: 'vehicleId', select: 'make model year registrationNumber' }
+        ]
+      })
+      .populate('garageId', 'name phone address');
+
+    if (!job || !job.delegate) {
+      return error(res, 'Delegate job view not found or code invalid', 404);
+    }
+
+    // Check expiration and status
+    if (new Date() > new Date(job.delegate.expiresAt) || ['delivered', 'closed'].includes(job.status)) {
+      return error(res, 'Delegate access link has expired or job is complete', 410);
+    }
+
+    // Strictly Scoped Payload — NO raw cost breakdowns (parts/labor split) or secret credentials (Fix 8)
+    const scopedView = {
+      jobId: job._id,
+      status: job.status,
+      stageTimestamps: job.stageTimestamps || {},
+      isEdgeCase: job.isEdgeCase || false,
+      edgeCaseFlags: job.edgeCaseFlags || [],
+      directContactFlag: job.directContactFlag || false,
+      directContactNotes: job.directContactNotes || '',
+      scopeRevisions: (job.scopeRevisions || []).map(r => ({
+        _id: r._id,
+        additionalAmount: r.additionalAmount,
+        justification: r.justification,
+        photos: r.photos,
+        percentageIncrease: r.percentageIncrease,
+        requiresApproval: r.requiresApproval,
+        status: r.status,
+        requestedAt: r.requestedAt
+      })),
+      customer: {
+        name: job.requestId?.userId?.name || 'Customer',
+        phone: job.requestId?.userId?.phone || 'N/A'
+      },
+      garage: {
+        name: job.garageId?.name || 'Garage',
+        phone: job.garageId?.phone || 'N/A',
+        address: job.garageId?.address || ''
+      },
+      vehicle: {
+        make: job.requestId?.vehicleId?.make || '',
+        model: job.requestId?.vehicleId?.model || '',
+        year: job.requestId?.vehicleId?.year || '',
+        registrationNumber: job.requestId?.vehicleId?.registrationNumber || ''
+      },
+      delegate: {
+        name: job.delegate.name,
+        expiresAt: job.delegate.expiresAt
+      }
+    };
+
+    success(res, { job: scopedView });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// Fix 6 — PUT /api/jobs/delegate-view/:accessCode/scope-revision/:revisionId/respond (Delegate Action Endpoint)
+export const respondScopeRevisionAsDelegate = async (req, res) => {
+  try {
+    const { accessCode, revisionId } = req.params;
+    const { action } = req.body; // 'approved' or 'rejected'
+
+    if (!accessCode || accessCode.length < 32) {
+      return error(res, 'Invalid delegate access code format', 400);
+    }
+    if (!['approved', 'rejected'].includes(action)) {
+      return error(res, 'Action must be "approved" or "rejected"', 400);
+    }
+
+    const job = await Job.findOne({ 'delegate.accessCode': accessCode }).populate('quoteId');
+    if (!job || !job.delegate) {
+      return error(res, 'Delegate job view not found or code invalid', 404);
+    }
+
+    // Check expiration and status
+    if (new Date() > new Date(job.delegate.expiresAt) || ['delivered', 'closed'].includes(job.status)) {
+      return error(res, 'Delegate access link has expired or job is complete', 410);
+    }
+
+    const revision = job.scopeRevisions.id(revisionId);
+    if (!revision) return error(res, 'Scope revision not found', 404);
+    if (revision.status !== 'pending') {
+      return error(res, `Scope revision is already ${revision.status}`, 400);
+    }
+
+    revision.status = action;
+    revision.actedBy = null;
+    revision.actedAsDelegate = true;
+    revision.actedAt = new Date();
+
+    // Unblock job if no other pending revisions requiring approval remain
+    const remainingPending = job.scopeRevisions.some(r => r.requiresApproval && r.status === 'pending');
+    job.isScopeApprovalPending = remainingPending;
+
+    // Recalculate actual margin on approval & store revised customer total
+    if (action === 'approved') {
+      const approvedRevisionsSum = job.scopeRevisions
+        .filter(r => r.status === 'approved')
+        .reduce((sum, r) => sum + r.additionalAmount, 0);
+
+      const origSubtotal = job.quoteId?.subtotal || job.revisedSubtotal || 1000;
+      const origCustomerTotal = job.quoteId?.customerTotal || job.revisedCustomerTotal || 1155;
+
+      const revisedSubtotal = origSubtotal + approvedRevisionsSum;
+      const revisedCustomerTotal = origCustomerTotal + approvedRevisionsSum;
+
+      job.revisedSubtotal = revisedSubtotal;
+      job.revisedCustomerTotal = revisedCustomerTotal;
+      job.actualMargin = parseFloat(((revisedCustomerTotal - revisedSubtotal) / revisedCustomerTotal).toFixed(4));
+    }
+
+    await job.save();
+
+    await logActivity(null, `scope_revision_${action}_by_delegate`, 'Job', job._id, {
+      revisionId,
+      action,
+      delegateName: job.delegate.name
+    });
+
+    // Issue 4 — Dispatch notification to founder when delegate acts
+    notifyFounderDelegateAction(
+      job.delegate.assignedBy || process.env.FOUNDER_EMAIL || 'admin@garro.ae',
+      job,
+      job.delegate.name,
+      action,
+      revision
+    ).catch(err => console.error('[notifyFounderDelegateAction] Async error:', err.message));
+
+    success(res, { job, message: `Scope revision ${action} by delegate successfully.` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
 
