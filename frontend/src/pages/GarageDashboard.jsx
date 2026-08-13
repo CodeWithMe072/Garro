@@ -1,9 +1,22 @@
 import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-import { LuZap, LuDollarSign, LuCircleCheck, LuStar } from 'react-icons/lu';
+import { useLanguage } from '../context/LanguageContext';
+import GarageSidebar from '../components/GarageSidebar';
+import {
+  LuZap,
+  LuDollarSign,
+  LuCircleCheck,
+  LuStar,
+  LuBell,
+  LuCar,
+  LuCheck,
+  LuX,
+  LuChevronRight,
+  LuWrench
+} from 'react-icons/lu';
 
 const GarageDashboard = () => {
   const [stats, setStats] = useState(null);
@@ -12,9 +25,9 @@ const GarageDashboard = () => {
   const [error, setError] = useState('');
   const { user } = useAuth();
   const { toast } = useNotification();
+  const { lang } = useLanguage();
   const navigate = useNavigate();
 
-  
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -26,7 +39,7 @@ const GarageDashboard = () => {
         throw new Error(data.message || 'Failed to fetch dashboard data.');
       }
       setStats(data.stats);
-      setRecentJobs(data.recentJobs);
+      setRecentJobs(data.recentJobs || []);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -54,233 +67,215 @@ const GarageDashboard = () => {
         throw new Error(data.message || 'Failed to respond to job.');
       }
       toast.success(data.message || `Job ${action}ed successfully!`);
-      fetchDashboardData(); // Reload stats and recent jobs
+      fetchDashboardData();
     } catch (err) {
       toast.error(err.message);
     }
   };
 
+  const garageName = user?.name || user?.firstName || 'Partner';
+
   if (loading) {
     return (
-      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: 'white' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner-border text-warning" style={{ width: '3rem', height: '3rem' }} role="status"></div>
-          <p style={{ marginTop: '16px', color: '#94a3b8' }}>Loading Garage Dashboard...</p>
-        </div>
+      <div className="staff-wrapper">
+        <GarageSidebar activeJobsCount={0} />
+        <main className="staff-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status"></div>
+            <p className="mt-3 text-muted fw-semibold">Loading Garage Dashboard...</p>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div style={{
-      background: '#0f172a',
-      minHeight: '100vh',
-      color: '#f8fafc',
-      padding: '40px 20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
+    <div className="staff-wrapper">
+      {/* ── SIDEBAR ── */}
+      <GarageSidebar activeJobsCount={stats?.activeJobs || 0} />
+
+      {/* ── MAIN CONTENT ── */}
+      <main className="staff-main">
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <div className="dash-header mb-4">
           <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', margin: '0 0 4px', letterSpacing: '-0.025em' }}>
-              Welcome back, Partner
-            </h1>
-            <p style={{ color: '#94a3b8', margin: 0, fontSize: '14px' }}>
-              Manage repair cards, quotes, and payouts.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <Link to="/garage-portal/jobs" style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '12px',
-              padding: '10px 20px',
-              color: 'white',
-              textDecoration: 'none',
-              fontWeight: '600',
-              fontSize: '14px',
-              transition: 'background 0.2s'
-            }}>
-              📋 View Job Cards
-            </Link>
-            <Link to="/garage-portal/earnings" style={{
-              background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-              borderRadius: '12px',
-              padding: '10px 20px',
-              color: 'white',
-              textDecoration: 'none',
-              fontWeight: '600',
-              fontSize: '14px',
-              boxShadow: '0 4px 15px rgba(249, 115, 22, 0.2)'
-            }}>
-              💰 Earnings Ledger
-            </Link>
+            <div className="dash-title">
+              {lang === 'ar' ? 'لوحة تحكم شريك الكراج' : 'Garage Partner Dashboard'}
+            </div>
+            <div className="dash-subtitle">
+              {lang === 'ar'
+                ? `مرحباً بعودتك، ${garageName}! إدارة بطاقات الإصلاح، الأسعار، والدفعات.`
+                : `Welcome back, ${garageName}! Manage repair cards, quotes, and payouts.`}
+            </div>
           </div>
         </div>
 
         {/* Stats Grid */}
         {stats && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '20px',
-            marginBottom: '40px'
-          }}>
-            {/* Active Jobs */}
-            <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Active Repairs</span>
-                <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuZap style={{ color: '#f59e0b' }} /></span>
+          <div className="stats-grid mb-4">
+            {/* Active Repairs */}
+            <div className="stat-card">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="text-muted small fw-bold text-uppercase">Active Repairs</span>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <LuZap size={18} />
+                </div>
               </div>
-              <div style={{ fontSize: '32px', fontWeight: '800' }}>{stats.activeJobs}</div>
-              <div style={{ color: '#f97316', fontSize: '12px', marginTop: '6px', fontWeight: '600' }}>In-Progress & Picked Up</div>
+              <div className="h2 fw-bold text-dark mb-1">{stats.activeJobs}</div>
+              <div className="small fw-semibold" style={{ color: '#d97706' }}>In-Progress &amp; Picked Up</div>
             </div>
 
             {/* Total Earnings */}
-            <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Total Earnings</span>
-                <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuDollarSign style={{ color: '#10b981' }} /></span>
+            <div className="stat-card">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="text-muted small fw-bold text-uppercase">Total Earnings</span>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <LuDollarSign size={18} />
+                </div>
               </div>
-              <div style={{ fontSize: '32px', fontWeight: '800', color: '#10b981' }}>AED {stats.totalEarnings.toFixed(2)}</div>
-              <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px' }}>Paid / Settled Invoices</div>
+              <div className="h2 fw-bold mb-1" style={{ color: '#059669' }}>
+                AED {stats.totalEarnings ? stats.totalEarnings.toFixed(2) : '0.00'}
+              </div>
+              <div className="small text-muted fw-semibold">Paid / Settled Invoices</div>
             </div>
 
             {/* Completed Repairs */}
-            <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Completed Repairs</span>
-                <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuCircleCheck style={{ color: '#10b981' }} /></span>
+            <div className="stat-card">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="text-muted small fw-bold text-uppercase">Completed Repairs</span>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <LuCircleCheck size={18} />
+                </div>
               </div>
-              <div style={{ fontSize: '32px', fontWeight: '800' }}>{stats.completedJobs}</div>
-              <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px' }}>Delivered & Closed</div>
+              <div className="h2 fw-bold text-dark mb-1">{stats.completedJobs}</div>
+              <div className="small text-muted fw-semibold">Delivered &amp; Closed</div>
             </div>
 
             {/* Garage Rating */}
-            <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600' }}>Garage Rating</span>
-                <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuStar style={{ color: '#fbbf24' }} /></span>
+            <div className="stat-card">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="text-muted small fw-bold text-uppercase">Garage Rating</span>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fffef0', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <LuStar size={18} />
+                </div>
               </div>
-              <div style={{ fontSize: '32px', fontWeight: '800', color: '#fbbf24' }}>{stats.avgRating} <span style={{ fontSize: '16px', color: '#94a3b8' }}>/ 5.0</span></div>
-              <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px' }}>Based on {stats.reviewsCount} reviews</div>
+              <div className="h2 fw-bold mb-1" style={{ color: '#d97706' }}>
+                {stats.avgRating} <span className="fs-6 text-muted font-normal">/ 5.0</span>
+              </div>
+              <div className="small text-muted fw-semibold">Based on {stats.reviewsCount || 0} reviews</div>
             </div>
           </div>
         )}
 
-        {/* Recent Job Offers / Alerts */}
-        <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            🔔 Live Job Assignments & Leads
-          </h3>
+        {/* Live Job Assignments & Leads Card */}
+        <div className="schedule-card">
+          <div className="schedule-head d-flex justify-content-between align-items-center mb-3">
+            <h4 className="m-0 d-flex align-items-center gap-2 font-bold" style={{ fontSize: '17px', color: '#0f172a' }}>
+              <LuBell className="text-primary-garro" size={18} />
+              {lang === 'ar' ? 'مهام وأعمال البث المباشر' : 'Live Job Assignments & Leads'}
+            </h4>
+            <span style={{ fontSize: '13px', color: '#64748b' }}>
+              {recentJobs.length} {lang === 'ar' ? 'مهام متاحة' : 'assignments'}
+            </span>
+          </div>
 
           {recentJobs.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
-              <span style={{ fontSize: '36px', display: 'block', marginBottom: '12px' }}>📭</span>
-              No recent jobs assigned to your garage. Keep this window open to receive real-time notifications!
+            <div className="text-center py-5">
+              <LuWrench size={48} className="text-muted mb-3" style={{ opacity: 0.4 }} />
+              <div className="fw-bold text-dark fs-6 mb-1">No pending job assignments</div>
+              <div className="text-muted small">New job requests assigned to your garage will appear here in real-time.</div>
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div className="table-responsive">
+              <table className="table align-middle mb-0" style={{ borderCollapse: 'separate', borderSpacing: '0 8px' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '12px', fontWeight: '700' }}>
-                    <th style={{ padding: '12px 16px' }}>JOB ID</th>
+                  <tr style={{ background: '#f8fafc', color: '#64748b', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <th style={{ padding: '12px 16px', borderRadius: '8px 0 0 8px' }}>JOB ID</th>
                     <th style={{ padding: '12px 16px' }}>VEHICLE</th>
                     <th style={{ padding: '12px 16px' }}>SERVICE TYPE</th>
                     <th style={{ padding: '12px 16px' }}>DESCRIPTION</th>
                     <th style={{ padding: '12px 16px' }}>ASSIGN STATUS</th>
-                    <th style={{ padding: '12px 16px' }}>ACTIONS</th>
+                    <th style={{ padding: '12px 16px', textAlign: 'right', borderRadius: '0 8px 8px 0' }}>ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
                   {recentJobs.map(job => (
-                    <tr key={job._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '14px' }}>
-                      <td style={{ padding: '16px', fontWeight: '600' }}>
+                    <tr key={job._id} style={{ background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: '700', color: '#0f172a', borderRadius: '8px 0 0 8px' }}>
                         #{job._id.slice(-6).toUpperCase()}
                       </td>
-                      <td style={{ padding: '16px' }}>
-                        {job.requestId?.vehicleId ? (
-                          `${job.requestId.vehicleId.make} ${job.requestId.vehicleId.model} (${job.requestId.vehicleId.year})`
-                        ) : 'Unknown Vehicle'}
-                        <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '2px' }}>
-                          {job.requestId?.vehicleId?.registrationNumber}
+                      <td style={{ padding: '14px 16px' }}>
+                        <div className="fw-bold text-dark" style={{ fontSize: '13.5px' }}>
+                          <LuCar className="me-1 text-primary-garro" size={14} />
+                          {job.requestId?.vehicleId ? (
+                            `${job.requestId.vehicleId.make} ${job.requestId.vehicleId.model} (${job.requestId.vehicleId.year})`
+                          ) : 'Unknown Vehicle'}
                         </div>
+                        {job.requestId?.vehicleId?.registrationNumber && (
+                          <div className="text-muted small">
+                            Reg: {job.requestId.vehicleId.registrationNumber}
+                          </div>
+                        )}
                       </td>
-                      <td style={{ padding: '16px' }}>
+                      <td style={{ padding: '14px 16px' }}>
                         <span style={{
-                          background: 'rgba(249, 115, 22, 0.1)',
-                          color: '#f97316',
+                          background: '#fff4ef',
+                          color: '#ff5c1a',
+                          border: '1px solid #ffe2d5',
                           borderRadius: '6px',
-                          padding: '3px 8px',
+                          padding: '4px 10px',
                           fontSize: '11px',
-                          fontWeight: '700',
+                          fontWeight: '800',
                           textTransform: 'uppercase'
                         }}>
                           {job.requestId?.subCategory || job.requestId?.serviceType?.replace(/_/g, ' ')}
                         </span>
                       </td>
-                      <td style={{ padding: '16px', color: '#cbd5e1', maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {job.requestId?.description}
+                      <td style={{ padding: '14px 16px', color: '#475569', maxWidth: '240px' }}>
+                        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px' }}>
+                          {job.requestId?.description || 'No description provided'}
+                        </div>
                       </td>
-                      <td style={{ padding: '16px' }}>
+                      <td style={{ padding: '14px 16px' }}>
                         {job.acceptedByGarage === 'pending' ? (
-                          <span style={{ color: '#fbbf24', fontWeight: '600' }}>⏳ Response Needed</span>
+                          <span className="badge bg-warning text-dark px-3 py-2 fw-bold" style={{ borderRadius: '8px', fontSize: '12px' }}>
+                            ⏳ Response Needed
+                          </span>
                         ) : job.acceptedByGarage === 'accepted' ? (
-                          <span style={{ color: '#10b981', fontWeight: '600' }}>✓ Accepted</span>
+                          <span className="badge bg-success text-white px-3 py-2 fw-bold" style={{ borderRadius: '8px', fontSize: '12px' }}>
+                            ✓ Accepted
+                          </span>
                         ) : (
-                          <span style={{ color: '#f87171', fontWeight: '600' }}>✗ Declined</span>
+                          <span className="badge bg-danger text-white px-3 py-2 fw-bold" style={{ borderRadius: '8px', fontSize: '12px' }}>
+                            ✗ Declined
+                          </span>
                         )}
                       </td>
-                      <td style={{ padding: '16px' }}>
+                      <td style={{ padding: '14px 16px', textAlign: 'right', borderRadius: '0 8px 8px 0' }}>
                         {job.acceptedByGarage === 'pending' ? (
-                          <div style={{ display: 'flex', gap: '8px' }}>
+                          <div className="d-inline-flex gap-2">
                             <button
                               onClick={() => handleRespond(job._id, 'accept')}
-                              style={{
-                                background: '#10b981',
-                                border: 'none',
-                                borderRadius: '6px',
-                                padding: '6px 12px',
-                                color: 'white',
-                                fontWeight: '600',
-                                fontSize: '12px',
-                                cursor: 'pointer'
-                              }}
+                              className="btn btn-sm btn-success fw-bold d-inline-flex align-items-center gap-1 px-3 py-1.5"
+                              style={{ borderRadius: '8px', fontSize: '12.5px' }}
                             >
-                              Accept
+                              <LuCheck size={14} /> Accept
                             </button>
                             <button
                               onClick={() => handleRespond(job._id, 'decline')}
-                              style={{
-                                background: '#ef4444',
-                                border: 'none',
-                                borderRadius: '6px',
-                                padding: '6px 12px',
-                                color: 'white',
-                                fontWeight: '600',
-                                fontSize: '12px',
-                                cursor: 'pointer'
-                              }}
+                              className="btn btn-sm btn-outline-danger fw-bold d-inline-flex align-items-center gap-1 px-3 py-1.5"
+                              style={{ borderRadius: '8px', fontSize: '12.5px' }}
                             >
-                              Decline
+                              <LuX size={14} /> Decline
                             </button>
                           </div>
                         ) : (
                           <button
                             onClick={() => navigate(`/garage-portal/jobs`)}
-                            style={{
-                              background: 'rgba(255,255,255,0.06)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              borderRadius: '6px',
-                              padding: '6px 12px',
-                              color: 'white',
-                              fontSize: '12px',
-                              cursor: 'pointer'
-                            }}
+                            className="btn btn-sm btn-light border fw-bold d-inline-flex align-items-center gap-1 px-3 py-1.5"
+                            style={{ borderRadius: '8px', fontSize: '12.5px', color: '#0f172a' }}
                           >
-                            Manage Card
+                            Manage Card <LuChevronRight size={14} />
                           </button>
                         )}
                       </td>
@@ -291,8 +286,7 @@ const GarageDashboard = () => {
             </div>
           )}
         </div>
-
-      </div>
+      </main>
     </div>
   );
 };

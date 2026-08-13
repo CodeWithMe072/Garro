@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 
-const CustomDropdown = ({ options, value, onChange, placeholder, name, required }) => {
+const CustomDropdown = ({ options, value, onChange, placeholder, name, required, theme }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const dropdownRef = useRef(null);
@@ -40,9 +40,10 @@ const CustomDropdown = ({ options, value, onChange, placeholder, name, required 
   };
 
   const isDisabled = !options || options.length === 0;
+  const themeClass = theme === 'dark' ? 'c-dropdown-dark' : theme === 'light' ? 'c-dropdown-light' : '';
 
   return (
-    <div className={`c-dropdown-container ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
+    <div className={`c-dropdown-container ${themeClass} ${isOpen ? 'is-open' : ''}`} ref={dropdownRef}>
       {/* Hidden input for HTML form submissions */}
       <input type="hidden" name={name} value={value || ''} required={required} />
 

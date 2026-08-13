@@ -1,7 +1,14 @@
 import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
+import GarageSidebar from '../components/GarageSidebar';
+import {
+  LuDollarSign,
+  LuCircleCheck,
+  LuClock,
+  LuFileText
+} from 'react-icons/lu';
 
 const GarageEarnings = () => {
   const [payouts, setPayouts] = useState([]);
@@ -9,9 +16,8 @@ const GarageEarnings = () => {
   const [loading, setLoading] = useState(true);
   
   const { toast } = useNotification();
-  const navigate = useNavigate();
+  const { lang } = useLanguage();
 
-  
   const fetchEarnings = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -37,136 +43,146 @@ const GarageEarnings = () => {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f172a', color: 'white' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="spinner-border text-warning" style={{ width: '3rem', height: '3rem' }} role="status"></div>
-          <p style={{ marginTop: '16px', color: '#94a3b8' }}>Retrieving earnings ledger...</p>
-        </div>
+      <div className="staff-wrapper">
+        <GarageSidebar activeJobsCount={0} />
+        <main className="staff-main" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="text-center py-5">
+            <div className="spinner-border text-primary" style={{ width: '3rem', height: '3rem' }} role="status"></div>
+            <p className="mt-3 text-muted fw-semibold">Retrieving earnings ledger...</p>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div style={{
-      background: '#0f172a',
-      minHeight: '100vh',
-      color: '#f8fafc',
-      padding: '40px 20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        
-        {/* Navigation */}
-        <div style={{ marginBottom: '24px' }}>
-          <button onClick={() => navigate('/garage-portal')} style={{
-            background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline'
-          }}>
-            ← Return to Dashboard
-          </button>
-        </div>
+    <div className="staff-wrapper">
+      {/* ── SIDEBAR ── */}
+      <GarageSidebar activeJobsCount={0} />
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+      {/* ── MAIN CONTENT ── */}
+      <main className="staff-main">
+        {/* Header */}
+        <div className="dash-header mb-4">
           <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', margin: '0 0 4px', letterSpacing: '-0.025em' }}>
-              💰 Earnings & Payouts Ledger
-            </h1>
-            <p style={{ color: '#94a3b8', margin: 0, fontSize: '14px' }}>
-              Track payouts and settlements from completed repairs.
-            </p>
+            <div className="dash-title">
+              {lang === 'ar' ? 'الأرباح والدفعات' : 'Earnings & Payouts Ledger'}
+            </div>
+            <div className="dash-subtitle">
+              {lang === 'ar' ? 'متابعة الدفعات والتسويات المالية من الإصلاحات المكتملة.' : 'Track payouts and settlements from completed repairs.'}
+            </div>
           </div>
         </div>
 
         {/* Finance Cards */}
         {summary && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '20px',
-            marginBottom: '40px'
-          }}>
+          <div className="stats-grid mb-4">
             {/* Total Volume */}
-            <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>Total Payout Volume</span>
-              <div style={{ fontSize: '32px', fontWeight: '800' }}>AED {summary.totalAmount.toFixed(2)}</div>
-              <div style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px' }}>Combined total of all repairs</div>
+            <div className="stat-card">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="text-muted small fw-bold text-uppercase">Total Payout Volume</span>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#f1f5f9', color: '#475569', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <LuDollarSign size={18} />
+                </div>
+              </div>
+              <div className="h2 fw-bold text-dark mb-1">
+                AED {summary.totalAmount ? summary.totalAmount.toFixed(2) : '0.00'}
+              </div>
+              <div className="small text-muted fw-semibold">Combined total of all repairs</div>
             </div>
 
             {/* Processed Payouts */}
-            <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>Settled Payouts</span>
-              <div style={{ fontSize: '32px', fontWeight: '800', color: '#10b981' }}>AED {summary.processedAmount.toFixed(2)}</div>
-              <div style={{ color: '#10b981', fontSize: '12px', marginTop: '6px', fontWeight: '600' }}>Transferred to your bank account</div>
+            <div className="stat-card">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="text-muted small fw-bold text-uppercase">Settled Payouts</span>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <LuCircleCheck size={18} />
+                </div>
+              </div>
+              <div className="h2 fw-bold mb-1" style={{ color: '#059669' }}>
+                AED {summary.processedAmount ? summary.processedAmount.toFixed(2) : '0.00'}
+              </div>
+              <div className="small fw-semibold" style={{ color: '#059669' }}>Transferred to bank account</div>
             </div>
 
             {/* Pending Payouts */}
-            <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '24px' }}>
-              <span style={{ color: '#94a3b8', fontSize: '13px', fontWeight: '600', display: 'block', marginBottom: '8px' }}>Pending Payouts</span>
-              <div style={{ fontSize: '32px', fontWeight: '800', color: '#fbbf24' }}>AED {summary.pendingAmount.toFixed(2)}</div>
-              <div style={{ color: '#fbbf24', fontSize: '12px', marginTop: '6px', fontWeight: '600' }}>Awaiting admin processing</div>
+            <div className="stat-card">
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="text-muted small fw-bold text-uppercase">Pending Payouts</span>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#fffbeb', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <LuClock size={18} />
+                </div>
+              </div>
+              <div className="h2 fw-bold mb-1" style={{ color: '#d97706' }}>
+                AED {summary.pendingAmount ? summary.pendingAmount.toFixed(2) : '0.00'}
+              </div>
+              <div className="small fw-semibold" style={{ color: '#d97706' }}>Awaiting admin processing</div>
             </div>
           </div>
         )}
 
-        {/* Ledger Table */}
-        <div style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '20px', padding: '28px' }}>
-          <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px' }}>
-            📜 Payout Settlement History
-          </h3>
+        {/* Settlement History */}
+        <div className="schedule-card" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+          <div className="schedule-head d-flex justify-content-between align-items-center mb-3">
+            <h4 className="m-0 d-flex align-items-center gap-2 font-bold" style={{ fontSize: '17px', color: '#0f172a' }}>
+              <LuFileText className="text-primary-garro" size={18} />
+              {lang === 'ar' ? 'سجل تسوية الدفعات' : 'Payout Settlement History'}
+            </h4>
+            <span style={{ fontSize: '13px', color: '#64748b' }}>
+              {payouts.length} transactions
+            </span>
+          </div>
 
           {payouts.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 20px', color: '#64748b' }}>
-              No payout records found. Settlements will show here as soon as invoice payments are processed.
+            <div className="text-center py-5">
+              <LuFileText size={48} className="text-muted mb-3" style={{ opacity: 0.3 }} />
+              <div className="fw-bold text-dark fs-6 mb-1">No payout records found</div>
+              <div className="text-muted small">Settlement records will appear here as soon as job invoices are processed.</div>
             </div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <div className="table-responsive">
+              <table className="table align-middle mb-0" style={{ borderCollapse: 'separate', borderSpacing: '0 8px' }}>
                 <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8', fontSize: '12px', fontWeight: '700' }}>
-                    <th style={{ padding: '12px 16px' }}>TRANSACTION ID</th>
+                  <tr style={{ background: '#f8fafc', color: '#64748b', fontSize: '11.5px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    <th style={{ padding: '12px 16px', borderRadius: '8px 0 0 8px' }}>TRANSACTION ID</th>
                     <th style={{ padding: '12px 16px' }}>DATE</th>
                     <th style={{ padding: '12px 16px' }}>JOB REF</th>
                     <th style={{ padding: '12px 16px' }}>INVOICE REF</th>
                     <th style={{ padding: '12px 16px' }}>AMOUNT (90%)</th>
                     <th style={{ padding: '12px 16px' }}>PAYOUT STATUS</th>
-                    <th style={{ padding: '12px 16px' }}>SETTLED ON</th>
+                    <th style={{ padding: '12px 16px', borderRadius: '0 8px 8px 0' }}>SETTLED ON</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payouts.map(p => (
-                    <tr key={p._id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', fontSize: '14px' }}>
-                      <td style={{ padding: '16px', fontWeight: '600' }}>
+                    <tr key={p._id} style={{ background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: '700', color: '#0f172a', borderRadius: '8px 0 0 8px' }}>
                         #{p._id.slice(-6).toUpperCase()}
                       </td>
-                      <td style={{ padding: '16px' }}>
+                      <td style={{ padding: '14px 16px', color: '#64748b', fontSize: '13.5px' }}>
                         {new Date(p.createdAt).toLocaleDateString()}
                       </td>
-                      <td style={{ padding: '16px', fontWeight: '600' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: '700', color: '#0f172a' }}>
                         {p.jobId ? `#JC-${p.jobId._id ? p.jobId._id.slice(-6).toUpperCase() : p.jobId.slice(-6).toUpperCase()}` : 'N/A'}
                       </td>
-                      <td style={{ padding: '16px' }}>
+                      <td style={{ padding: '14px 16px', color: '#475569' }}>
                         {p.invoiceId?.invoiceNumber || 'N/A'}
                       </td>
-                      <td style={{ padding: '16px', fontWeight: '700', color: '#10b981' }}>
+                      <td style={{ padding: '14px 16px', fontWeight: '800', color: '#059669', fontSize: '15px' }}>
                         AED {p.amount.toFixed(2)}
                       </td>
-                      <td style={{ padding: '16px' }}>
+                      <td style={{ padding: '14px 16px' }}>
                         {p.status === 'processed' ? (
-                          <span style={{
-                            background: 'rgba(16, 185, 129, 0.1)', color: '#10b981',
-                            borderRadius: '20px', padding: '4px 12px', fontSize: '12px', fontWeight: '700'
-                          }}>
+                          <span className="badge bg-success text-white px-3 py-2 fw-bold" style={{ borderRadius: '8px', fontSize: '12px' }}>
                             ✓ Processed
                           </span>
                         ) : (
-                          <span style={{
-                            background: 'rgba(251, 191, 36, 0.1)', color: '#fbbf24',
-                            borderRadius: '20px', padding: '4px 12px', fontSize: '12px', fontWeight: '700'
-                          }}>
+                          <span className="badge bg-warning text-dark px-3 py-2 fw-bold" style={{ borderRadius: '8px', fontSize: '12px' }}>
                             ⏳ Pending
                           </span>
                         )}
                       </td>
-                      <td style={{ padding: '16px', color: '#cbd5e1' }}>
+                      <td style={{ padding: '14px 16px', color: '#64748b', fontSize: '13px', borderRadius: '0 8px 8px 0' }}>
                         {p.processedAt ? new Date(p.processedAt).toLocaleString() : '—'}
                       </td>
                     </tr>
@@ -176,8 +192,7 @@ const GarageEarnings = () => {
             </div>
           )}
         </div>
-
-      </div>
+      </main>
     </div>
   );
 };

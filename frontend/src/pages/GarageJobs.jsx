@@ -1,9 +1,20 @@
 import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import { useLanguage } from '../context/LanguageContext';
+import GarageSidebar from '../components/GarageSidebar';
 import { getSocket } from '../utils/socket';
+import {
+  LuWrench,
+  LuCar,
+  LuUser,
+  LuFileText,
+  LuUpload,
+  LuCheck,
+  LuClock,
+  LuDollarSign
+} from 'react-icons/lu';
 
 const GarageJobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -18,7 +29,7 @@ const GarageJobs = () => {
   const [laborCost, setLaborCost] = useState('');
 
   const { toast } = useNotification();
-  const navigate = useNavigate();
+  const { lang } = useLanguage();
 
   const fetchJobs = async () => {
     try {
@@ -30,8 +41,7 @@ const GarageJobs = () => {
       if (!res.ok || !data.success) {
         throw new Error(data.message || 'Failed to fetch job list.');
       }
-      setJobs(data.jobs);
-      // Keep selected job reference updated
+      setJobs(data.jobs || []);
       if (selectedJob) {
         const updated = data.jobs.find(j => j._id === selectedJob._id);
         setSelectedJob(updated || null);
@@ -47,7 +57,6 @@ const GarageJobs = () => {
     fetchJobs();
   }, [filterStatus]);
 
-  // Live update — when admin assigns a request to this garage, refresh the job list in real-time
   useEffect(() => {
     const socket = getSocket();
     const handleNewAssignment = () => {
@@ -144,7 +153,6 @@ const GarageJobs = () => {
     }
   };
 
-  // Determine next status option
   const getNextStatusOptions = (current) => {
     const STATUS_FLOW = {
       pickup_scheduled:   ['picked_up'],
@@ -160,299 +168,271 @@ const GarageJobs = () => {
   };
 
   return (
-    <div style={{
-      background: '#0f172a',
-      minHeight: '100vh',
-      color: '#f8fafc',
-      padding: '40px 20px',
-      fontFamily: 'system-ui, -apple-system, sans-serif'
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="staff-wrapper">
+      {/* ── SIDEBAR ── */}
+      <GarageSidebar activeJobsCount={jobs.filter(j => !['delivered', 'closed'].includes(j.status)).length} />
 
-        {/* Navigation */}
-        <div style={{ marginBottom: '24px' }}>
-          <button onClick={() => navigate('/garage-portal')} style={{
-            background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px', textDecoration: 'underline'
-          }}>
-            ← Return to Dashboard
-          </button>
-        </div>
+      {/* ── MAIN CONTENT ── */}
+      <main className="staff-main">
+        {/* Header */}
+        <div className="dash-header mb-4">
+          <div>
+            <div className="dash-title">
+              {lang === 'ar' ? 'بطاقات الأعمال والطلبات' : 'Active Repair Cards'}
+            </div>
+            <div className="dash-subtitle">
+              {lang === 'ar' ? 'إدارة أوامر الإصلاح ورفع الفواتير' : 'View, advance status, and submit invoices for assigned vehicle repairs.'}
+            </div>
+          </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '28px', fontWeight: '800', margin: 0, letterSpacing: '-0.025em' }}>
-            📋 Active Repair Cards
-          </h1>
-          {/* Filters */}
-          <div style={{ display: 'flex', gap: '10px' }}>
-            {['', 'pickup_scheduled', 'in_garage', 'repair_in_progress', 'work_complete', 'ready_for_delivery'].map(st => (
+          {/* Filter Pills */}
+          <div className="d-flex flex-wrap gap-2">
+            {[
+              { id: '', label: 'All Repairs' },
+              { id: 'pickup_scheduled', label: 'Scheduled' },
+              { id: 'in_garage', label: 'In Garage' },
+              { id: 'repair_in_progress', label: 'In Progress' },
+              { id: 'work_complete', label: 'Completed' }
+            ].map(st => (
               <button
-                key={st}
-                onClick={() => setFilterStatus(st)}
-                style={{
-                  padding: '8px 16px',
-                  background: filterStatus === st ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' : '#1e293b',
-                  border: 'none',
-                  borderRadius: '8px',
-                  color: 'white',
-                  fontSize: '13px',
-                  fontWeight: '600',
-                  cursor: 'pointer'
-                }}
+                key={st.id}
+                onClick={() => setFilterStatus(st.id)}
+                className={`btn btn-sm fw-bold ${filterStatus === st.id ? 'btn-garro btn-primary-garro' : 'btn-light border'}`}
+                style={{ borderRadius: '8px', fontSize: '12.5px' }}
               >
-                {st === '' ? 'All Repairs' : st.replace(/_/g, ' ').toUpperCase()}
+                {st.label}
               </button>
             ))}
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '400px 1fr', gap: '30px' }}>
-
+        {/* Content Layout */}
+        <div className="row g-4">
           {/* Left Column: Job Cards List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="col-lg-5">
             {loading ? (
-              <p style={{ color: '#64748b', textAlign: 'center' }}>Loading Jobs...</p>
+              <div className="text-center py-5">
+                <div className="spinner-border text-primary" style={{ width: '2rem', height: '2rem' }}></div>
+                <p className="mt-2 text-muted small">Loading Jobs...</p>
+              </div>
             ) : jobs.length === 0 ? (
-              <div style={{ background: '#1e293b', borderRadius: '16px', padding: '32px', textAlign: 'center', color: '#64748b' }}>
-                No repairs match this filter.
+              <div className="schedule-card text-center py-5">
+                <LuWrench size={40} className="text-muted mb-2" style={{ opacity: 0.4 }} />
+                <div className="fw-bold text-dark fs-6 mb-1">No repairs found</div>
+                <div className="text-muted small">No jobs match the selected filter.</div>
               </div>
             ) : (
-              jobs.map(job => (
-                <div
-                  key={job._id}
-                  onClick={() => setSelectedJob(job)}
-                  style={{
-                    background: selectedJob?._id === job._id ? 'rgba(249, 115, 22, 0.08)' : '#1e293b',
-                    border: selectedJob?._id === job._id ? '1.5px solid #f97316' : '1.5px solid rgba(255,255,255,0.04)',
-                    borderRadius: '16px',
-                    padding: '20px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: '700', fontSize: '15px' }}>
-                      #{job._id.slice(-6).toUpperCase()}
-                    </span>
-                    <span style={{
-                      background: 'rgba(249, 115, 22, 0.1)',
-                      color: '#f97316',
-                      borderRadius: '6px',
-                      padding: '2px 6px',
-                      fontSize: '10px',
-                      fontWeight: '700',
-                      textTransform: 'uppercase'
-                    }}>
-                      {job.status.replace(/_/g, ' ')}
-                    </span>
-                  </div>
+              <div className="d-flex flex-column gap-3">
+                {jobs.map(job => {
+                  const isSelected = selectedJob?._id === job._id;
+                  return (
+                    <div
+                      key={job._id}
+                      onClick={() => setSelectedJob(job)}
+                      style={{
+                        background: '#ffffff',
+                        border: isSelected ? '2px solid #ff5c1a' : '1px solid #e2e8f0',
+                        borderRadius: '14px',
+                        padding: '18px 20px',
+                        cursor: 'pointer',
+                        boxShadow: isSelected ? '0 4px 15px rgba(255,92,26,0.1)' : '0 1px 3px rgba(0,0,0,0.03)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <span className="fw-bold text-dark" style={{ fontSize: '15px' }}>
+                          #{job._id.slice(-6).toUpperCase()}
+                        </span>
+                        <span style={{
+                          background: '#fff4ef',
+                          color: '#ff5c1a',
+                          border: '1px solid #ffe2d5',
+                          borderRadius: '6px',
+                          padding: '3px 8px',
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          textTransform: 'uppercase'
+                        }}>
+                          {job.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
 
-                  <p style={{ margin: '0 0 12px', fontSize: '14px', fontWeight: '600', color: '#cbd5e1' }}>
-                    {job.requestId?.vehicleId ? (
-                      `${job.requestId.vehicleId.make} ${job.requestId.vehicleId.model}`
-                    ) : 'Unknown Vehicle'}
-                  </p>
+                      <div className="fw-bold text-secondary mb-2" style={{ fontSize: '13.5px' }}>
+                        <LuCar className="me-1 text-primary-garro" size={14} />
+                        {job.requestId?.vehicleId ? (
+                          `${job.requestId.vehicleId.make} ${job.requestId.vehicleId.model}`
+                        ) : 'Unknown Vehicle'}
+                      </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#94a3b8' }}>
-                    <span>Client: {job.requestId?.userId?.name || 'Customer'}</span>
-                    <span>{new Date(job.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              ))
+                      <div className="d-flex justify-content-between align-items-center text-muted small">
+                        <span><LuUser className="me-1" size={12} />{job.requestId?.userId?.name || 'Customer'}</span>
+                        <span>{new Date(job.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
 
-          {/* Right Column: Detailed Job View */}
-          <div style={{
-            background: '#1e293b',
-            borderRadius: '20px',
-            padding: '32px',
-            border: '1px solid rgba(255,255,255,0.04)',
-            alignSelf: 'start'
-          }}>
-            {selectedJob ? (
-              <div>
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '24px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '20px' }}>
-                  <div>
-                    <h2 style={{ fontSize: '22px', fontWeight: '800', margin: '0 0 4px' }}>
-                      Repair Order #{selectedJob._id.slice(-6).toUpperCase()}
-                    </h2>
-                    <span style={{ fontSize: '13px', color: '#94a3b8' }}>
-                      Assigned on {new Date(selectedJob.createdAt).toLocaleString()}
+          {/* Right Column: Job Detail View */}
+          <div className="col-lg-7">
+            <div className="schedule-card" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
+              {selectedJob ? (
+                <div>
+                  <div className="d-flex justify-content-between align-items-start pb-3 mb-4" style={{ borderBottom: '1px solid #e2e8f0' }}>
+                    <div>
+                      <h3 className="fw-bold text-dark m-0" style={{ fontSize: '20px' }}>
+                        Order #{selectedJob._id.slice(-6).toUpperCase()}
+                      </h3>
+                      <span className="text-muted small">
+                        Assigned on {new Date(selectedJob.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <span className="badge bg-success px-3 py-2 fw-bold text-uppercase" style={{ borderRadius: '8px', fontSize: '12px' }}>
+                      {selectedJob.status.replace(/_/g, ' ')}
                     </span>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{
-                      background: 'rgba(16, 185, 129, 0.1)',
-                      color: '#10b981',
-                      padding: '6px 14px',
-                      borderRadius: '30px',
-                      fontSize: '13px',
-                      fontWeight: '700',
-                      textTransform: 'uppercase',
-                      display: 'inline-block'
-                    }}>
-                      {selectedJob.status.replace(/_/g, ' ')}
+
+                  {/* Grid Info */}
+                  <div className="row g-3 mb-4">
+                    <div className="col-md-6">
+                      <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        <div className="text-muted small fw-bold text-uppercase mb-1">🚗 Vehicle Details</div>
+                        {selectedJob.requestId?.vehicleId ? (
+                          <div className="small text-dark" style={{ lineHeight: 1.6 }}>
+                            <strong>{selectedJob.requestId.vehicleId.make} {selectedJob.requestId.vehicleId.model} ({selectedJob.requestId.vehicleId.year})</strong><br />
+                            Plate: <span className="bg-white px-2 py-0.5 rounded border font-monospace fw-bold">{selectedJob.requestId.vehicleId.registrationNumber || 'N/A'}</span>
+                          </div>
+                        ) : <div className="small text-muted">Unknown</div>}
+                      </div>
+                    </div>
+
+                    <div className="col-md-6">
+                      <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                        <div className="text-muted small fw-bold text-uppercase mb-1">👤 Customer Contact</div>
+                        {selectedJob.requestId?.userId ? (
+                          <div className="small text-dark" style={{ lineHeight: 1.6 }}>
+                            <strong>{selectedJob.requestId.userId.name}</strong><br />
+                            Phone: {selectedJob.requestId.userId.phone || 'N/A'}<br />
+                            Email: {selectedJob.requestId.userId.email || 'N/A'}
+                          </div>
+                        ) : <div className="small text-muted">Unknown</div>}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Grid Info */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '32px' }}>
-                  {/* Vehicle */}
-                  <div>
-                    <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '10px' }}>
-                      🚗 Vehicle Info
-                    </h4>
-                    {selectedJob.requestId?.vehicleId ? (
-                      <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6' }}>
-                        <strong>{selectedJob.requestId.vehicleId.make} {selectedJob.requestId.vehicleId.model}</strong><br />
-                        Year: {selectedJob.requestId.vehicleId.year}<br />
-                        Plate: <span style={{ background: '#0f172a', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace' }}>{selectedJob.requestId.vehicleId.registrationNumber}</span>
-                      </p>
-                    ) : <p>Unknown</p>}
+                  {/* Issue Description */}
+                  <div style={{ background: '#fff4ef', border: '1px solid #ffe8dd', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
+                    <div className="text-muted small fw-bold text-uppercase mb-1">📋 Service Request &amp; Notes</div>
+                    <div className="fw-bold text-primary-garro small text-uppercase mb-1">
+                      {selectedJob.requestId?.subCategory || selectedJob.requestId?.serviceType?.replace(/_/g, ' ')}
+                    </div>
+                    <p className="m-0 small text-secondary" style={{ lineHeight: 1.5 }}>
+                      "{selectedJob.requestId?.description || 'No specific notes provided.'}"
+                    </p>
                   </div>
 
-                  {/* Customer */}
-                  <div>
-                    <h4 style={{ fontSize: '13px', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.05em', marginBottom: '10px' }}>
-                      👤 Customer Info
-                    </h4>
-                    {selectedJob.requestId?.userId ? (
-                      <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6' }}>
-                        <strong>{selectedJob.requestId.userId.name}</strong><br />
-                        Phone: {selectedJob.requestId.userId.phone}<br />
-                        Email: {selectedJob.requestId.userId.email}
-                      </p>
-                    ) : <p>Unknown</p>}
+                  {/* Progress Status Actions */}
+                  <div className="pt-3 mb-4" style={{ borderTop: '1px solid #e2e8f0' }}>
+                    <div className="fw-bold text-dark small text-uppercase mb-3 d-flex align-items-center gap-1">
+                      <LuClock className="text-primary-garro" size={16} /> Progress Repair Status
+                    </div>
+                    <div className="d-flex flex-wrap gap-2">
+                      {getNextStatusOptions(selectedJob.status).map(nxt => (
+                        <button
+                          key={nxt}
+                          onClick={() => handleStatusUpdate(selectedJob._id, nxt)}
+                          className="btn btn-sm btn-primary-garro fw-bold px-3 py-2"
+                          style={{ borderRadius: '8px', fontSize: '13px' }}
+                        >
+                          Advance to "{nxt.replace(/_/g, ' ').toUpperCase()}"
+                        </button>
+                      ))}
+                      {getNextStatusOptions(selectedJob.status).length === 0 && (
+                        <div className="text-success small fw-bold d-flex align-items-center gap-1">
+                          <LuCheck size={16} /> Job is completed or managed by system handlers.
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
 
-                {/* Description */}
-                <div style={{ background: '#0f172a', borderRadius: '12px', padding: '16px 20px', marginBottom: '32px' }}>
-                  <h4 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#94a3b8', margin: '0 0 6px' }}>
-                    📋 Reported Issue / Service Type
-                  </h4>
-                  <span style={{ fontSize: '12px', color: '#f97316', fontWeight: '700', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                    {selectedJob.requestId?.subCategory || selectedJob.requestId?.serviceType?.replace(/_/g, ' ')}
-                  </span>
-                  <p style={{ margin: 0, fontSize: '14px', color: '#cbd5e1', lineHeight: '1.5' }}>
-                    {selectedJob.requestId?.description}
-                  </p>
-                </div>
-
-                {/* Repair Status Timeline Actions */}
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '24px', marginBottom: '32px' }}>
-                  <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '14px' }}>
-                    🛠️ Progress Repair State
-                  </h4>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    {getNextStatusOptions(selectedJob.status).map(nxt => (
-                      <button
-                        key={nxt}
-                        onClick={() => handleStatusUpdate(selectedJob._id, nxt)}
-                        style={{
-                          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                          border: 'none',
-                          borderRadius: '10px',
-                          padding: '10px 18px',
-                          color: 'white',
-                          fontWeight: '600',
-                          fontSize: '13px',
-                          cursor: 'pointer',
-                          boxShadow: '0 4px 12px rgba(249, 115, 22, 0.15)'
-                        }}
-                      >
-                        Advance to "{nxt.replace(/_/g, ' ').toUpperCase()}"
-                      </button>
-                    ))}
-                    {getNextStatusOptions(selectedJob.status).length === 0 && (
-                      <span style={{ color: '#64748b', fontSize: '13px' }}>
-                        Repair card is completed or managed by system/helpers.
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Submit Quote Section */}
-                {selectedJob.status === 'quote_pending' && (
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '24px', marginBottom: '32px' }}>
-                    <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '14px', color: '#fbbf24' }}>
-                      💰 Submit Pricing Breakdown (Quote Required)
-                    </h4>
-                    <form onSubmit={handleQuoteSubmit} style={{ display: 'flex', gap: '16px', alignItems: 'end' }}>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', fontSize: '11px', color: '#94a3b8', marginBottom: '6px' }}>Parts Cost (AED)</label>
-                        <input
-                          type="number"
-                          value={partsCost}
-                          onChange={(e) => setPartsCost(e.target.value)}
-                          required
-                          placeholder="0.00"
-                          style={{
-                            width: '100%', padding: '10px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white'
-                          }}
-                        />
+                  {/* Submit Quote Section */}
+                  {selectedJob.status === 'quote_pending' && (
+                    <div className="pt-3 mb-4" style={{ borderTop: '1px solid #e2e8f0' }}>
+                      <div className="fw-bold text-warning small text-uppercase mb-3 d-flex align-items-center gap-1">
+                        <LuDollarSign size={16} /> Submit Pricing Breakdown
                       </div>
-                      <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', fontSize: '11px', color: '#94a3b8', marginBottom: '6px' }}>Labor Cost (AED)</label>
-                        <input
-                          type="number"
-                          value={laborCost}
-                          onChange={(e) => setLaborCost(e.target.value)}
-                          required
-                          placeholder="0.00"
-                          style={{
-                            width: '100%', padding: '10px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white'
-                          }}
-                        />
+                      <form onSubmit={handleQuoteSubmit} className="row g-3 align-items-end">
+                        <div className="col-md-5">
+                          <label className="form-label small fw-bold text-secondary">Parts Cost (AED)</label>
+                          <input
+                            type="number"
+                            className="form-control form-control-sm"
+                            value={partsCost}
+                            onChange={(e) => setPartsCost(e.target.value)}
+                            required
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div className="col-md-5">
+                          <label className="form-label small fw-bold text-secondary">Labor Cost (AED)</label>
+                          <input
+                            type="number"
+                            className="form-control form-control-sm"
+                            value={laborCost}
+                            onChange={(e) => setLaborCost(e.target.value)}
+                            required
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div className="col-md-2">
+                          <button type="submit" className="btn btn-sm btn-warning fw-bold w-100 py-1.5" style={{ borderRadius: '8px' }}>
+                            Submit
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Invoice PDF Upload */}
+                  {['in_garage', 'repair_in_progress', 'work_complete'].includes(selectedJob.status) && (
+                    <div className="pt-3" style={{ borderTop: '1px solid #e2e8f0' }}>
+                      <div className="fw-bold text-success small text-uppercase mb-3 d-flex align-items-center gap-1">
+                        <LuFileText size={16} /> Upload Final Garage Invoice (PDF)
                       </div>
-                      <button type="submit" style={{
-                        padding: '10px 20px', background: '#fbbf24', border: 'none', borderRadius: '8px', color: '#0f172a', fontWeight: '700', fontSize: '13px', cursor: 'pointer'
-                      }}>
-                        Submit Quote
-                      </button>
-                    </form>
-                  </div>
-                )}
+                      <form onSubmit={handleInvoiceUpload} className="d-flex gap-2">
+                        <input
+                          type="file"
+                          accept="application/pdf"
+                          className="form-control form-control-sm"
+                          onChange={(e) => setInvoiceFile(e.target.files[0])}
+                          required
+                        />
+                        <button
+                          type="submit"
+                          disabled={uploading}
+                          className="btn btn-sm btn-success fw-bold d-inline-flex align-items-center gap-1 px-3"
+                          style={{ borderRadius: '8px', flexShrink: 0 }}
+                        >
+                          <LuUpload size={14} /> {uploading ? 'Uploading...' : 'Upload PDF'}
+                        </button>
+                      </form>
+                    </div>
+                  )}
 
-                {/* Upload Invoice PDF Section */}
-                {['in_garage', 'repair_in_progress', 'work_complete'].includes(selectedJob.status) && (
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '24px' }}>
-                    <h4 style={{ fontSize: '14px', fontWeight: '700', marginBottom: '14px', color: '#10b981' }}>
-                      📄 Upload Final Garage Invoice (PDF)
-                    </h4>
-                    <form onSubmit={handleInvoiceUpload} style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                      <input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={(e) => setInvoiceFile(e.target.files[0])}
-                        required
-                        style={{
-                          flex: 1, padding: '8px', background: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', fontSize: '13px'
-                        }}
-                      />
-                      <button type="submit" disabled={uploading} style={{
-                        padding: '10px 20px', background: '#10b981', border: 'none', borderRadius: '8px', color: 'white', fontWeight: '700', fontSize: '13px', cursor: 'pointer', opacity: uploading ? 0.7 : 1
-                      }}>
-                        {uploading ? 'Uploading...' : 'Upload PDF'}
-                      </button>
-                    </form>
-                  </div>
-                )}
-
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '80px 20px', color: '#64748b' }}>
-                <span style={{ fontSize: '48px', display: 'block', marginBottom: '16px' }}>👈</span>
-                Select a repair card from the left panel to manage it.
-              </div>
-            )}
+                </div>
+              ) : (
+                <div className="text-center py-5">
+                  <LuWrench size={48} className="text-muted mb-3" style={{ opacity: 0.3 }} />
+                  <div className="fw-bold text-dark fs-6 mb-1">Select a Repair Order</div>
+                  <div className="text-muted small">Click any repair card on the left panel to inspect details and update status.</div>
+                </div>
+              )}
+            </div>
           </div>
-
         </div>
-
-      </div>
+      </main>
     </div>
   );
 };

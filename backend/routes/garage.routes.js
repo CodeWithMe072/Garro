@@ -23,5 +23,7 @@ router.post('/portal/jobs/:jobId/respond', auth, role('garage'), ctrl.respondToJ
 router.post('/portal/quotes', auth, role('garage'), ctrl.submitGarageQuote);
 router.post('/portal/jobs/:jobId/invoice', auth, upload.single('invoice'), ctrl.uploadInvoice);
 router.get('/portal/earnings', auth, role('garage'), ctrl.getPortalEarnings);
+router.get('/portal/staff', auth, role('garage'), ctrl.getPortalStaff);
+router.post('/portal/staff', auth, role('garage'), ctrl.addPortalStaff);
 
 export default router;

@@ -49,6 +49,7 @@ const ResetPassword = React.lazy(() => import('./pages/ResetPassword'));
 const GarageDashboard = React.lazy(() => import('./pages/GarageDashboard'));
 const GarageJobs = React.lazy(() => import('./pages/GarageJobs'));
 const GarageEarnings = React.lazy(() => import('./pages/GarageEarnings'));
+const GarageStaff = React.lazy(() => import('./pages/GarageStaff'));
 const MyVehicles = React.lazy(() => import('./pages/MyVehicles'));
 const MyInvoices = React.lazy(() => import('./pages/MyInvoices'));
 const MyQuotes = React.lazy(() => import('./pages/MyQuotes'));
@@ -264,6 +265,11 @@ const App = () => {
             <Route path="/garage-portal/earnings" element={
               <ProtectedRoute roles={['garage']}>
                 <GarageEarnings />
+              </ProtectedRoute>
+            } />
+            <Route path="/garage-portal/staff" element={
+              <ProtectedRoute roles={['garage']}>
+                <GarageStaff />
               </ProtectedRoute>
             } />
           </Routes>

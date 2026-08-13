@@ -6,6 +6,8 @@ import Review from '../models/Review.js';
 import Request from '../models/Request.js';
 import Quote from '../models/Quote.js';
 import GaragePayout from '../models/GaragePayout.js';
+import Helper from '../models/Helper.js';
+import bcrypt from 'bcryptjs';
 import { uploadBufferToR2, uploadToR2 } from '../utils/upload.js';
 import { success, error  } from '../utils/response.js';
 
@@ -349,3 +351,113 @@ export const getPortalEarnings = async (req, res) => {
     error(res, err.message, 500);
   }
 };
+
+// GET /api/garages/portal/staff
+export const getPortalStaff = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    const staffUsers = await User.find({
+      garageId: user.garageId,
+      _id: { $ne: user._id }
+    }).select('-password').sort({ createdAt: -1 });
+
+    const helpers = await Helper.find({ garageId: user.garageId });
+    const helperMap = {};
+    helpers.forEach(h => {
+      if (h.userId) helperMap[h.userId.toString()] = h;
+    });
+
+    const staffList = staffUsers.map(u => {
+      const uObj = u.toObject();
+      const h = helperMap[u._id.toString()];
+      if (h && h.workingHours?.schedule?.length > 0) {
+        uObj.schedule = h.workingHours.schedule;
+        const workingDay = h.workingHours.schedule.find(s => s.isWorking) || h.workingHours.schedule[0];
+        uObj.shiftStart = workingDay.startTime;
+        uObj.shiftEnd = workingDay.endTime;
+      } else {
+        uObj.shiftStart = '09:00';
+        uObj.shiftEnd = '21:00';
+        uObj.schedule = [
+          { day: 'monday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+          { day: 'tuesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+          { day: 'wednesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+          { day: 'thursday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+          { day: 'friday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+          { day: 'saturday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+          { day: 'sunday', isWorking: true, startTime: '09:00', endTime: '21:00' }
+        ];
+      }
+      return uObj;
+    });
+
+    success(res, { staffList });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/garages/portal/staff
+export const addPortalStaff = async (req, res) => {
+  try {
+    const { name, email, phone, password, role, schedule } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    if (!name || !email || !phone || !password) {
+      return error(res, 'Name, email, phone, and password are required', 400);
+    }
+
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      return error(res, 'A user with this email address already exists', 400);
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newStaff = await User.create({
+      name: name.trim(),
+      email: email.toLowerCase().trim(),
+      phone: phone.trim(),
+      password: hashedPassword,
+      role: role || 'staff',
+      garageId: user.garageId,
+      status: 'active'
+    });
+
+    const defaultSchedule = [
+      { day: 'monday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'tuesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'wednesday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'thursday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'friday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'saturday', isWorking: true, startTime: '09:00', endTime: '21:00' },
+      { day: 'sunday', isWorking: true, startTime: '09:00', endTime: '21:00' }
+    ];
+
+    const finalSchedule = (schedule && Array.isArray(schedule) && schedule.length > 0) ? schedule : defaultSchedule;
+
+    // Also register in Helper model for job assignment dispatching
+    await Helper.create({
+      userId: newStaff._id,
+      name: newStaff.name,
+      phone: newStaff.phone,
+      garageId: user.garageId,
+      isAvailable: true,
+      workingHours: {
+        timezone: 'Asia/Dubai',
+        schedule: finalSchedule
+      }
+    });
+
+    const staffObj = newStaff.toObject();
+    delete staffObj.password;
+    staffObj.schedule = finalSchedule;
+
+    success(res, { staff: staffObj, message: 'Staff member added successfully with 7-day weekly schedule!' }, 201);
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
