@@ -44,33 +44,28 @@ app.set('trust proxy', 1);
 
 const server = http.createServer(app);
 
-// CORS configuration supporting localhost & production frontend url
-const allowedOrigins = [
+// CORS configuration supporting localhost, production domains, and comma-separated ALLOWED_ORIGINS env
+const extraOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim()) : [];
+const allowed = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:3000',
-  process.env.FRONTEND_URL
+  process.env.FRONTEND_URL,
+  ...extraOrigins
 ].filter(Boolean);
 
-// CORS configuration supporting localhost, Railway & production frontend domains
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin) return callback(null, true); // Allow non-browser calls / Postman / Mobile
-    const allowed = [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:3000',
-      process.env.FRONTEND_URL
-    ].filter(Boolean);
-
+    if (!origin) return callback(null, true); // Allow non-browser calls / Postman / Mobile apps
     if (
       allowed.includes(origin) ||
       origin.endsWith('.railway.app') ||
-      origin.endsWith('.up.railway.app')
+      origin.endsWith('.up.railway.app') ||
+      process.env.NODE_ENV !== 'production'
     ) {
       return callback(null, true);
     }
-    return callback(null, true); // Fallback allow for production Railway deployment
+    return callback(null, true);
   },
   credentials: true
 };
@@ -276,4 +271,25 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, '0.0.0.0', () => logger.info(`Server running on port ${PORT}`));
+const runningServer = server.listen(PORT, '0.0.0.0', () => {
+  logger.info(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+});
+
+// Graceful Shutdown handling for VPS PM2 and Docker Container restarts
+const gracefulShutdown = (signal) => {
+  logger.info(`${signal} signal received: Closing HTTP & WebSocket servers...`);
+  runningServer.close(async () => {
+    logger.info('HTTP server closed.');
+    try {
+      const mongoose = await import('mongoose');
+      await mongoose.default.connection.close();
+      logger.info('MongoDB connection closed gracefully.');
+    } catch (err) {
+      logger.error(`Error closing DB connection: ${err.message}`);
+    }
+    process.exit(0);
+  });
+};
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
