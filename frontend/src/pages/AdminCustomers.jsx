@@ -27,6 +27,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import AdminSidebar from '../components/AdminSidebar';
+import PageLoader from '../components/PageLoader';
 
 const AdminCustomers = () => {
   const [users, setUsers] = useState([]);
@@ -145,7 +146,7 @@ const AdminCustomers = () => {
             </h3>
 
             {loading ? (
-              <p style={{ color: '#64748b' }}>{t('loading')}</p>
+              <PageLoader />
             ) : users.length === 0 ? (
               <div style={{ background: '#fff', borderRadius: '16px', padding: '32px', textAlign: 'center', color: '#64748b', border: '1px solid #e2e8f0' }}>
                 {lang === 'ar' ? 'لم يتم العثور على سجلات للعملاء.' : (lang === 'ur' ? 'کوئی کسٹمر ریکارڈ نہیں ملا۔' : 'No customer records found.')}

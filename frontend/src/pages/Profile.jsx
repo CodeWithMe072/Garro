@@ -23,7 +23,7 @@ const Profile = () => {
 
   const initialNameParts = getNameParts();
 
-  // Personal Info Form (Email and Phone are read-only)
+  // Personal Info Form
   const [formData, setFormData] = useState({
     firstName: user?.firstName || initialNameParts.first,
     lastName: user?.lastName || initialNameParts.last,
@@ -46,6 +46,22 @@ const Profile = () => {
       });
     }
   }, [user]);
+
+  // Email Change OTP States
+  const [showEmailOtpModal, setShowEmailOtpModal] = useState(false);
+  const [emailOtpCode, setEmailOtpCode] = useState('');
+  const [emailOtpSending, setEmailOtpSending] = useState(false);
+  const [emailOtpVerifying, setEmailOtpVerifying] = useState(false);
+  const [pendingNewEmail, setPendingNewEmail] = useState('');
+  const [emailDemoCode, setEmailDemoCode] = useState(null);
+
+  // Phone SMS OTP Change States
+  const [showPhoneOtpModal, setShowPhoneOtpModal] = useState(false);
+  const [phoneOtpCode, setPhoneOtpCode] = useState('');
+  const [phoneOtpSending, setPhoneOtpSending] = useState(false);
+  const [phoneOtpVerifying, setPhoneOtpVerifying] = useState(false);
+  const [pendingNewPhone, setPendingNewPhone] = useState('');
+  const [phoneDemoCode, setPhoneDemoCode] = useState(null);
 
   // Password Change Step-by-Step State
   const [pwdStep, setPwdStep] = useState(1); // 1: Enter Current, 2: Enter OTP & New Password
@@ -104,9 +120,153 @@ const Profile = () => {
     }
   };
 
-  // Handle personal profile submission (updates only name)
+  // Trigger Email OTP Request
+  const handleRequestEmailOtp = async (newEmail) => {
+    setEmailOtpSending(true);
+    setEmailDemoCode(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/profile/email/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newEmail })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPendingNewEmail(newEmail);
+        setEmailOtpCode('');
+        setShowEmailOtpModal(true);
+        if (data.demoCode) setEmailDemoCode(data.demoCode);
+        toast.success(`OTP code sent to ${newEmail}`);
+      } else {
+        toast.error(data.message || 'Failed to send Email OTP');
+        if (res.status === 403 && data.message.includes('locked')) {
+          handleLockout();
+        }
+      }
+    } catch (err) {
+      toast.error('An error occurred sending email OTP');
+    } finally {
+      setEmailOtpSending(false);
+    }
+  };
+
+  // Verify Email OTP
+  const handleVerifyEmailOtp = async (e) => {
+    e.preventDefault();
+    if (!emailOtpCode) return toast.error('Please enter the 6-digit OTP code');
+    setEmailOtpVerifying(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/profile/email/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newEmail: pendingNewEmail, code: emailOtpCode })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        login(data.user, token);
+        setShowEmailOtpModal(false);
+        setEmailOtpCode('');
+        toast.success('🎉 Email address updated successfully!');
+      } else {
+        toast.error(data.message || 'Failed to verify email OTP');
+        if (res.status === 403 && data.message.includes('locked')) {
+          handleLockout();
+        }
+      }
+    } catch (err) {
+      toast.error('An error occurred verifying email OTP');
+    } finally {
+      setEmailOtpVerifying(false);
+    }
+  };
+
+  // Trigger Phone SMS OTP Request
+  const handleRequestPhoneOtp = async (newPhone) => {
+    setPhoneOtpSending(true);
+    setPhoneDemoCode(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/profile/phone/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newPhone })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setPendingNewPhone(newPhone);
+        setPhoneOtpCode('');
+        setShowPhoneOtpModal(true);
+        if (data.demoCode) setPhoneDemoCode(data.demoCode);
+        toast.success(`SMS OTP sent to ${newPhone}`);
+      } else {
+        toast.error(data.message || 'Failed to send SMS OTP');
+        if (res.status === 403 && data.message.includes('locked')) {
+          handleLockout();
+        }
+      }
+    } catch (err) {
+      toast.error('An error occurred sending SMS OTP');
+    } finally {
+      setPhoneOtpSending(false);
+    }
+  };
+
+  // Verify Phone SMS OTP
+  const handleVerifyPhoneOtp = async (e) => {
+    e.preventDefault();
+    if (!phoneOtpCode) return toast.error('Please enter the 6-digit SMS OTP code');
+    setPhoneOtpVerifying(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/profile/phone/verify`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ newPhone: pendingNewPhone, code: phoneOtpCode })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        login(data.user, token);
+        setShowPhoneOtpModal(false);
+        setPhoneOtpCode('');
+        toast.success('🎉 Phone number updated successfully!');
+      } else {
+        toast.error(data.message || 'Failed to verify SMS OTP');
+        if (res.status === 403 && data.message.includes('locked')) {
+          handleLockout();
+        }
+      }
+    } catch (err) {
+      toast.error('An error occurred verifying SMS OTP');
+    } finally {
+      setPhoneOtpVerifying(false);
+    }
+  };
+
+  // Handle personal profile submission
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
+
+    // 1. If Email was modified, trigger Email OTP Flow
+    if (formData.email && formData.email.toLowerCase() !== (user?.email || '').toLowerCase()) {
+      return handleRequestEmailOtp(formData.email);
+    }
+
+    // 2. If Phone was modified, trigger Phone SMS OTP Flow
+    if (formData.phone && formData.phone !== (user?.phone || '')) {
+      return handleRequestPhoneOtp(formData.phone);
+    }
+
+    // 3. Otherwise update Name
     setProfileSaving(true);
     try {
       const fullName = `${formData.firstName} ${formData.lastName}`.trim();
@@ -250,54 +410,6 @@ const Profile = () => {
               {user?.role ? user.role.toUpperCase() : 'CUSTOMER'}
             </span>
           </div>
-
-          {/* Quick Help Card */}
-          <div className="card border-0 shadow-sm p-4 bg-light mb-4" style={{ borderRadius: '16px' }}>
-            <h6 className="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
-              <LuCar style={{ color: '#ff5c1a' }} size={18} /> {t('manage_fleet_title')}
-            </h6>
-            <p className="text-muted small mb-0">
-              {t('manage_fleet_desc')}
-            </p>
-          </div>
-
-          {/* Security Alert Info */}
-          <div className="card border-0 shadow-sm p-4 border-start border-warning" style={{ borderRadius: '16px', borderLeftWidth: '5px !important' }}>
-            <h6 className="fw-bold text-warning mb-2 d-flex align-items-center gap-2">
-              <LuShieldAlert size={18} /> {t('security_alert_title')}
-            </h6>
-            <p className="text-muted small mb-0">
-              {t('security_alert_desc')}
-            </p>
-          </div>
-
-          {/* GDPR User Controls */}
-          <div className="card border-0 shadow-sm p-4 mt-4" style={{ borderRadius: '16px', borderTop: '4px solid #ef4444' }}>
-            <h6 className="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-              <LuShieldCheck size={18} style={{ color: '#ff5c1a' }} /> GDPR Privacy Controls
-            </h6>
-            <p className="text-muted small mb-3">
-              Manage your personal data. You can download a portability export of all your data or request deletion of your account.
-            </p>
-            <div className="d-grid gap-2">
-              <button 
-                type="button" 
-                onClick={handleDownloadData} 
-                className="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center gap-2"
-                style={{ borderRadius: '8px' }}
-              >
-                <LuDownload size={14} /> Download My Data
-              </button>
-              <button 
-                type="button" 
-                onClick={() => setShowDeleteModal(true)} 
-                className="btn btn-outline-danger btn-sm d-flex align-items-center justify-content-center gap-2"
-                style={{ borderRadius: '8px' }}
-              >
-                <LuTrash2 size={14} /> Delete Account
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Profile Editing Section */}
@@ -332,34 +444,63 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* READ-ONLY EMAIL & PHONE */}
+              {/* EDITABLE EMAIL & PHONE WITH TOP HEADER VERIFY BUTTON */}
               <div className="row g-3 mb-4">
                 <div className="col-md-6">
-                  <label className="form-label small fw-medium text-muted">{t('email_readonly')}</label>
+                  <div className="d-flex justify-content-between align-items-center mb-1">
+                    <label className="form-label small fw-medium text-dark mb-0">Email Address</label>
+                    {formData.email && formData.email.toLowerCase() !== (user?.email || '').toLowerCase() && (
+                      <button 
+                        type="button" 
+                        className="btn btn-primary-garro btn-sm text-white fw-bold px-3 py-1"
+                        style={{ fontSize: '12px', borderRadius: '6px', transform: 'none', boxShadow: 'none' }}
+                        onClick={() => handleRequestEmailOtp(formData.email)}
+                        disabled={emailOtpSending}
+                      >
+                        {emailOtpSending ? 'Sending...' : 'Verify OTP'}
+                      </button>
+                    )}
+                  </div>
                   <input 
                     type="email" 
-                    className="form-control text-muted bg-light border-0" 
+                    className="form-control" 
                     name="email" 
                     value={formData.email} 
-                    disabled 
-                    readOnly 
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                    required 
                   />
+                  <span className="form-text text-muted small">Changing email requires Email OTP verification.</span>
                 </div>
+                
                 <div className="col-md-6">
-                  <label className="form-label small fw-medium text-muted">{t('phone_readonly')}</label>
+                  <div className="d-flex justify-content-between align-items-center mb-1">
+                    <label className="form-label small fw-medium text-dark mb-0">Phone Number</label>
+                    {formData.phone && formData.phone !== (user?.phone || '') && (
+                      <button 
+                        type="button" 
+                        className="btn btn-primary-garro btn-sm text-white fw-bold px-3 py-1"
+                        style={{ fontSize: '12px', borderRadius: '6px', transform: 'none', boxShadow: 'none' }}
+                        onClick={() => handleRequestPhoneOtp(formData.phone)}
+                        disabled={phoneOtpSending}
+                      >
+                        {phoneOtpSending ? 'Sending...' : 'Verify OTP'}
+                      </button>
+                    )}
+                  </div>
                   <input 
                     type="text" 
-                    className="form-control text-muted bg-light border-0" 
+                    className="form-control" 
                     name="phone" 
                     value={formData.phone} 
-                    disabled 
-                    readOnly 
+                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                    required 
                   />
+                  <span className="form-text text-muted small">Changing phone number requires SMS OTP verification.</span>
                 </div>
               </div>
 
               <div className="d-flex justify-content-end">
-                <button type="submit" className="btn btn-primary-garro px-4" disabled={profileSaving}>
+                <button type="submit" className="btn btn-primary-garro px-4" disabled={profileSaving || emailOtpSending || phoneOtpSending}>
                   {profileSaving ? t('updating') : t('save_profile_changes')}
                 </button>
               </div>
@@ -455,6 +596,113 @@ const Profile = () => {
           </div>
         </div>
       </div>
+
+      {/* EMAIL OTP VERIFICATION MODAL */}
+      {showEmailOtpModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+              <div className="modal-header bg-primary text-white">
+                <h5 className="modal-title fw-bold">✉️ Verify New Email Address</h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setShowEmailOtpModal(false)}></button>
+              </div>
+              <form onSubmit={handleVerifyEmailOtp}>
+                <div className="modal-body p-4">
+                  <p className="text-dark fw-medium mb-3">
+                    We sent a 6-digit verification OTP code to <strong className="text-primary">{pendingNewEmail}</strong>.
+                  </p>
+
+                  {emailDemoCode && (
+                    <div className="alert alert-info py-2 px-3 small fw-bold mb-3" style={{ borderRadius: '8px' }}>
+                      💡 Demo Email OTP Code: <span className="text-primary fs-6 ms-1">{emailDemoCode}</span>
+                    </div>
+                  )}
+
+                  <div className="mb-3">
+                    <label className="form-label small fw-bold text-dark">Enter 6-Digit Email OTP:</label>
+                    <input 
+                      type="text" 
+                      className="form-control text-center fs-4 fw-bold" 
+                      style={{ letterSpacing: '6px' }}
+                      maxLength="6"
+                      value={emailOtpCode} 
+                      onChange={e => setEmailOtpCode(e.target.value.replace(/\D/g, ''))} 
+                      placeholder="000000"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer bg-light border-0">
+                  <button type="button" className="btn btn-outline-secondary" onClick={() => setShowEmailOtpModal(false)}>
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary px-4" 
+                    disabled={emailOtpVerifying || emailOtpCode.length < 6}
+                  >
+                    {emailOtpVerifying ? 'Verifying...' : 'Verify Email & Save'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PHONE SMS OTP VERIFICATION MODAL */}
+      {showPhoneOtpModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content border-0 shadow" style={{ borderRadius: '16px', overflow: 'hidden' }}>
+              <div className="modal-header bg-success text-white">
+                <h5 className="modal-title fw-bold">📱 Verify New Phone Number</h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setShowPhoneOtpModal(false)}></button>
+              </div>
+              <form onSubmit={handleVerifyPhoneOtp}>
+                <div className="modal-body p-4">
+                  <p className="text-dark fw-medium mb-3">
+                    We sent a 6-digit SMS OTP code to <strong className="text-success">{pendingNewPhone}</strong>.
+                  </p>
+
+                  {phoneDemoCode && (
+                    <div className="alert alert-info py-2 px-3 small fw-bold mb-3" style={{ borderRadius: '8px' }}>
+                      💡 Demo SMS OTP Code: <span className="text-success fs-6 ms-1">{phoneDemoCode}</span>
+                    </div>
+                  )}
+
+                  <div className="mb-3">
+                    <label className="form-label small fw-bold text-dark">Enter 6-Digit SMS OTP:</label>
+                    <input 
+                      type="text" 
+                      className="form-control text-center fs-4 fw-bold" 
+                      style={{ letterSpacing: '6px' }}
+                      maxLength="6"
+                      value={phoneOtpCode} 
+                      onChange={e => setPhoneOtpCode(e.target.value.replace(/\D/g, ''))} 
+                      placeholder="000000"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="modal-footer bg-light border-0">
+                  <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPhoneOtpModal(false)}>
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-success px-4" 
+                    disabled={phoneOtpVerifying || phoneOtpCode.length < 6}
+                  >
+                    {phoneOtpVerifying ? 'Verifying...' : 'Verify Phone & Save'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* GDPR Account Deletion Confirmation Modal */}
       {showDeleteModal && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>

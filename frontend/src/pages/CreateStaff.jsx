@@ -28,6 +28,7 @@ const CreateStaff = () => {
 
 
   const [role, setRole] = useState('staff');
+  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -51,8 +52,9 @@ const CreateStaff = () => {
       return;
     }
 
+    setSaving(true);
     try {
-            const token = localStorage.getItem('token');
+      const token = localStorage.getItem('token');
       const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: {
@@ -77,6 +79,8 @@ const CreateStaff = () => {
       navigate('/admin/manage-staff');
     } catch (err) {
       toast.error(err.message || 'Error creating staff account.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -231,9 +235,23 @@ const CreateStaff = () => {
               <textarea className="inp" name="notes" rows="3" value={formData.notes} onChange={handleChange}></textarea>
             </div>
 
-            <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-              <Link to="/admin/manage-staff" className="btn-secondary" style={{ textDecoration: 'none' }}>{t('cancel')}</Link>
-              <button type="submit" className="btn-submit d-inline-flex align-items-center"><LuCircleCheck className="me-1" /> {t('create_staff_account')}</button>
+            <div className="d-flex align-items-center gap-3 mt-4">
+              <Link 
+                to="/admin/manage-staff" 
+                className="btn btn-outline-secondary px-4 py-2" 
+                style={{ borderRadius: '10px', textDecoration: 'none', fontWeight: 600 }}
+              >
+                {t('cancel')}
+              </Link>
+              <button 
+                type="submit" 
+                className="btn btn-primary-garro px-4 py-2 text-white fw-bold d-inline-flex align-items-center gap-2"
+                style={{ borderRadius: '10px', border: 'none' }}
+                disabled={saving}
+              >
+                <LuCircleCheck size={18} /> 
+                {saving ? 'Creating Account...' : t('create_staff_account')}
+              </button>
             </div>
           </form>
         </div>

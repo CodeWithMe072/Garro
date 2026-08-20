@@ -22,7 +22,7 @@ import { useLanguage } from '../context/LanguageContext';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
-import AdminSidebar from '../components/AdminSidebar';
+import PageLoader from '../components/PageLoader';
 
 const AdminComplaints = () => {
   const [complaints, setComplaints] = useState([]);
@@ -120,7 +120,7 @@ const AdminComplaints = () => {
           </div>
 
           {loading ? (
-            <p style={{ color: '#64748b' }}>{t('loading')}</p>
+            <PageLoader />
           ) : complaints.length === 0 ? (
             <div className="text-center py-5 bg-white rounded-4 border shadow-sm" style={{ borderColor: '#e2e8f0' }}>
               <div className="d-inline-flex align-items-center justify-content-center p-3 rounded-circle bg-success-subtle text-success mb-3" style={{ background: 'rgba(16, 185, 129, 0.08)' }}>

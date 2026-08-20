@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -7,6 +7,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import SupportChatWidget from './components/SupportChatWidget';
+import AdminSidebar, { AdminLayoutContext } from './components/AdminSidebar';
+import PageLoader from './components/PageLoader';
 
 // Lazy load pages
 const Landing = React.lazy(() => import('./pages/Landing'));
@@ -82,6 +84,23 @@ const PageLayout = ({ children }) => {
   );
 };
 
+// Persistent layout for Admin subpages (keeps Navbar & Sidebar mounted so only right side re-renders)
+const AdminPageLayout = () => {
+  return (
+    <AdminLayoutContext.Provider value={true}>
+      <div className="g-admin-layout">
+        <Navbar />
+        <div className="dash-wrapper">
+          <AdminSidebar isPersistentLayout={true} />
+          <main className="dash-main">
+            <Outlet />
+          </main>
+        </div>
+      </div>
+    </AdminLayoutContext.Provider>
+  );
+};
+
 // Role-based redirect for "/dashboard" links/notifications
 const DashboardRedirect = () => {
   const { user } = useAuth();
@@ -118,7 +137,7 @@ const App = () => {
         <AuthProvider>
         <Router>
           <CustomerSupportChatWrapper />
-          <Suspense fallback={<div className="container mt-5"><h4>Loading...</h4></div>}>
+          <Suspense fallback={<PageLoader />}>
             <Routes>
             {/* Public Routes with Layout */}
             <Route path="/" element={<PageLayout><Home /></PageLayout>} />
@@ -152,7 +171,7 @@ const App = () => {
             <Route path="/insurance" element={<ProtectedRoute><PageLayout><Insurance /></PageLayout></ProtectedRoute>} />
             <Route path="/insurance/:slug/quote" element={<ProtectedRoute><PageLayout><InsuranceQuote /></PageLayout></ProtectedRoute>} />
             <Route path="/roadside" element={<ProtectedRoute><PageLayout><Roadside /></PageLayout></ProtectedRoute>} />
-            <Route path="/emergency-pickup" element={<Navigate to="/roadside" replace />} />
+            <Route path="/emergency-pickup" element={<ProtectedRoute><PageLayout><EmergencyPickup /></PageLayout></ProtectedRoute>} />
             <Route path="/end-of-life" element={<ProtectedRoute><PageLayout><EndOfLife /></PageLayout></ProtectedRoute>} />
             
             <Route path="/search" element={<ProtectedRoute><PageLayout><Search /></PageLayout></ProtectedRoute>} />
@@ -170,88 +189,35 @@ const App = () => {
             <Route path="/contact" element={<PageLayout><Contact /></PageLayout>} />
             <Route path="/blog" element={<PageLayout><Blog /></PageLayout>} />
 
-            {/* Dashboard Routes with Layout */}
-            <Route path="/admin" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminDashboard /></PageLayout>
+            {/* Dashboard Routes with Persistent Admin Layout (Only right side re-renders on nav click) */}
+            <Route element={
+              <ProtectedRoute roles={['manager', 'superadmin', 'admin', 'staff']}>
+                <AdminPageLayout />
               </ProtectedRoute>
-            } />
-            <Route path="/admin/refunds" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminDashboard /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/payouts" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminDashboard /></PageLayout>
-              </ProtectedRoute>
-            } />
+            }>
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/refunds" element={<AdminDashboard />} />
+              <Route path="/admin/payouts" element={<AdminDashboard />} />
+              <Route path="/admin/manage-staff" element={<StaffManagement />} />
+              <Route path="/admin/manage-garages" element={<GarageManagement />} />
+              <Route path="/admin/catalog" element={<CatalogManagement />} />
+              <Route path="/admin/customers" element={<AdminCustomers />} />
+              <Route path="/admin/complaints" element={<AdminComplaints />} />
+              <Route path="/admin/support" element={<AdminSupportChat />} />
+              <Route path="/admin/settings" element={<AdminSettings />} />
+              <Route path="/admin/activity-logs" element={<AdminActivityLogs />} />
+              <Route path="/admin/bulk-message" element={<AdminBulkMessage />} />
+              <Route path="/admin/reports" element={<AdminReports />} />
+              <Route path="/admin/service-pricing" element={<AdminServicePricing />} />
+              <Route path="/admin/create-staff" element={<CreateStaff />} />
+            </Route>
+
             <Route path="/admin/staff" element={
               <ProtectedRoute roles={['staff', 'manager', 'superadmin', 'admin']}>
                 <PageLayout><StaffDashboard /></PageLayout>
               </ProtectedRoute>
             } />
-            <Route path="/admin/manage-staff" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><StaffManagement /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/manage-garages" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><GarageManagement /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/catalog" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><CatalogManagement /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/customers" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminCustomers /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/complaints" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminComplaints /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/support" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin', 'staff']}>
-                <PageLayout><AdminSupportChat /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/settings" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminSettings /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/activity-logs" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminActivityLogs /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/bulk-message" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminBulkMessage /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/reports" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminReports /></PageLayout>
-              </ProtectedRoute>
-            } />
             <Route path="/admin/quote-builder" element={<Navigate to="/admin/service-pricing" replace />} />
-            <Route path="/admin/service-pricing" element={
-              <ProtectedRoute roles={['manager', 'superadmin', 'admin']}>
-                <PageLayout><AdminServicePricing /></PageLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/create-staff" element={
-              <ProtectedRoute roles={['manager', 'superadmin']}>
-                <PageLayout><CreateStaff /></PageLayout>
-              </ProtectedRoute>
-            } />
             <Route path="/garage-portal" element={
               <ProtectedRoute roles={['garage']}>
                 <GarageDashboard />

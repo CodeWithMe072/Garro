@@ -1,6 +1,7 @@
 import { API_BASE } from '../config/api';
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { disconnectSocket } from '../utils/socket';
+import PageLoader from '../components/PageLoader';
 
 const AuthContext = createContext();
 
@@ -107,7 +108,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   if (loading) {
-    return <div>Loading...</div>; // Or a proper spinner
+    return <PageLoader />;
   }
 
   return (

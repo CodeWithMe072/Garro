@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import AdminSidebar from '../components/AdminSidebar';
+import PageLoader from '../components/PageLoader';
 import {
   LuLayoutDashboard,
   LuStore,
@@ -237,15 +238,9 @@ const AdminReports = () => {
             <div className="card border-0 rounded-4 shadow-sm p-4 h-100" style={{ background: '#ffffff' }}>
               <div className="d-flex align-items-center justify-content-between mb-4">
                 <h5 className="fw-bold mb-0 text-slate-800">Data Preview</h5>
-                <span className="text-secondary" style={{ fontSize: '0.85rem' }}>Auto-refreshes on filter change</span>
               </div>
-
               {loading ? (
-                <div className="d-flex flex-column align-items-center justify-content-center py-5">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                </div>
+                <PageLoader />
               ) : previewData.length === 0 ? (
                 <div className="text-center py-5 text-secondary">No report data matches current parameters.</div>
               ) : (

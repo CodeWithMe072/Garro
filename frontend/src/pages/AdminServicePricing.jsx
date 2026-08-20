@@ -1,6 +1,7 @@
 import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import PageLoader from '../components/PageLoader';
 import {
   LuDollarSign, LuSave, LuRefreshCw, LuChevronLeft,
   LuCircleCheck, LuTriangleAlert, LuLoader
@@ -14,6 +15,8 @@ const SERVICE_LABELS = {
   ac_repair:     'AC Gas Topup & Repair',
   electrical:    'Electrical Diagnostics & Repair',
   diagnostics:   'Engine Diagnostics',
+  roadside_assistance: 'Roadside Assistance',
+  emergency_pickup:    'Emergency Recovery Pickup',
   other:         'General Mechanical Repair'
 };
 
@@ -124,13 +127,9 @@ const AdminServicePricing = () => {
             <LuTriangleAlert size={16} /> {fetchErr}
           </div>
         )}
-
         {/* Loading */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '80px 0', color: '#64748b' }}>
-            <LuLoader size={32} style={{ animation: 'spin 1s linear infinite' }} />
-            <p style={{ marginTop: 12 }}>Loading pricing table...</p>
-          </div>
+          <PageLoader />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {pricing.map(p => {

@@ -22,15 +22,14 @@ import {
 } from 'react-icons/lu';
 import { useLanguage } from '../context/LanguageContext';
 import AdminSidebar from '../components/AdminSidebar';
+import PageLoader from '../components/PageLoader';
 
 const StaffManagement = () => {
   const [helpers, setHelpers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const { t, lang, changeLanguage } = useLanguage();
-  const [isLangOpen, setIsLangOpen] = useState(false);
-
+  const { t, lang } = useLanguage();
 
   // Modal State
   const [scheduleModalOpen, setScheduleModalOpen] = useState(false);
@@ -49,7 +48,7 @@ const StaffManagement = () => {
   });
   const [savingSchedule, setSavingSchedule] = useState(false);
 
-    const token = localStorage.getItem('token');
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchHelpers = async () => {
@@ -68,7 +67,7 @@ const StaffManagement = () => {
       }
     };
     fetchHelpers();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, token]);
 
   const handleOpenScheduleModal = (helper) => {
     setSelectedHelper(helper);
@@ -156,14 +155,7 @@ const StaffManagement = () => {
   ];
 
   if (loading) {
-    return (
-      <div className="container py-5 text-center" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">{t('loading')}</span>
-        </div>
-        <h5 className="mt-3">{t('loading')}</h5>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   return (
@@ -217,34 +209,24 @@ const StaffManagement = () => {
                      <button onClick={() => handleOpenScheduleModal(s.raw)} className="sc-btn edit d-inline-flex align-items-center justify-content-center" style={{ flex: 1 }}>
                        <LuCalendarClock className="me-1" /> {t('schedule')}
                      </button>
-                    {s.is_active ? (
-                      <button className="sc-btn deact d-inline-flex align-items-center justify-content-center" style={{ flex: 1 }}>
-                        <LuCircleSlash className="me-1" /> {t('deactivate')}
-                      </button>
-                    ) : (
-                      <span className="sc-btn" style={{ background: '#f1f5f9', color: '#94a3b8', flex: 1, textAlign: 'center' }}>{t('inactive')}</span>
-                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right: Invite panel */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            
-            {/* Send Invite */}
-            <div className="panel">
+          {/* Right: Invite Form & History */}
+          <div>
+            <div className="panel" style={{ marginBottom: '20px' }}>
               <div className="panel-head">
                 <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}><LuMail /></span>
-                <h3>{t('invite_new_helper')}</h3>
+                <h3>{t('invite_new_staff')}</h3>
               </div>
               <div className="panel-body">
-                <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '16px' }}>Generate a secure invite link. The staff member sets their own password when they join.</p>
                 <form onSubmit={e => e.preventDefault()}>
                   <div className="fg">
-                    <label>Staff Email *</label>
-                    <input type="email" name="email" className="inp" placeholder="staff@example.com" required />
+                    <label>Email Address</label>
+                    <input type="email" name="email" className="inp" placeholder="colleague@garro.com" required />
                   </div>
                   <div className="fg">
                     <label>Role</label>

@@ -17,9 +17,16 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 /* Accessibility focus styles for WCAG 2.1 AA */
-a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: 3px solid #ff5c1a !important;
+a:focus-visible, button:focus-visible {
+  outline: 2px solid #ff5c1a !important;
   outline-offset: 2px !important;
+}
+
+input:focus, select:focus, textarea:focus, 
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(255, 92, 26, 0.15) !important;
+  border-color: #ff5c1a !important;
 }
 html, body {
   overflow-x: clip;
@@ -2768,4 +2775,17 @@ html[lang="ar"] .auth-alt-link .arrow-ico, html[lang="ur"] .auth-alt-link .arrow
   display: none !important;
   width: 0 !important;
   height: 0 !important;
+}
+
+/* Persistent Admin Layout — unwrap nested wrappers inside Outlet */
+.dash-main > .dash-wrapper {
+  display: contents !important;
+}
+.dash-main > .dash-wrapper > .dash-main,
+.dash-main > .dash-main {
+  padding: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: auto !important;
+  background: transparent !important;
 }

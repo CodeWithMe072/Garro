@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import AdminSidebar from '../components/AdminSidebar';
+import PageLoader from '../components/PageLoader';
 import {
   LuLayoutDashboard,
   LuStore,
@@ -469,10 +470,7 @@ const CatalogManagement = () => {
 
         {/* Loading Spinner */}
         {loading ? (
-          <div className="text-center py-5">
-            <div className="spinner-border text-primary-garro" role="status"></div>
-            <div className="mt-2 text-muted">Loading tab contents...</div>
-          </div>
+          <PageLoader />
         ) : (
           <div>
             {/* Bulk Operations Panel */}

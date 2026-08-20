@@ -124,12 +124,12 @@ const Roadside = () => {
               {/* Action Button */}
               <div style={{ marginBottom: '32px' }}>
                 <Link
-                  to="/get-quote"
+                  to="/emergency-pickup"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '8px',
-                    background: 'linear-gradient(135deg,#ff5c1a,#ff8c42)',
+                    background: 'linear-gradient(135deg,#ef4444,#dc2626)',
                     color: '#fff',
                     borderRadius: '12px',
                     padding: '12px 28px',
@@ -137,11 +137,11 @@ const Roadside = () => {
                     fontSize: '14.5px',
                     textDecoration: 'none',
                     fontFamily: "'Poppins', sans-serif",
-                    boxShadow: '0 6px 20px rgba(255,92,26,.25)',
+                    boxShadow: '0 6px 20px rgba(239,68,68,.25)',
                     transition: 'all 0.2s'
                   }}
                 >
-                  <LuTruck size={16} /> Request Emergency Tow
+                  <LuTruck size={16} /> Request Emergency Pickup
                 </Link>
               </div>
 
@@ -213,104 +213,7 @@ const Roadside = () => {
         </div>
       </section>
 
-      {/* ══ 4 SERVICES CARDS SECTION ══ */}
-      <section style={{ padding: '60px 0', background: '#ffffff' }}>
-        <div className="container">
-          <div className="row g-4">
-            {/* Card 1: 24/7 Support */}
-            <div className="col-md-6 col-lg-3">
-              <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '20px',
-                padding: '28px',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.01)',
-                height: '100%'
-              }}>
-                <div style={{ color: '#ff5c1a', marginBottom: '20px' }}>
-                  <LuClock size={32} strokeWidth={1.5} />
-                </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Same Day Support</h3>
-                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
-                  Available same day, every day of the year.
-                </p>
-                <div style={{ position: 'absolute', bottom: 0, left: '28px', right: '28px', height: '4px', background: '#ff5c1a', borderRadius: '2px 2px 0 0' }}></div>
-              </div>
-            </div>
 
-            {/* Card 2: Nationwide Coverage */}
-            <div className="col-md-6 col-lg-3">
-              <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '20px',
-                padding: '28px',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.01)',
-                height: '100%'
-              }}>
-                <div style={{ color: '#3b82f6', marginBottom: '20px' }}>
-                  <LuMapPin size={32} strokeWidth={1.5} />
-                </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Nationwide Coverage</h3>
-                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
-                  Coming soon to all major cities across UAE.
-                </p>
-                <div style={{ position: 'absolute', bottom: 0, left: '28px', right: '28px', height: '4px', background: '#3b82f6', borderRadius: '2px 2px 0 0' }}></div>
-              </div>
-            </div>
-
-            {/* Card 3: Trusted Professionals */}
-            <div className="col-md-6 col-lg-3">
-              <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '20px',
-                padding: '28px',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.01)',
-                height: '100%'
-              }}>
-                <div style={{ color: '#8b5cf6', marginBottom: '20px' }}>
-                  <LuHardHat size={32} strokeWidth={1.5} />
-                </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Trusted Professionals</h3>
-                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
-                  Verified experts to assist you on the road.
-                </p>
-                <div style={{ position: 'absolute', bottom: 0, left: '28px', right: '28px', height: '4px', background: '#8b5cf6', borderRadius: '2px 2px 0 0' }}></div>
-              </div>
-            </div>
-
-            {/* Card 4: Safe & Reliable */}
-            <div className="col-md-6 col-lg-3">
-              <div style={{
-                background: '#ffffff',
-                border: '1.5px solid #e2e8f0',
-                borderRadius: '20px',
-                padding: '28px',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.01)',
-                height: '100%'
-              }}>
-                <div style={{ color: '#10b981', marginBottom: '20px' }}>
-                  <LuBadgeCheck size={32} strokeWidth={1.5} />
-                </div>
-                <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>Safe &amp; Reliable</h3>
-                <p style={{ fontSize: '13px', color: '#64748b', lineHeight: 1.6, marginBottom: '20px' }}>
-                  Your safety is our top priority, always.
-                </p>
-                <div style={{ position: 'absolute', bottom: 0, left: '28px', right: '28px', height: '4px', background: '#10b981', borderRadius: '2px 2px 0 0' }}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
 
 

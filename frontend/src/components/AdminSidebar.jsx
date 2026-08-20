@@ -23,7 +23,15 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const AdminSidebar = ({ pendingBookings }) => {
+export const AdminLayoutContext = React.createContext(false);
+export const useAdminLayout = () => React.useContext(AdminLayoutContext);
+
+const AdminSidebar = ({ pendingBookings, isPersistentLayout }) => {
+  const isInsideLayout = useAdminLayout();
+  if (!isPersistentLayout && isInsideLayout) {
+    return null;
+  }
+
   const { t } = useLanguage();
   const { logout } = useAuth();
   const navigate = useNavigate();
