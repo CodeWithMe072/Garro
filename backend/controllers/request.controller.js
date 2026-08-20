@@ -1057,6 +1057,7 @@ export const exportRefundReport = async (req, res) => {
         'major_service': 'Major Service',
         'brake_repair': 'Brake Repair',
         'roadside_assistance': 'Roadside Assistance',
+        'emergency_pickup': 'Emergency Recovery Pickup',
         'electrical': 'Electrical Repair',
         'diagnostics': 'Computer Diagnostics',
         'battery': 'Battery Replacement',

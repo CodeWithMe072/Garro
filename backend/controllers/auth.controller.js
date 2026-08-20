@@ -454,6 +454,221 @@ export const verifyPasswordChange = async (req, res) => {
   }
 };
 
+const sendSmsOtp = async (phone, otp) => {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  if (!accountSid || !authToken) {
+    console.log(`[Demo/Dev Mode] No Twilio configured. Mock sending SMS OTP ${otp} to ${phone}`);
+    return true;
+  }
+  try {
+    const twilio = (await import('twilio')).default;
+    const client = twilio(accountSid, authToken);
+    await client.messages.create({
+      from: process.env.TWILIO_PHONE_NUMBER || '+1234567890',
+      to: phone,
+      body: `Your Garro verification OTP code is: ${otp}. Valid for 5 minutes.`
+    });
+    console.log(`SMS OTP sent to ${phone}`);
+    return true;
+  } catch (err) {
+    console.error('Twilio SMS error:', err.message);
+    return false;
+  }
+};
+
+// POST /api/auth/profile/email/request
+export const requestEmailChange = async (req, res) => {
+  try {
+    const { newEmail } = req.body;
+    if (!newEmail) return res.status(400).json({ success: false, message: 'New email address is required' });
+
+    const lowercaseEmail = newEmail.toLowerCase().trim();
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (user.email.toLowerCase() === lowercaseEmail) {
+      return res.status(400).json({ success: false, message: 'New email address is identical to your current email' });
+    }
+
+    const existing = await User.findOne({ email: lowercaseEmail, _id: { $ne: user._id } });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Email address is already in use by another account' });
+    }
+
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await Otp.findOneAndUpdate(
+      { email: lowercaseEmail },
+      { code, createdAt: new Date() },
+      { upsert: true, new: true }
+    );
+
+    await sendEmailOtp(lowercaseEmail, code);
+
+    res.json({
+      success: true,
+      message: 'OTP code sent to your new email address.',
+      demoCode: process.env.RESEND_API_KEY ? null : code
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/profile/email/verify
+export const verifyEmailChange = async (req, res) => {
+  try {
+    const { newEmail, code } = req.body;
+    if (!newEmail || !code) return res.status(400).json({ success: false, message: 'New email and OTP code are required' });
+
+    const lowercaseEmail = newEmail.toLowerCase().trim();
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
+    }
+
+    const record = await Otp.findOne({ email: lowercaseEmail, code });
+    if (!record) {
+      user.wrongOtpAttempts = (user.wrongOtpAttempts || 0) + 1;
+      if (user.wrongOtpAttempts >= 5) {
+        user.lockUntil = new Date(Date.now() + 30 * 60 * 1000);
+        user.wrongOtpAttempts = 0;
+        await user.save();
+        return res.status(403).json({
+          success: false,
+          message: 'Too many wrong OTP attempts. Your profile is locked for 30 minutes.'
+        });
+      }
+      await user.save();
+      const remaining = 5 - user.wrongOtpAttempts;
+      return res.status(400).json({
+        success: false,
+        message: `Invalid or expired OTP code. ${remaining} attempts remaining before account lockout.`
+      });
+    }
+
+    user.email = lowercaseEmail;
+    user.wrongOtpAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+
+    await Otp.deleteOne({ _id: record._id });
+    await logActivity(user._id, 'update_email', 'User', user._id, { email: user.email });
+
+    res.json({
+      success: true,
+      message: 'Email address updated successfully!',
+      user: { id: user._id, firstName: user.name.split(' ')[0] || user.name, lastName: user.name.split(' ').slice(1).join(' ') || '', email: user.email, phone: user.phone, role: user.role }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/profile/phone/request
+export const requestPhoneChange = async (req, res) => {
+  try {
+    const { newPhone } = req.body;
+    if (!newPhone) return res.status(400).json({ success: false, message: 'New phone number is required' });
+
+    const trimmedPhone = newPhone.trim();
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (user.phone === trimmedPhone) {
+      return res.status(400).json({ success: false, message: 'New phone number is identical to your current phone' });
+    }
+
+    const existing = await User.findOne({ phone: trimmedPhone, _id: { $ne: user._id } });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Phone number is already in use by another account' });
+    }
+
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await Otp.findOneAndUpdate(
+      { phone: trimmedPhone },
+      { code, createdAt: new Date() },
+      { upsert: true, new: true }
+    );
+
+    await sendSmsOtp(trimmedPhone, code);
+
+    res.json({
+      success: true,
+      message: 'SMS OTP sent to your new phone number.',
+      demoCode: (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) ? null : code
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/profile/phone/verify
+export const verifyPhoneChange = async (req, res) => {
+  try {
+    const { newPhone, code } = req.body;
+    if (!newPhone || !code) return res.status(400).json({ success: false, message: 'New phone number and OTP code are required' });
+
+    const trimmedPhone = newPhone.trim();
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const remainingMinutes = Math.ceil((user.lockUntil - Date.now()) / (60 * 1000));
+      return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
+    }
+
+    const record = await Otp.findOne({ phone: trimmedPhone, code });
+    if (!record) {
+      user.wrongOtpAttempts = (user.wrongOtpAttempts || 0) + 1;
+      if (user.wrongOtpAttempts >= 5) {
+        user.lockUntil = new Date(Date.now() + 30 * 60 * 1000);
+        user.wrongOtpAttempts = 0;
+        await user.save();
+        return res.status(403).json({
+          success: false,
+          message: 'Too many wrong OTP attempts. Your profile is locked for 30 minutes.'
+        });
+      }
+      await user.save();
+      const remaining = 5 - user.wrongOtpAttempts;
+      return res.status(400).json({
+        success: false,
+        message: `Invalid or expired OTP code. ${remaining} attempts remaining before account lockout.`
+      });
+    }
+
+    user.phone = trimmedPhone;
+    user.wrongOtpAttempts = 0;
+    user.lockUntil = null;
+    await user.save();
+
+    await Otp.deleteOne({ _id: record._id });
+    await logActivity(user._id, 'update_phone', 'User', user._id, { phone: user.phone });
+
+    res.json({
+      success: true,
+      message: 'Phone number updated successfully!',
+      user: { id: user._id, firstName: user.name.split(' ')[0] || user.name, lastName: user.name.split(' ').slice(1).join(' ') || '', email: user.email, phone: user.phone, role: user.role }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 // POST /api/auth/refresh
 export const refresh = async (req, res) => {
   try {

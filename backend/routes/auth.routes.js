@@ -9,6 +9,10 @@ import {
   updateProfile,
   requestPasswordChange,
   verifyPasswordChange,
+  requestEmailChange,
+  verifyEmailChange,
+  requestPhoneChange,
+  verifyPhoneChange,
   refresh,
   forgotPassword,
   resetPassword
@@ -36,10 +40,14 @@ router.post('/send-otp',   checkIpBlock, sendOtp);
 router.post('/verify-otp', checkIpBlock, verifyOtp);
 router.post('/refresh',    refresh);
 
-// Profile and Password endpoints (secured with auth middleware)
-router.put('/profile',                  auth, updateProfile);
+// Profile, Password, Email & Phone endpoints (secured with auth middleware)
+router.put('/profile',                   auth, updateProfile);
 router.post('/profile/password/request', auth, requestPasswordChange);
 router.post('/profile/password/verify',  auth, verifyPasswordChange);
+router.post('/profile/email/request',    auth, requestEmailChange);
+router.post('/profile/email/verify',     auth, verifyEmailChange);
+router.post('/profile/phone/request',    auth, requestPhoneChange);
+router.post('/profile/phone/verify',     auth, verifyPhoneChange);
 
 router.post('/forgot-password',         forgotPassword);
 router.post('/reset-password/:token',   resetPassword);

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 const SERVICE_TYPES = ['minor_service', 'major_service', 'ac_repair', 'brake_repair',
-  'electrical', 'diagnostics', 'battery', 'roadside_assistance', 'other'];
+  'electrical', 'diagnostics', 'battery', 'roadside_assistance', 'emergency_pickup', 'other'];
 
 const STATUS_STEPS = [
   'pending_payment', 'new', 'assigned', 'quote_pending', 'quote_sent', 'quote_approved',
