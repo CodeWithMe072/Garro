@@ -179,7 +179,7 @@ const Roadside = () => {
               <div style={{ 
                 position: 'relative', 
                 width: '100%', 
-                height: '500px', 
+                minHeight: '420px', 
                 display: 'flex', 
                 alignItems: 'center', 
                 justifyContent: 'center' 
@@ -194,18 +194,30 @@ const Roadside = () => {
                   zIndex: 1
                 }}></div>
 
-                {/* Flatbed Tow Truck Image */}
-                <img 
-                  src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=1000&auto=format&fit=crop" 
-                  alt="Flatbed Recovery Tow Truck" 
-                  style={{
-                    width: '95%',
-                    maxHeight: '340px',
-                    objectFit: 'contain',
-                    zIndex: 2,
-                    filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.15))'
-                  }}
-                />
+                {/* Roadside Recovery Tow Truck Card */}
+                <div style={{
+                  position: 'relative',
+                  zIndex: 2,
+                  width: '100%',
+                  maxWidth: '520px',
+                  borderRadius: '24px',
+                  overflow: 'hidden',
+                  boxShadow: '0 20px 50px rgba(15,23,42,0.12), 0 4px 12px rgba(255,92,26,0.1)',
+                  border: '1px solid rgba(255,92,26,0.15)',
+                  background: '#f8fafc'
+                }}>
+                  <img 
+                    src="https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?q=80&w=1000&auto=format&fit=crop" 
+                    onError={(e) => { e.target.src = "/assets/images/services/towing-service.jpg"; }}
+                    alt="Roadside Assistance Tow Truck Service" 
+                    style={{
+                      width: '100%',
+                      height: '380px',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                  />
+                </div>
 
               </div>
             </div>

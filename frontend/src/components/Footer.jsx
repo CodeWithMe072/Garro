@@ -27,7 +27,6 @@ const Footer = () => {
     { to: '/insurance', label: t('insurance') },
     { to: '/roadside', label: t('roadside') },
     { to: '/end-of-life', label: t('scrap') },
-    { to: '/get-quote', label: t('get_quote') },
     { to: '/my-requests', label: t('requests') },
   ];
 
