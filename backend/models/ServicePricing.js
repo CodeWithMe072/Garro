@@ -8,8 +8,7 @@ const ServicePricingSchema = new mongoose.Schema({
   serviceType: {
     type: String,
     required: true,
-    unique: true,
-    enum: ['minor_service', 'major_service', 'brake_repair', 'battery', 'ac_repair', 'electrical', 'diagnostics', 'roadside_assistance', 'emergency_pickup', 'other']
+    unique: true
   },
   label: { type: String, required: true },         // Human-readable label shown to admin
   partsCost: { type: Number, default: 0, min: 0 }, // Base parts cost

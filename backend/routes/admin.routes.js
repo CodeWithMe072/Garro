@@ -28,7 +28,9 @@ router.patch('/requests/:id/manual-assign',       reqCtrl.manualAssign);
 
 // Service Pricing (admin-configurable)
 router.get('/service-pricing',                    pricingCtrl.getServicePricing);
+router.post('/service-pricing',                   pricingCtrl.createServicePricing);
 router.put('/service-pricing/:serviceType',       pricingCtrl.updateServicePricing);
+router.delete('/service-pricing/:serviceType',    pricingCtrl.deleteServicePricing);
 
 // Cancellation & Refund Management
 router.get('/cancellations/stats',                    reqCtrl.getRefundStats);

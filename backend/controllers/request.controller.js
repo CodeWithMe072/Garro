@@ -1336,6 +1336,10 @@ export const submitQuote = async (req, res) => {
       vinNumber
     } = req.body;
 
+    if (!category || !subCategory || !category.trim() || !subCategory.trim()) {
+      return error(res, 'Please select both a Service Category and Sub-Category before requesting a quote.', 400);
+    }
+
     const authHeader = req.headers.authorization;
     let currentUser = req.user;
 

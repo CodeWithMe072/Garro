@@ -62,6 +62,23 @@ const ServiceSelection = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!canSubmit) return;
+
+    const form = e.target;
+    const formData = new FormData(form);
+
+    const catVal = (formData.get('category') || selectedCat || '').trim();
+    const subCatVal = (formData.get('sub_category') || '').trim();
+
+    if (!catVal) {
+      alert('Please select a main Service Category before submitting.');
+      return;
+    }
+
+    if (!subCatVal) {
+      alert('Please select a Sub-Category before submitting.');
+      return;
+    }
+
     navigate('/garages');
   };
 
@@ -118,7 +135,7 @@ const ServiceSelection = () => {
               </div>
               <div>
                 <div className="gq-label"><span className="material-icons-round">list</span> Sub-Category</div>
-                <select name="sub_category" className="gq-select" defaultValue="">
+                <select name="sub_category" className="gq-select" defaultValue="" required>
                   <option value="">Select sub-category</option>
                   {catalogServices.find(c => c.slug === selectedCat)?.subCategories.map(s => (
                     <option key={s._id} value={s.slug}>{s.name}</option>

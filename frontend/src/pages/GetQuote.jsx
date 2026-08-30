@@ -125,15 +125,23 @@ const GetQuote = () => {
       return;
     }
 
-    const form = e.target;
-    const formData = new FormData(form);
+    const catVal = (formData.get('category') || category || '').trim();
+    const subCatVal = (formData.get('sub_category') || subCategory || '').trim();
 
-    const category = formData.get('category');
-    const sub_category = formData.get('sub_category');
-    const car_brand = formData.get('car_brand');
-    const car_model = formData.get('car_model');
-    const car_year = formData.get('car_year');
-    const city_name = formData.get('city_name');
+    if (!catVal) {
+      toast.error('Please select a main Service Category before requesting a quote.');
+      return;
+    }
+
+    if (!subCatVal) {
+      toast.error('Please select a Sub-Category before requesting a quote.');
+      return;
+    }
+
+    const car_brand = formData.get('car_brand') || carBrand;
+    const car_model = formData.get('car_model') || carModel;
+    const car_year = formData.get('car_year') || carYear;
+    const city_name = formData.get('city_name') || cityName;
     const area = formData.get('area');
     const problem_title = formData.get('problem_title');
     const phone = formData.get('phone');
@@ -142,8 +150,8 @@ const GetQuote = () => {
     try {
       const token = localStorage.getItem('token');
       const payload = {
-        category,
-        subCategory: sub_category,
+        category: catVal,
+        subCategory: subCatVal,
         carBrand: car_brand,
         carModel: car_model,
         carYear: car_year,

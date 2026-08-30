@@ -35,6 +35,60 @@ export const getServicePricing = async (req, res) => {
 };
 
 /**
+ * POST /api/admin/service-pricing
+ * Create a new service pricing entry.
+ */
+export const createServicePricing = async (req, res) => {
+  try {
+    const { label, partsCost, laborCost, durationHours, serviceType } = req.body;
+
+    if (!label || laborCost === undefined) {
+      return error(res, 'Service label and laborCost are required', 400);
+    }
+
+    const key = (serviceType || label)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '');
+
+    const existing = await ServicePricing.findOne({ serviceType: key });
+    if (existing) {
+      return error(res, `Service type '${key}' already exists`, 400);
+    }
+
+    const created = await ServicePricing.create({
+      serviceType: key,
+      label: label.trim(),
+      partsCost: Number(partsCost) || 0,
+      laborCost: Number(laborCost) || 0,
+      durationHours: Number(durationHours) || 2
+    });
+
+    success(res, { pricing: created, message: `New service '${label}' created successfully` }, 201);
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+/**
+ * DELETE /api/admin/service-pricing/:serviceType
+ * Delete a service pricing entry.
+ */
+export const deleteServicePricing = async (req, res) => {
+  try {
+    const { serviceType } = req.params;
+    const deleted = await ServicePricing.findOneAndDelete({ serviceType });
+    if (!deleted) {
+      return error(res, 'Service pricing entry not found', 404);
+    }
+    success(res, { message: `Service '${deleted.label}' deleted successfully` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+/**
  * PUT /api/admin/service-pricing/:serviceType
  * Upsert a pricing entry for a given service type.
  */
