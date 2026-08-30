@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { LuBadgeCheck, LuTruck, LuShield } from 'react-icons/lu';
 
 const About = () => {

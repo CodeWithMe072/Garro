@@ -3,7 +3,51 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { processPendingQuoteIfAny } from '../utils/pendingQuote';
+import { LuGlobe, LuChevronDown, LuCheck } from 'react-icons/lu';
+
+const localT = {
+  en: {
+    verify_account: "Verify Your Account",
+    verify_desc: "Enter the 6-digit verification code sent to your email.",
+    demo_mode: "Demo / Dev Mode Active:",
+    click_autofill: "Click code to auto-fill",
+    verify_continue: "Verify & Continue",
+    verifying: "Verifying...",
+    didnt_receive: "Didn't receive code?",
+    resend_otp: "Resend Code",
+    back_to_signup: "Back to Sign Up",
+    resend_success: "A new OTP code has been sent to your email.",
+    resend_failed: "Failed to resend OTP. Please try again."
+  },
+  ar: {
+    verify_account: "تأكيد حسابك",
+    verify_desc: "أدخل رمز التحقق المكون من 6 أرقام المرسل إلى بريدك الإلكتروني.",
+    demo_mode: "وضع التجربة نشط:",
+    click_autofill: "انقر للتعبئة التلقائية",
+    verify_continue: "تأكيد ومتابعة",
+    verifying: "جاري التحقق...",
+    didnt_receive: "لم تتلق الرمز؟",
+    resend_otp: "إعادة إرسال الرمز",
+    back_to_signup: "العودة إلى التسجيل",
+    resend_success: "تم إرسال رمز تحقق جديد إلى بريدك الإلكتروني.",
+    resend_failed: "فشل إعادة إرسال الرمز. يرجى المحاولة مرة أخرى."
+  },
+  ur: {
+    verify_account: "اپنے اکاؤنٹ کی تصدیق کریں",
+    verify_desc: "اپنی ای میل پر بھیجا گیا 6 ہندسوں کا کوڈ درج کریں۔",
+    demo_mode: "ڈیمو موڈ فعال ہے:",
+    click_autofill: "آٹو فل کے لیے کوڈ پر کلک کریں",
+    verify_continue: "تصدیق کریں اور جاری رکھیں",
+    verifying: "تصدیق ہو رہی ہے...",
+    didnt_receive: "کوڈ موصول نہیں ہوا؟",
+    resend_otp: "دوبارہ کوڈ بھیجیں",
+    back_to_signup: "سائن اپ پر واپس جائیں",
+    resend_success: "آپ کی ای میل پر نیا او ٹی پی بھیج دیا گیا ہے۔",
+    resend_failed: "او ٹی پی بھیجنے میں ناکامی۔ براہ کرم دوبارہ کوشش کریں۔"
+  }
+};
 
 const VerifyOtp = () => {
   const { lang, changeLanguage } = useLanguage();
@@ -83,7 +127,7 @@ const VerifyOtp = () => {
     if (!email) return;
 
     try {
-            const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
+      const res = await fetch(`${API_BASE}/api/auth/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -109,7 +153,7 @@ const VerifyOtp = () => {
     setError('');
 
     try {
-            const quoteToken = location.state?.quoteToken || localStorage.getItem('pending_quote_token');
+      const quoteToken = location.state?.quoteToken || localStorage.getItem('pending_quote_token');
       const res = await fetch(`${API_BASE}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
