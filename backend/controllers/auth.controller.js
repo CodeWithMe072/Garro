@@ -79,15 +79,34 @@ export const register = async (req, res) => {
   try {
     const { name, email, phone, password, role } = req.body;
 
-    const exists = await User.findOne({ email });
-    if (exists) return res.status(400).json({ success: false, message: 'Email already registered' });
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: 'Name is required.' });
+    }
+    if (!email || !email.trim()) {
+      return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ success: false, message: 'Mobile number is required.' });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanPhone = phone.trim();
+
+    const emailExists = await User.findOne({ email: cleanEmail });
+    if (emailExists) return res.status(400).json({ success: false, message: 'This email is already registered.' });
+
+    const phoneExists = await User.findOne({ phone: cleanPhone });
+    if (phoneExists) return res.status(400).json({ success: false, message: 'This phone number is already registered.' });
 
     const hashed = await bcrypt.hash(password, 12);
     // Create new users as inactive so they must verify via OTP first
     const user = await User.create({
-      name,
-      email,
-      phone,
+      name: name.trim(),
+      email: cleanEmail,
+      phone: cleanPhone,
       password: hashed,
       role: role || 'customer',
       status: 'inactive'
@@ -95,20 +114,19 @@ export const register = async (req, res) => {
 
     // Generate and send OTP immediately upon registration
     const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const lowercaseEmail = email.toLowerCase();
     await Otp.findOneAndUpdate(
-      { email: lowercaseEmail },
+      { email: cleanEmail },
       { code, createdAt: new Date() },
       { upsert: true, new: true }
     );
-    await sendEmailOtp(email, code);
+    await sendEmailOtp(cleanEmail, code);
 
     const token = signToken(user);
     await generateAndSetRefreshToken(res, user._id);
     res.status(201).json({
       success: true,
       token,
-      user: { id: user._id, name, email, role: user.role },
+      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role },
       demoCode: process.env.RESEND_API_KEY ? null : code
     });
   } catch (err) {
@@ -251,6 +269,18 @@ export const login = async (req, res) => {
       return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
     }
 
+    if (user.status === 'banned') {
+      return res.status(403).json({ success: false, message: 'Access revoked. Your account has been permanently closed. Please contact Admin to reopen access.' });
+    }
+
+    if (user.garageId) {
+      const Garage = (await import('../models/Garage.js')).default;
+      const garage = await Garage.findById(user.garageId);
+      if (garage && (garage.status === 'inactive' || garage.deletionRequest?.status === 'approved')) {
+        return res.status(403).json({ success: false, message: 'Access revoked. Your garage account has been closed by Admin. Please contact Admin to reopen access.' });
+      }
+    }
+
     if (user.status !== 'active') {
       const code = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -340,8 +370,9 @@ export const logout = async (req, res) => {
 // PUT /api/auth/profile
 export const updateProfile = async (req, res) => {
   try {
-    const { name } = req.body;
-    if (!name) return res.status(400).json({ success: false, message: 'Name is required' });
+    const { name, firstName, lastName } = req.body;
+    const fullName = name ? name.trim() : (`${firstName || ''} ${lastName || ''}`).trim();
+    if (!fullName) return res.status(400).json({ success: false, message: 'Name is required' });
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ success: false, message: 'User not found' });
@@ -352,13 +383,36 @@ export const updateProfile = async (req, res) => {
       return res.status(403).json({ success: false, message: `Your profile is locked. Try again in ${remainingMinutes} minutes.` });
     }
 
-    user.name = name;
+    user.name = fullName;
+    if (firstName) user.firstName = firstName.trim();
+    if (lastName) user.lastName = lastName.trim();
     await user.save();
+
+    // Sync Helper record if exists
+    try {
+      const Helper = (await import('../models/Helper.js')).default;
+      const helper = await Helper.findOne({ userId: user._id });
+      if (helper) {
+        helper.name = user.name;
+        await helper.save();
+      }
+    } catch {
+      // ignore if helper lookup fails
+    }
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      user: { id: user._id, firstName: user.name.split(' ')[0] || user.name, lastName: user.name.split(' ').slice(1).join(' ') || '', email: user.email, phone: user.phone, role: user.role }
+      user: {
+        id: user._id,
+        name: user.name,
+        firstName: user.firstName || user.name.split(' ')[0] || user.name,
+        lastName: user.lastName || user.name.split(' ').slice(1).join(' ') || '',
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        garageId: user.garageId
+      }
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -689,10 +743,20 @@ export const refresh = async (req, res) => {
     }
 
     const user = await User.findById(activeToken.userId);
-    if (!user || user.status !== 'active') {
+    if (!user || user.status !== 'active' || user.status === 'banned') {
       await RefreshToken.deleteOne({ _id: activeToken._id });
       res.clearCookie('refreshToken');
-      return res.status(401).json({ success: false, message: 'User not active or found' });
+      return res.status(403).json({ success: false, message: 'Access revoked. Account closed by Admin.' });
+    }
+
+    if (user.garageId) {
+      const Garage = (await import('../models/Garage.js')).default;
+      const garage = await Garage.findById(user.garageId);
+      if (garage && (garage.status === 'inactive' || garage.deletionRequest?.status === 'approved')) {
+        await RefreshToken.deleteOne({ _id: activeToken._id });
+        res.clearCookie('refreshToken');
+        return res.status(403).json({ success: false, message: 'Access revoked. Your garage account has been closed by Admin.' });
+      }
     }
 
     // Rotate token: delete old one

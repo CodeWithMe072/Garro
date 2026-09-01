@@ -68,7 +68,7 @@ export const toggleStatus = async (req, res) => {
     if (!garage) return error(res, 'Garage not found', 404);
     garage.status = garage.status === 'active' ? 'inactive' : 'active';
     await garage.save();
-    success(res, { garage });
+    success(res, { garage, message: `Garage status updated to ${garage.status}` });
   } catch (err) {
     error(res, err.message, 500);
   }
@@ -456,6 +456,305 @@ export const addPortalStaff = async (req, res) => {
     staffObj.schedule = finalSchedule;
 
     success(res, { staff: staffObj, message: 'Staff member added successfully with 7-day weekly schedule!' }, 201);
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// PUT /api/garages/portal/staff/:staffId
+export const updatePortalStaff = async (req, res) => {
+  try {
+    const { staffId } = req.params;
+    const { name, email, phone, role, password, schedule, status } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    const staffUser = await User.findOne({ _id: staffId, garageId: user.garageId });
+    if (!staffUser) return error(res, 'Staff member not found', 404);
+
+    if (email && email.toLowerCase().trim() !== staffUser.email) {
+      const existing = await User.findOne({ email: email.toLowerCase().trim(), _id: { $ne: staffId } });
+      if (existing) {
+        return error(res, 'Email address is already in use by another user', 400);
+      }
+      staffUser.email = email.toLowerCase().trim();
+    }
+
+    if (name) staffUser.name = name.trim();
+    if (phone) staffUser.phone = phone.trim();
+    if (role) staffUser.role = role;
+    if (status) staffUser.status = status;
+    if (password && password.trim().length > 0) {
+      staffUser.password = await bcrypt.hash(password.trim(), 10);
+    }
+
+    await staffUser.save();
+
+    // Update corresponding Helper model
+    const helper = await Helper.findOne({ userId: staffId });
+    if (helper) {
+      if (name) helper.name = name.trim();
+      if (phone) helper.phone = phone.trim();
+      if (status) helper.isAvailable = (status === 'active');
+      if (schedule && Array.isArray(schedule) && schedule.length > 0) {
+        helper.workingHours = helper.workingHours || {};
+        helper.workingHours.schedule = schedule;
+      }
+      await helper.save();
+    } else if (schedule && Array.isArray(schedule) && schedule.length > 0) {
+      await Helper.create({
+        userId: staffUser._id,
+        name: staffUser.name,
+        phone: staffUser.phone,
+        garageId: user.garageId,
+        isAvailable: staffUser.status === 'active',
+        workingHours: {
+          timezone: 'Asia/Dubai',
+          schedule
+        }
+      });
+    }
+
+    const updatedObj = staffUser.toObject();
+    delete updatedObj.password;
+    if (schedule) updatedObj.schedule = schedule;
+
+    success(res, { staff: updatedObj, message: 'Staff member updated successfully!' });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// PATCH /api/garages/portal/staff/:staffId/status (or toggle-status)
+export const togglePortalStaffStatus = async (req, res) => {
+  try {
+    const { staffId } = req.params;
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    const staffUser = await User.findOne({ _id: staffId, garageId: user.garageId });
+    if (!staffUser) return error(res, 'Staff member not found', 404);
+
+    const newStatus = staffUser.status === 'active' ? 'blocked' : 'active';
+    staffUser.status = newStatus;
+    await staffUser.save();
+
+    // Sync Helper availability
+    const helper = await Helper.findOne({ userId: staffId });
+    if (helper) {
+      helper.isAvailable = (newStatus === 'active');
+      await helper.save();
+    }
+
+    success(res, { staff: staffUser, message: `Staff status updated to ${newStatus}` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// DELETE /api/garages/portal/staff/:staffId
+export const deletePortalStaff = async (req, res) => {
+  try {
+    const { staffId } = req.params;
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    const staffUser = await User.findOneAndDelete({ _id: staffId, garageId: user.garageId });
+    if (!staffUser) return error(res, 'Staff member not found', 404);
+
+    await Helper.findOneAndDelete({ userId: staffId });
+
+    success(res, { message: 'Staff member deleted successfully' });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/garages/portal/status
+export const getPortalGarageStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    const garage = await Garage.findById(user.garageId);
+    if (!garage) return error(res, 'Garage not found', 404);
+
+    const isOpen = garage.isOpen !== false;
+    success(res, { isOpen, status: garage.status, name: garage.name });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// PATCH /api/garages/portal/toggle-open
+export const togglePortalGarageOpen = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    const garage = await Garage.findById(user.garageId);
+    if (!garage) return error(res, 'Garage not found', 404);
+
+    const newIsOpen = !(garage.isOpen !== false);
+    garage.isOpen = newIsOpen;
+    await garage.save();
+
+    // Also update all helpers associated with this garage
+    await Helper.updateMany(
+      { garageId: garage._id },
+      { $set: { isAvailable: newIsOpen } }
+    );
+
+    success(res, {
+      isOpen: newIsOpen,
+      message: newIsOpen ? 'Garage opened successfully' : 'Garage closed successfully'
+    });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/garages/portal/request-deletion
+export const requestGarageDeletion = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    const garage = await Garage.findById(user.garageId);
+    if (!garage) return error(res, 'Garage not found', 404);
+
+    garage.deletionRequest = {
+      status: 'pending',
+      requestedAt: new Date(),
+      reason: reason || 'Garage partner requested account deletion'
+    };
+    await garage.save();
+
+    success(res, {
+      garage,
+      message: 'Account deletion request submitted to Admin. An administrator will contact you shortly to process your request.'
+    });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// DELETE /api/garages/portal/request-deletion
+export const cancelGarageDeletionRequest = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    const garage = await Garage.findById(user.garageId);
+    if (!garage) return error(res, 'Garage not found', 404);
+
+    garage.deletionRequest = { status: 'none' };
+    await garage.save();
+
+    success(res, { message: 'Deletion request cancelled successfully. Your garage remains active.' });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/garages/admin/deletion-requests
+export const getGarageDeletionRequests = async (req, res) => {
+  try {
+    const requests = await Garage.find({ 'deletionRequest.status': 'pending' }).sort({ 'deletionRequest.requestedAt': -1 });
+    success(res, { requests });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/garages/admin/deletion-requests/:garageId/approve
+export const approveGarageDeletionRequest = async (req, res) => {
+  try {
+    const { garageId } = req.params;
+    const { adminNotes } = req.body || {};
+
+    const garage = await Garage.findById(garageId);
+    if (!garage) return error(res, 'Garage not found', 404);
+
+    garage.status = 'inactive';
+    garage.isOpen = false;
+    garage.deletionRequest.status = 'approved';
+    garage.deletionRequest.reviewedAt = new Date();
+    if (adminNotes) garage.deletionRequest.adminNotes = adminNotes;
+    await garage.save();
+
+    // Block all user accounts linked to this garage
+    await User.updateMany(
+      { garageId: garage._id },
+      { $set: { status: 'banned' } }
+    );
+
+    // Set all helper profiles to unavailable & off duty
+    await Helper.updateMany(
+      { garageId: garage._id },
+      { $set: { isAvailable: false, dutyStatus: 'off_duty' } }
+    );
+
+    // Delete all refresh tokens for all user accounts linked to this garage
+    const garageUsers = await User.find({ garageId: garage._id });
+    const garageUserIds = garageUsers.map(u => u._id);
+    const RefreshToken = (await import('../models/RefreshToken.js')).default;
+    await RefreshToken.deleteMany({ userId: { $in: garageUserIds } });
+
+    success(res, { message: `Garage "${garage.name}" and all associated staff accounts have been permanently closed and deactivated.` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/garages/admin/deletion-requests/:garageId/reject
+export const rejectGarageDeletionRequest = async (req, res) => {
+  try {
+    const { garageId } = req.params;
+    const { adminNotes } = req.body || {};
+
+    const garage = await Garage.findById(garageId);
+    if (!garage) return error(res, 'Garage not found', 404);
+
+    garage.deletionRequest.status = 'rejected';
+    garage.deletionRequest.reviewedAt = new Date();
+    if (adminNotes) garage.deletionRequest.adminNotes = adminNotes;
+    await garage.save();
+
+    success(res, { message: `Deletion request for "${garage.name}" rejected. The garage remains active.` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/garages/admin/:garageId/reopen
+export const reopenGarage = async (req, res) => {
+  try {
+    const { garageId } = req.params;
+
+    const garage = await Garage.findById(garageId);
+    if (!garage) return error(res, 'Garage not found', 404);
+
+    garage.status = 'active';
+    garage.isOpen = true;
+    garage.deletionRequest = { status: 'none' };
+    await garage.save();
+
+    // Reactivate all user accounts linked to this garage
+    await User.updateMany(
+      { garageId: garage._id },
+      { $set: { status: 'active' } }
+    );
+
+    // Restore helper availability & on duty status
+    await Helper.updateMany(
+      { garageId: garage._id },
+      { $set: { isAvailable: true, dutyStatus: 'on_duty' } }
+    );
+
+    success(res, { message: `Garage "${garage.name}" and all staff accounts have been reopened and access restored!` });
   } catch (err) {
     error(res, err.message, 500);
   }

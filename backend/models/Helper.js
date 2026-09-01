@@ -6,6 +6,7 @@ const helperSchema = new mongoose.Schema({
   phone:           { type: String, required: true },
   garageId:        { type: mongoose.Schema.Types.ObjectId, ref: 'Garage', required: true },
   isAvailable:     { type: Boolean, default: true },
+  dutyStatus:      { type: String, enum: ['on_duty', 'off_duty'], default: 'on_duty' },
   currentLocation: {
     lat: { type: Number },
     lng: { type: Number }

@@ -27,6 +27,18 @@ const getSlotBuffer = (slot) => {
 
 // Helper function to verify availability of a helper for a given window
 export const checkHelperAvailability = async (helper, startTime, endTime, excludeBookingId = null) => {
+  // 0. Check Garage Open/Active Status
+  if (helper.garageId) {
+    let garageObj = helper.garageId;
+    if (typeof garageObj === 'string' || garageObj instanceof String || !garageObj.status) {
+      const Garage = (await import('../models/Garage.js')).default;
+      garageObj = await Garage.findById(helper.garageId);
+    }
+    if (garageObj && (garageObj.isOpen === false || garageObj.status !== 'active')) {
+      return false;
+    }
+  }
+
   // 1. Working hours check
   const timezone = helper.workingHours?.timezone || 'Asia/Dubai';
   const schedule = helper.workingHours?.schedule?.length ? helper.workingHours.schedule : [
@@ -140,7 +152,7 @@ export const getAvailableHelpers = async (req, res) => {
       end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
     }
 
-    const helpers = await Helper.find().populate('garageId', 'name');
+    const helpers = await Helper.find().populate('garageId', 'name status isOpen');
     const availableHelpers = [];
 
     for (const helper of helpers) {
@@ -213,7 +225,7 @@ export const updateWorkingHours = async (req, res) => {
 // Legacy support endpoints for existing routes
 export const getHelpers = async (req, res) => {
   try {
-    const helpers = await Helper.find().populate('garageId', 'name');
+    const helpers = await Helper.find().populate('garageId', 'name status isOpen');
     success(res, { helpers });
   } catch (err) {
     error(res, err.message, 500);
@@ -244,8 +256,64 @@ export const toggleAvailability = async (req, res) => {
     const helper = await Helper.findById(req.params.id);
     if (!helper) return error(res, 'Helper not found', 404);
     helper.isAvailable = !helper.isAvailable;
+    helper.dutyStatus = helper.isAvailable ? 'on_duty' : 'off_duty';
     await helper.save();
+
+    // Sync User dutyStatus
+    if (helper.userId) {
+      const User = (await import('../models/User.js')).default;
+      await User.findByIdAndUpdate(helper.userId, { dutyStatus: helper.dutyStatus });
+    }
+
     success(res, { helper });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/helpers/me/duty-status
+export const getStaffDutyStatus = async (req, res) => {
+  try {
+    const User = (await import('../models/User.js')).default;
+    const user = await User.findById(req.user.id);
+    if (!user) return error(res, 'User not found', 404);
+
+    const helper = await Helper.findOne({ userId: req.user.id });
+    const isAvailable = helper ? helper.isAvailable : (user.dutyStatus !== 'off_duty');
+    const dutyStatus = helper ? (helper.dutyStatus || (helper.isAvailable ? 'on_duty' : 'off_duty')) : (user.dutyStatus || 'on_duty');
+
+    success(res, { dutyStatus, isAvailable });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// PATCH /api/helpers/me/toggle-duty
+export const toggleStaffDutyStatus = async (req, res) => {
+  try {
+    const User = (await import('../models/User.js')).default;
+    const user = await User.findById(req.user.id);
+    if (!user) return error(res, 'User not found', 404);
+
+    const helper = await Helper.findOne({ userId: req.user.id });
+    const currentStatus = helper ? (helper.dutyStatus || (helper.isAvailable ? 'on_duty' : 'off_duty')) : (user.dutyStatus || 'on_duty');
+    const newStatus = currentStatus === 'on_duty' ? 'off_duty' : 'on_duty';
+    const isAvail = newStatus === 'on_duty';
+
+    user.dutyStatus = newStatus;
+    await user.save();
+
+    if (helper) {
+      helper.dutyStatus = newStatus;
+      helper.isAvailable = isAvail;
+      await helper.save();
+    }
+
+    success(res, {
+      dutyStatus: newStatus,
+      isAvailable: isAvail,
+      message: newStatus === 'on_duty' ? 'Staff marked as ON DUTY 🟢' : 'Staff marked as OFF DUTY 🔴'
+    });
   } catch (err) {
     error(res, err.message, 500);
   }

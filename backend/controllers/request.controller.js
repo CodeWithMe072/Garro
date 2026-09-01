@@ -55,6 +55,7 @@ export const createRequest = async (req, res) => {
     // Create a temporary Quote for upfront payment (pre-approved)
     const quote = await Quote.create({
       requestId: request._id,
+      garageId: request.garageId || null,
       partsCost,
       laborCost,
       status: 'approved'
@@ -62,7 +63,25 @@ export const createRequest = async (req, res) => {
 
     // Link quoteId back to the request
     request.quoteId = quote._id;
+    if (request.garageId) {
+      request.status = 'assigned';
+    }
     await request.save();
+
+    // If a specific garage was selected during booking (e.g. from Find Garages / Book Garage),
+    // create a Job record for that garage so it immediately appears in Garage Portal jobs!
+    if (request.garageId) {
+      const existingJob = await Job.findOne({ requestId: request._id });
+      if (!existingJob) {
+        await Job.create({
+          quoteId: quote._id,
+          requestId: request._id,
+          garageId: request.garageId,
+          status: 'pickup_scheduled',
+          estimatedArrival: request.preferredDate || new Date(Date.now() + 4 * 60 * 60 * 1000)
+        });
+      }
+    }
 
     success(res, { request, quoteId: quote._id, autoAssigned: false }, 201);
   } catch (err) {

@@ -7,6 +7,7 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role:     { type: String, enum: ['customer', 'admin', 'helper', 'garage', 'superadmin', 'manager', 'staff'], default: 'customer' },
   status:   { type: String, enum: ['active', 'inactive', 'banned'], default: 'active' },
+  dutyStatus: { type: String, enum: ['on_duty', 'off_duty'], default: 'on_duty' },
   garageId: { type: mongoose.Schema.Types.ObjectId, ref: 'Garage' },
   location: {
     lat: { type: Number },

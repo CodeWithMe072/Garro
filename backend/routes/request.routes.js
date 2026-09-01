@@ -18,7 +18,7 @@ router.post('/claim-quote', auth, async (req, res) => {
 });
 
 router.use(auth);
-router.post('/', role('customer'), upload.array('photos', 10), ctrl.createRequest);
+router.post('/', role('customer', 'admin', 'superadmin', 'manager'), upload.array('photos', 10), ctrl.createRequest);
 router.get('/customer/dashboard-stats', ctrl.getCustomerDashboardStats);
 router.get('/',  ctrl.getRequests);
 router.get('/:id', ctrl.getRequest);
