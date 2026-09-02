@@ -100,64 +100,72 @@ const Navbar = () => {
           <span className="g-logo-text">Ga<span>rro</span></span>
         </Link>
 
-        {/* Nav Links */}
+        {/* Nav Links — Consistent for logged-in and logged-out users */}
         <ul className={`g-nav-links ${isMobileMenuOpen ? 'open' : ''}`} id="navLinks">
-          {/* Public Links Visible only when not logged in */}
-          {!isAuthenticated && (
-            <>
-              <li>
-                <Link to="/" className={isActive('/')}>
-                  {t('home')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/services" className={isActive('/services')}>
-                  <span dir="auto">{t('our_services')}</span>
-                </Link>
-              </li>
-
-              <li>
-                <Link to="/about" className={isActive('/about')}>
-                  <span dir="auto">{t('nav_about') || 'About'}</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact" className={isActive('/contact')}>
-                  <span dir="auto">{t('contact_us')}</span>
-                </Link>
-              </li>
-            </>
-          )}
-
-          {/* Authenticated Links */}
-          {isAuthenticated && (
-            <>
-              <li>
-                <Link to="/home" className={isActive('/home')}>
-                  <LuHouse size={15} /> {t('home')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/insurance" className={isActive('/insurance')}>
-                  <LuShield size={15} /> {t('insurance')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/roadside" className={isActive('/roadside')}>
-                  <LuTruck size={15} /> {t('roadside')}
-                </Link>
-              </li>
-              <li>
-                <Link to="/end-of-life" className={isActive('/end-of-life')}>
-                  <LuRecycle size={15} /> {t('scrap')}
-                </Link>
-              </li>
-            </>
-          )}
+          <li>
+            <Link to={isAuthenticated ? "/home" : "/"} className={isActive('/home') || isActive('/')}>
+              <LuHouse size={15} /> {t('home')}
+            </Link>
+          </li>
+          <li>
+            <Link to="/insurance" className={isActive('/insurance')}>
+              <LuShield size={15} /> {t('insurance')}
+            </Link>
+          </li>
+          <li>
+            <Link to="/roadside" className={isActive('/roadside')}>
+              <LuTruck size={15} /> {t('roadside')}
+            </Link>
+          </li>
+          <li>
+            <Link to="/end-of-life" className={isActive('/end-of-life')}>
+              <LuRecycle size={15} /> {t('scrap')}
+            </Link>
+          </li>
         </ul>
 
         {/* Right Side */}
         <div className="g-nav-right">
+          {/* Language Selector — Always Visible */}
+          <div ref={langRef} style={{ position: 'relative', marginRight: '12px' }}>
+            <button
+              onClick={() => setIsLangOpen(!isLangOpen)}
+              style={{
+                background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '20px',
+                padding: '6px 12px', color: '#475569', fontSize: '12.5px', fontWeight: 700,
+                cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.18s'
+              }}
+            >
+              <LuGlobe size={14} /> {lang.toUpperCase()} <LuChevronDown size={12} />
+            </button>
+            {isLangOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px',
+                boxShadow: '0 10px 24px rgba(0,0,0,0.08)', zIndex: 1000,
+                minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
+              }}>
+                {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }].map(({ code, label }) => (
+                  <button
+                    key={code}
+                    onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
+                    style={{
+                      background: lang === code ? '#fff4ef' : 'none', border: 'none',
+                      borderRadius: '8px', padding: '8px 12px',
+                      color: lang === code ? '#ff5c1a' : '#475569',
+                      fontSize: '13px', fontWeight: lang === code ? 700 : 500,
+                      cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
+                    }}
+                  >
+                    <span>{label}</span>
+                    {lang === code && <LuCheck size={12} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           {isAuthenticated ? (
             <>
               {/* Role Badges */}
@@ -171,46 +179,6 @@ const Navbar = () => {
                   <span className="dot"></span>{user.role === 'manager' ? 'Manager' : 'Admin'}
                 </Link>
               )}
-
-              {/* Language Selector */}
-              <div ref={langRef} style={{ position: 'relative', marginRight: '12px' }}>
-                <button
-                  onClick={() => setIsLangOpen(!isLangOpen)}
-                  style={{
-                    background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '20px',
-                    padding: '6px 12px', color: '#475569', fontSize: '12.5px', fontWeight: 700,
-                    cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.18s'
-                  }}
-                >
-                  <LuGlobe size={14} /> {lang.toUpperCase()} <LuChevronDown size={12} />
-                </button>
-                {isLangOpen && (
-                  <div style={{
-                    position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                    background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px',
-                    boxShadow: '0 10px 24px rgba(0,0,0,0.08)', zIndex: 1000,
-                    minWidth: '120px', padding: '6px', display: 'flex', flexDirection: 'column', gap: '2px'
-                  }}>
-                    {[{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }].map(({ code, label }) => (
-                      <button
-                        key={code}
-                        onClick={() => { changeLanguage(code); setIsLangOpen(false); }}
-                        style={{
-                          background: lang === code ? '#fff4ef' : 'none', border: 'none',
-                          borderRadius: '8px', padding: '8px 12px',
-                          color: lang === code ? '#ff5c1a' : '#475569',
-                          fontSize: '13px', fontWeight: lang === code ? 700 : 500,
-                          cursor: 'pointer', display: 'flex', alignItems: 'center',
-                          justifyContent: 'space-between', width: '100%', transition: 'all 0.15s'
-                        }}
-                      >
-                        <span>{label}</span>
-                        {lang === code && <LuCheck size={12} />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               {/* Notification Bell */}
               <div className={`g-dropdown ${isNotifOpen ? 'open' : ''}`} ref={notifRef} style={{ marginRight: '16px', position: 'relative' }}>
