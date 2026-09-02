@@ -225,8 +225,73 @@ export const updateWorkingHours = async (req, res) => {
 // Legacy support endpoints for existing routes
 export const getHelpers = async (req, res) => {
   try {
-    const helpers = await Helper.find().populate('garageId', 'name status isOpen');
+    const helpers = await Helper.find()
+      .populate('garageId', 'name status isOpen')
+      .populate('userId', 'email name phone role status department employeeId');
     success(res, { helpers });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// PUT /api/helpers/:helperId
+export const updateHelperProfile = async (req, res) => {
+  try {
+    const { helperId } = req.params;
+    const { name, phone, email, role, department, garageId, status } = req.body;
+
+    const helper = await Helper.findById(helperId);
+    if (!helper) return error(res, 'Staff member not found', 404);
+
+    if (name) helper.name = name;
+    if (phone) helper.phone = phone;
+    if (email) helper.email = email;
+    if (role) helper.role = role === 'manager' ? 'manager' : 'helper';
+    if (garageId !== undefined) helper.garageId = garageId || null;
+    if (status !== undefined) {
+      helper.isAvailable = status === 'active' || status === true || status === 'on_duty';
+      helper.dutyStatus = helper.isAvailable ? 'on_duty' : 'off_duty';
+    }
+    await helper.save();
+
+    // Also update linked User account
+    if (helper.userId) {
+      const User = (await import('../models/User.js')).default;
+      const user = await User.findById(helper.userId);
+      if (user) {
+        if (name) user.name = name;
+        if (phone) user.phone = phone;
+        if (email) user.email = email;
+        if (role) user.role = role === 'manager' ? 'manager' : 'helper';
+        if (department) user.department = department;
+        if (garageId !== undefined) user.garageId = garageId || null;
+        if (status !== undefined) {
+          user.status = (status === 'active' || status === true || status === 'on_duty') ? 'active' : 'banned';
+        }
+        await user.save();
+      }
+    }
+
+    success(res, { helper, message: 'Staff profile updated successfully.' });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// DELETE /api/helpers/:helperId
+export const deleteHelperAccount = async (req, res) => {
+  try {
+    const { helperId } = req.params;
+    const helper = await Helper.findById(helperId);
+    if (!helper) return error(res, 'Staff member not found', 404);
+
+    if (helper.userId) {
+      const User = (await import('../models/User.js')).default;
+      await User.findByIdAndDelete(helper.userId);
+    }
+    await Helper.findByIdAndDelete(helperId);
+
+    success(res, { message: 'Staff member deleted successfully.' });
   } catch (err) {
     error(res, err.message, 500);
   }
@@ -314,6 +379,132 @@ export const toggleStaffDutyStatus = async (req, res) => {
       isAvailable: isAvail,
       message: newStatus === 'on_duty' ? 'Staff marked as ON DUTY 🟢' : 'Staff marked as OFF DUTY 🔴'
     });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/helpers/me/request-deletion
+export const requestStaffDeletion = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const User = (await import('../models/User.js')).default;
+    const user = await User.findById(req.user.id);
+    if (!user) return error(res, 'User not found', 404);
+
+    const delReq = {
+      status: 'pending',
+      requestedAt: new Date(),
+      reason: reason || 'Staff member requested account deletion'
+    };
+
+    user.deletionRequest = delReq;
+    await user.save();
+
+    const helper = await Helper.findOne({ userId: user._id });
+    if (helper) {
+      helper.deletionRequest = delReq;
+      await helper.save();
+    }
+
+    const targetRole = user.garageId ? 'garage manager' : 'platform administrator';
+    success(res, {
+      user,
+      message: `Account deletion request submitted to your ${targetRole} for approval.`
+    });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// DELETE /api/helpers/me/request-deletion
+export const cancelStaffDeletionRequest = async (req, res) => {
+  try {
+    const User = (await import('../models/User.js')).default;
+    const user = await User.findById(req.user.id);
+    if (!user) return error(res, 'User not found', 404);
+
+    user.deletionRequest = { status: 'none' };
+    await user.save();
+
+    const helper = await Helper.findOne({ userId: user._id });
+    if (helper) {
+      helper.deletionRequest = { status: 'none' };
+      await helper.save();
+    }
+
+    success(res, { message: 'Deletion request cancelled successfully.' });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/helpers/me/deletion-status
+export const getStaffDeletionStatus = async (req, res) => {
+  try {
+    const User = (await import('../models/User.js')).default;
+    const user = await User.findById(req.user.id);
+    if (!user) return error(res, 'User not found', 404);
+
+    success(res, { deletionRequest: user.deletionRequest || { status: 'none' } });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// GET /api/garages/portal/staff-deletion-requests
+export const getGarageStaffDeletionRequests = async (req, res) => {
+  try {
+    const User = (await import('../models/User.js')).default;
+    const user = await User.findById(req.user.id);
+    if (!user || !user.garageId) return error(res, 'User is not associated with a garage', 400);
+
+    const requests = await Helper.find({
+      garageId: user.garageId,
+      'deletionRequest.status': 'pending'
+    }).populate('userId', 'email name phone');
+
+    success(res, { requests });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/garages/portal/staff-deletion-requests/:staffId/approve
+export const approveGarageStaffDeletionRequest = async (req, res) => {
+  try {
+    const { staffId } = req.params;
+    const helper = await Helper.findById(staffId);
+    if (!helper) return error(res, 'Staff member not found', 404);
+
+    if (helper.userId) {
+      const User = (await import('../models/User.js')).default;
+      await User.findByIdAndDelete(helper.userId);
+    }
+    await Helper.findByIdAndDelete(staffId);
+
+    success(res, { message: `Staff account "${helper.name}" has been approved and permanently deleted.` });
+  } catch (err) {
+    error(res, err.message, 500);
+  }
+};
+
+// POST /api/garages/portal/staff-deletion-requests/:staffId/reject
+export const rejectGarageStaffDeletionRequest = async (req, res) => {
+  try {
+    const { staffId } = req.params;
+    const helper = await Helper.findById(staffId);
+    if (!helper) return error(res, 'Staff member not found', 404);
+
+    helper.deletionRequest = { status: 'rejected', reviewedAt: new Date() };
+    await helper.save();
+
+    if (helper.userId) {
+      const User = (await import('../models/User.js')).default;
+      await User.findByIdAndUpdate(helper.userId, { 'deletionRequest.status': 'rejected', 'deletionRequest.reviewedAt': new Date() });
+    }
+
+    success(res, { message: `Deletion request for "${helper.name}" rejected.` });
   } catch (err) {
     error(res, err.message, 500);
   }

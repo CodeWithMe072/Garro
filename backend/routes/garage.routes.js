@@ -3,6 +3,11 @@ const router = express.Router();
 import auth from '../middleware/auth.middleware.js';
 import role from '../middleware/role.middleware.js';
 import * as ctrl from '../controllers/garage.controller.js';
+import { 
+  getGarageStaffDeletionRequests, 
+  approveGarageStaffDeletionRequest, 
+  rejectGarageStaffDeletionRequest 
+} from '../controllers/helper.controller.js';
 import { upload } from '../utils/upload.js';
 
 // Public for authenticated users (Customers & Admins)
@@ -39,5 +44,10 @@ router.get('/admin/deletion-requests', auth, role('admin', 'superadmin', 'manage
 router.post('/admin/deletion-requests/:garageId/approve', auth, role('admin', 'superadmin', 'manager'), ctrl.approveGarageDeletionRequest);
 router.post('/admin/deletion-requests/:garageId/reject', auth, role('admin', 'superadmin', 'manager'), ctrl.rejectGarageDeletionRequest);
 router.post('/admin/:garageId/reopen', auth, role('admin', 'superadmin', 'manager'), ctrl.reopenGarage);
+
+// --- Garage Portal Staff Deletion Request routes ---
+router.get('/portal/staff-deletion-requests', auth, role('garage'), getGarageStaffDeletionRequests);
+router.post('/portal/staff-deletion-requests/:staffId/approve', auth, role('garage'), approveGarageStaffDeletionRequest);
+router.post('/portal/staff-deletion-requests/:staffId/reject', auth, role('garage'), rejectGarageStaffDeletionRequest);
 
 export default router;

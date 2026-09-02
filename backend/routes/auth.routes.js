@@ -15,7 +15,12 @@ import {
   verifyPhoneChange,
   refresh,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  createStaffInvite,
+  getStaffInvites,
+  revokeStaffInvite,
+  verifyStaffInviteToken,
+  acceptStaffInvite
 } from '../controllers/auth.controller.js';
 import auth from '../middleware/auth.middleware.js';
 import { checkIpBlock } from '../middleware/ipBlock.middleware.js';
@@ -51,5 +56,12 @@ router.post('/profile/phone/verify',     auth, verifyPhoneChange);
 
 router.post('/forgot-password',         forgotPassword);
 router.post('/reset-password/:token',   resetPassword);
+
+// Staff Invitation routes
+router.post('/staff-invites', auth, createStaffInvite);
+router.get('/staff-invites', auth, getStaffInvites);
+router.delete('/staff-invites/:inviteId', auth, revokeStaffInvite);
+router.get('/staff-invites/verify/:token', verifyStaffInviteToken);
+router.post('/accept-staff-invite', acceptStaffInvite);
 
 export default router;

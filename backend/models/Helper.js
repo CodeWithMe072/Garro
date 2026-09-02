@@ -12,6 +12,13 @@ const helperSchema = new mongoose.Schema({
     lng: { type: Number }
   },
   activeJobId:     { type: mongoose.Schema.Types.ObjectId, ref: 'Job', default: null },
+  deletionRequest: {
+    status:      { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'none' },
+    requestedAt: { type: Date },
+    reason:      { type: String },
+    reviewedAt:  { type: Date },
+    adminNotes:  { type: String }
+  },
   rating:          { type: Number, default: 5 },
   totalJobs:       { type: Number, default: 0 },
   workingHours: {

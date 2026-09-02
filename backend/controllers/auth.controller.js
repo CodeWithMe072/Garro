@@ -101,33 +101,58 @@ export const register = async (req, res) => {
     const phoneExists = await User.findOne({ phone: cleanPhone });
     if (phoneExists) return res.status(400).json({ success: false, message: 'This phone number is already registered.' });
 
-    const hashed = await bcrypt.hash(password, 12);
-    // Create new users as inactive so they must verify via OTP first
+    const isStaffRole = ['helper', 'staff', 'manager'].includes(role);
+    const initialStatus = isStaffRole || ['admin', 'superadmin'].includes(req.user?.role) ? 'active' : 'inactive';
+
     const user = await User.create({
       name: name.trim(),
       email: cleanEmail,
       phone: cleanPhone,
       password: hashed,
       role: role || 'customer',
-      status: 'inactive'
+      department: req.body.department || 'General',
+      employeeId: req.body.employeeId || '',
+      garageId: req.body.garageId || null,
+      status: initialStatus
     });
 
-    // Generate and send OTP immediately upon registration
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    await Otp.findOneAndUpdate(
-      { email: cleanEmail },
-      { code, createdAt: new Date() },
-      { upsert: true, new: true }
-    );
-    await sendEmailOtp(cleanEmail, code);
+    if (isStaffRole) {
+      const Helper = (await import('../models/Helper.js')).default;
+      const existingHelper = await Helper.findOne({ userId: user._id });
+      if (!existingHelper) {
+        await Helper.create({
+          name: user.name,
+          phone: user.phone,
+          email: user.email,
+          userId: user._id,
+          role: role === 'manager' ? 'manager' : 'helper',
+          garageId: user.garageId || null,
+          isAvailable: true,
+          dutyStatus: 'on_duty'
+        });
+      }
+    }
+
+    // Generate and send OTP for regular customer registrations
+    let demoCode = null;
+    if (initialStatus === 'inactive') {
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      await Otp.findOneAndUpdate(
+        { email: cleanEmail },
+        { code, createdAt: new Date() },
+        { upsert: true, new: true }
+      );
+      await sendEmailOtp(cleanEmail, code);
+      demoCode = process.env.RESEND_API_KEY ? null : code;
+    }
 
     const token = signToken(user);
     await generateAndSetRefreshToken(res, user._id);
     res.status(201).json({
       success: true,
       token,
-      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role },
-      demoCode: process.env.RESEND_API_KEY ? null : code
+      user: { id: user._id, name: user.name, email: user.email, phone: user.phone, role: user.role, garageId: user.garageId },
+      demoCode
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -838,6 +863,153 @@ export const resetPassword = async (req, res) => {
     await user.save();
 
     res.json({ success: true, message: 'Password has been reset successfully.' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/staff-invites
+export const createStaffInvite = async (req, res) => {
+  try {
+    const { email, role, department, garageId } = req.body;
+    if (!email || !email.trim()) return res.status(400).json({ success: false, message: 'Email is required' });
+
+    const cleanEmail = email.trim().toLowerCase();
+    const existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser) return res.status(400).json({ success: false, message: 'A user with this email is already registered.' });
+
+    const StaffInvite = (await import('../models/StaffInvite.js')).default;
+    await StaffInvite.updateMany({ email: cleanEmail, status: 'pending' }, { $set: { status: 'revoked' } });
+
+    const inviteToken = crypto.randomBytes(24).toString('hex');
+    const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000); // 3 days
+
+    const invite = await StaffInvite.create({
+      email: cleanEmail,
+      role: role || 'staff',
+      department: department || 'General',
+      garageId: garageId || null,
+      token: inviteToken,
+      expiresAt,
+      createdById: req.user?.id
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Staff invitation link generated successfully',
+      invite,
+      inviteToken
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// GET /api/auth/staff-invites
+export const getStaffInvites = async (req, res) => {
+  try {
+    const StaffInvite = (await import('../models/StaffInvite.js')).default;
+    const invites = await StaffInvite.find().sort({ createdAt: -1 }).populate('garageId', 'name');
+    res.json({ success: true, invites });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// DELETE /api/auth/staff-invites/:inviteId
+export const revokeStaffInvite = async (req, res) => {
+  try {
+    const { inviteId } = req.params;
+    const StaffInvite = (await import('../models/StaffInvite.js')).default;
+    const invite = await StaffInvite.findByIdAndUpdate(inviteId, { status: 'revoked' }, { new: true });
+    if (!invite) return res.status(404).json({ success: false, message: 'Invite not found' });
+    res.json({ success: true, message: 'Invitation revoked successfully', invite });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// GET /api/auth/staff-invites/verify/:token
+export const verifyStaffInviteToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const StaffInvite = (await import('../models/StaffInvite.js')).default;
+    const invite = await StaffInvite.findOne({ token, status: 'pending' }).populate('garageId', 'name');
+    if (!invite) {
+      return res.status(400).json({ success: false, message: 'Invalid or already used invitation link.' });
+    }
+    if (invite.expiresAt < new Date()) {
+      invite.status = 'revoked';
+      await invite.save();
+      return res.status(400).json({ success: false, message: 'This invitation link has expired.' });
+    }
+    res.json({ success: true, invite });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// POST /api/auth/accept-staff-invite
+export const acceptStaffInvite = async (req, res) => {
+  try {
+    const { token, firstName, lastName, phone, password } = req.body;
+    if (!token || !firstName || !lastName || !password) {
+      return res.status(400).json({ success: false, message: 'First name, last name, and password are required.' });
+    }
+
+    const StaffInvite = (await import('../models/StaffInvite.js')).default;
+    const invite = await StaffInvite.findOne({ token, status: 'pending' });
+    if (!invite) return res.status(400).json({ success: false, message: 'Invalid or expired invitation token.' });
+
+    if (invite.expiresAt < new Date()) {
+      invite.status = 'revoked';
+      await invite.save();
+      return res.status(400).json({ success: false, message: 'This invitation token has expired.' });
+    }
+
+    const cleanEmail = invite.email.toLowerCase();
+    const existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser) return res.status(400).json({ success: false, message: 'An account with this email already exists.' });
+
+    const fullName = `${firstName} ${lastName}`.trim();
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const userRole = invite.role === 'manager' ? 'manager' : 'helper';
+
+    const user = await User.create({
+      name: fullName,
+      email: cleanEmail,
+      phone: phone || '+971500000000',
+      password: hashedPassword,
+      role: userRole,
+      department: invite.department || 'General',
+      garageId: invite.garageId || null,
+      status: 'active'
+    });
+
+    const Helper = (await import('../models/Helper.js')).default;
+    await Helper.create({
+      name: user.name,
+      phone: user.phone,
+      email: user.email,
+      userId: user._id,
+      role: userRole,
+      garageId: invite.garageId || null,
+      isAvailable: true,
+      dutyStatus: 'on_duty'
+    });
+
+    invite.status = 'used';
+    await invite.save();
+
+    const authToken = signToken(user);
+    await generateAndSetRefreshToken(res, user._id);
+
+    res.status(201).json({
+      success: true,
+      message: 'Staff onboarding complete! Welcome to Garro.',
+      token: authToken,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, garageId: user.garageId }
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

@@ -9,6 +9,15 @@ const userSchema = new mongoose.Schema({
   status:   { type: String, enum: ['active', 'inactive', 'banned'], default: 'active' },
   dutyStatus: { type: String, enum: ['on_duty', 'off_duty'], default: 'on_duty' },
   garageId: { type: mongoose.Schema.Types.ObjectId, ref: 'Garage' },
+  department: { type: String, default: 'General' },
+  employeeId: { type: String },
+  deletionRequest: {
+    status:      { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'none' },
+    requestedAt: { type: Date },
+    reason:      { type: String },
+    reviewedAt:  { type: Date },
+    adminNotes:  { type: String }
+  },
   location: {
     lat: { type: Number },
     lng: { type: Number }
