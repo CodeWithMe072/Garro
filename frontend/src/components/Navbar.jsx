@@ -15,8 +15,6 @@ const Navbar = () => {
   const { lang, changeLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const isStaffView = location.pathname.startsWith('/admin/staff') || location.pathname.startsWith('/staff') || (location.pathname === '/my-bookings' && user?.role === 'staff');
-  const hideHomeInsurance = user?.role === 'staff' || isStaffView;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -134,37 +132,26 @@ const Navbar = () => {
           {/* Authenticated Links */}
           {isAuthenticated && (
             <>
-              {!hideHomeInsurance && (
-                <>
-                  <li>
-                    <Link to="/home" className={isActive('/home')}>
-                      <LuHouse size={15} /> {t('home')}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/insurance" className={isActive('/insurance')}>
-                      <LuShield size={15} /> {t('insurance')}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/roadside" className={isActive('/roadside')}>
-                      <LuTruck size={15} /> {t('roadside')}
-                    </Link>
-                  </li>
-                  <li>
-                    <Link to="/end-of-life" className={isActive('/end-of-life')}>
-                      <LuRecycle size={15} /> {t('scrap')}
-                    </Link>
-                  </li>
-                </>
-              )}
-              {['staff', 'helper'].includes(user?.role) && (
-                <li>
-                  <Link to="/admin/staff" className={isActive('/admin/staff')}>
-                    <LuLayoutDashboard size={15} /> Staff Dashboard
-                  </Link>
-                </li>
-              )}
+              <li>
+                <Link to="/home" className={isActive('/home')}>
+                  <LuHouse size={15} /> {t('home')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/insurance" className={isActive('/insurance')}>
+                  <LuShield size={15} /> {t('insurance')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/roadside" className={isActive('/roadside')}>
+                  <LuTruck size={15} /> {t('roadside')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/end-of-life" className={isActive('/end-of-life')}>
+                  <LuRecycle size={15} /> {t('scrap')}
+                </Link>
+              </li>
             </>
           )}
         </ul>
@@ -320,22 +307,26 @@ const Navbar = () => {
                       <Link to="/my-vehicles" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         <LuCar size={16} />{t('vehicles')}
                       </Link>
-                      <Link to="/my-reviews" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <LuMessageSquare size={16} />My Reviews
-                      </Link>
                       <Link to="/help-center" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
                         <LuCircleHelp size={16} />Help Center
                       </Link>
                     </>
                   )}
 
+
+
                   {['staff', 'helper'].includes(user?.role) && (
                     <>
                       <Link to="/admin/staff" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <LuLayoutDashboard size={16} />Staff Dashboard
+                        <LuLayoutDashboard size={16} />{t('dashboard') || 'Dashboard'}
                       </Link>
-                      <Link to="/my-requests" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                        <LuClipboardList size={16} />Assigned Jobs &amp; Requests
+                    </>
+                  )}
+
+                  {user?.role === 'garage' && (
+                    <>
+                      <Link to="/garage-portal" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
+                        <LuLayoutDashboard size={16} />Garage Portal
                       </Link>
                     </>
                   )}

@@ -6,6 +6,18 @@ import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import AdminSidebar from '../components/AdminSidebar';
 import PageLoader from '../components/PageLoader';
+import CustomDropdown from '../components/CustomDropdown';
+
+const REPORT_TYPE_OPTIONS = [
+  { value: 'revenue', label: 'Revenue Performance' },
+  { value: 'garage', label: 'Garage Performance' }
+];
+
+const PERIOD_SCOPE_OPTIONS = [
+  { value: '3', label: 'Last 3 Months' },
+  { value: '6', label: 'Last 6 Months' },
+  { value: '12', label: 'Last 12 Months' }
+];
 import {
   LuLayoutDashboard,
   LuStore,
@@ -142,29 +154,24 @@ const AdminReports = () => {
               <h5 className="fw-bold mb-4 text-slate-800">Configure Report</h5>
               
               <div className="mb-3">
-                <label className="form-label fw-semibold text-secondary">Report Type</label>
-                <select
-                  className="form-select rounded-3 shadow-none border-slate-200"
+                <label className="form-label fw-semibold text-secondary mb-2" style={{ display: 'block' }}>Report Type</label>
+                <CustomDropdown
+                  options={REPORT_TYPE_OPTIONS}
                   value={reportType}
-                  onChange={(e) => setReportType(e.target.value)}
-                >
-                  <option value="revenue">Revenue Performance</option>
-                  <option value="garage">Garage Performance</option>
-                </select>
+                  onChange={(val) => setReportType(val)}
+                  theme="light"
+                />
               </div>
 
               {reportType === 'revenue' && (
                 <div className="mb-3">
-                  <label className="form-label fw-semibold text-secondary">Period Scope</label>
-                  <select
-                    className="form-select rounded-3 shadow-none border-slate-200"
-                    value={months}
-                    onChange={(e) => setMonths(e.target.value)}
-                  >
-                    <option value="3">Last 3 Months</option>
-                    <option value="6">Last 6 Months</option>
-                    <option value="12">Last 12 Months</option>
-                  </select>
+                  <label className="form-label fw-semibold text-secondary mb-2" style={{ display: 'block' }}>Period Scope</label>
+                  <CustomDropdown
+                    options={PERIOD_SCOPE_OPTIONS}
+                    value={String(months)}
+                    onChange={(val) => setMonths(val)}
+                    theme="light"
+                  />
                 </div>
               )}
 

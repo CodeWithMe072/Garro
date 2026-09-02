@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LuX, LuSend, LuCircleCheck } from 'react-icons/lu';
+import CustomDropdown from './CustomDropdown';
 
 const EOLRequestModal = ({ isOpen, onClose, initialServiceType }) => {
   const [formData, setFormData] = useState({
@@ -237,39 +238,23 @@ const EOLRequestModal = ({ isOpen, onClose, initialServiceType }) => {
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.03em' }}>
                       Emirate
                     </label>
-                    <select
-                      name="emirate"
+                    <CustomDropdown
+                      options={emirates.map(em => ({ value: em, label: em }))}
                       value={formData.emirate}
-                      onChange={handleChange}
-                      style={{
-                        width: '100%', padding: '11px 16px', borderRadius: '12px',
-                        border: '1.5px solid #e2e8f0', fontSize: '13.5px', outline: 'none',
-                        fontFamily: "'Poppins', sans-serif", color: '#0f172a', background: '#fff'
-                      }}
-                    >
-                      {emirates.map(em => (
-                        <option key={em} value={em}>{em}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, emirate: val })}
+                      theme="light"
+                    />
                   </div>
                   <div className="col-sm-6">
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#334155', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '.03em' }}>
                       Service Type
                     </label>
-                    <select
-                      name="serviceType"
+                    <CustomDropdown
+                      options={serviceTypes.map(st => ({ value: st, label: st }))}
                       value={formData.serviceType}
-                      onChange={handleChange}
-                      style={{
-                        width: '100%', padding: '11px 16px', borderRadius: '12px',
-                        border: '1.5px solid #e2e8f0', fontSize: '13.5px', outline: 'none',
-                        fontFamily: "'Poppins', sans-serif", color: '#0f172a', background: '#fff'
-                      }}
-                    >
-                      {serviceTypes.map(st => (
-                        <option key={st} value={st}>{st}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => setFormData({ ...formData, serviceType: val })}
+                      theme="light"
+                    />
                   </div>
                 </div>
 

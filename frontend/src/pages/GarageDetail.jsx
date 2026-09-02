@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
+import CustomDropdown from '../components/CustomDropdown';
 
 const GarageDetail = () => {
   const { id } = useParams();
@@ -245,19 +246,19 @@ const GarageDetail = () => {
                   <form onSubmit={handleSubmitReview}>
                     <div className="row g-3">
                       <div className="col-md-4">
-                        <label className="form-label small">Rating</label>
-                        <select
-                          className="form-select"
-                          value={newRating}
-                          onChange={(e) => setNewRating(e.target.value)}
-                          required
-                        >
-                          <option value="5">5 Stars</option>
-                          <option value="4">4 Stars</option>
-                          <option value="3">3 Stars</option>
-                          <option value="2">2 Stars</option>
-                          <option value="1">1 Star</option>
-                        </select>
+                        <label className="form-label small mb-2" style={{ display: 'block' }}>Rating</label>
+                        <CustomDropdown
+                          options={[
+                            { value: '5', label: '5 Stars ⭐' },
+                            { value: '4', label: '4 Stars ⭐' },
+                            { value: '3', label: '3 Stars ⭐' },
+                            { value: '2', label: '2 Stars ⭐' },
+                            { value: '1', label: '1 Star ⭐' }
+                          ]}
+                          value={String(newRating)}
+                          onChange={(val) => setNewRating(val)}
+                          theme="light"
+                        />
                       </div>
                       <div className="col-md-8">
                         <label className="form-label small">Your Review</label>

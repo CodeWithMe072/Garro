@@ -20,6 +20,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import AdminSidebar from '../components/AdminSidebar';
+import CustomDropdown from '../components/CustomDropdown';
 
 const AdminQuoteBuilder = () => {
   const [requests, setRequests] = useState([]);
@@ -235,19 +236,15 @@ const AdminQuoteBuilder = () => {
                       <label style={{ display: 'block', fontSize: '13px', color: '#64748b', marginBottom: '8px' }}>
                         {lang === 'ar' ? 'تعيين كراج شريك' : (lang === 'ur' ? 'پارٹنر گیراج تفویض کریں' : 'Assign Partner Garage')}
                       </label>
-                      <select
+                      <CustomDropdown
+                        options={garages
+                          .filter(g => g.isOpen !== false && g.status === 'active')
+                          .map(g => ({ value: g._id, label: `${g.name} (${g.location?.city || 'UAE'})` }))}
                         value={selectedGarageId}
-                        onChange={(e) => setSelectedGarageId(e.target.value)}
-                        required
-                        style={{
-                          width: '100%', padding: '12px', background: '#fff', border: '1px solid #cbd5e1', borderRadius: '10px', color: '#1e293b'
-                        }}
-                      >
-                        <option value="">-- {lang === 'ar' ? 'اختر كراج شريك' : (lang === 'ur' ? 'پارٹنر گیراج منتخب کریں' : 'Choose Partner Garage')} --</option>
-                        {garages.map(g => (
-                          <option key={g._id} value={g._id}>{g.name} ({g.location?.city || 'UAE'})</option>
-                        ))}
-                      </select>
+                        onChange={(val) => setSelectedGarageId(val)}
+                        placeholder={`-- ${lang === 'ar' ? 'اختر كراج شريك' : (lang === 'ur' ? 'پارٹنر گیراج منتخب کریں' : 'Choose Partner Garage')} --`}
+                        theme="light"
+                      />
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '30px' }}>

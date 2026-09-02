@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import { LuGlobe, LuChevronDown, LuCheck, LuUser, LuLock, LuEye, LuEyeOff, LuArrowLeft, LuLogIn, LuUserPlus, LuShield, LuChevronRight, LuCircleAlert, LuClock, LuTag, LuHeadphones, LuMail, LuPhone } from 'react-icons/lu';
+import CustomDropdown from '../components/CustomDropdown';
 
 const localT = {
   en: {
@@ -36,6 +37,7 @@ const localT = {
     create_account_btn: "Create Account",
     or: "or",
     already_have_acc: "Already have an account? ",
+    back_to_site: "Back to Home",
     sign_in: "Sign In"
   },
   ar: {
@@ -104,10 +106,23 @@ const localT = {
   }
 };
 
+const COUNTRY_OPTIONS = [
+  { value: '+971', label: '🇦🇪 +971 (UAE)' },
+  { value: '+966', label: '🇸🇦 +966 (Saudi Arabia)' },
+  { value: '+965', label: '🇰🇼 +965 (Kuwait)' },
+  { value: '+973', label: '🇧🇭 +973 (Bahrain)' },
+  { value: '+968', label: '🇴🇲 +968 (Oman)' },
+  { value: '+974', label: '🇶🇦 +974 (Qatar)' },
+  { value: '+91',  label: '🇮🇳 +91 (India)' },
+  { value: '+44',  label: '🇬🇧 +44 (UK)' },
+  { value: '+1',   label: '🇺🇸 +1 (US)' }
+];
+
 const Signup = () => {
   const { lang, changeLanguage } = useLanguage();
   const [isLangOpen, setIsLangOpen] = useState(false);
   const lt = (key) => localT[lang]?.[key] || localT['en']?.[key] || key;
+  const [countryCode, setCountryCode] = useState('+971');
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -130,41 +145,56 @@ const Signup = () => {
     e.preventDefault();
     setError('');
 
+    // All fields validation
+    if (!formData.firstName.trim() || !formData.lastName.trim()) {
+      setError('First name and last name are required.');
+      return;
+    }
+
+    if (!formData.email.trim()) {
+      setError('Email address is required.');
+      return;
+    }
+
+    if (!formData.phone.trim()) {
+      setError('Mobile number is required.');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError('Passwords do not match.');
       return;
     }
 
-    if (!formData.phone) {
-      setError('Phone number is required');
+    // Clean digits from phone input
+    let digitsOnly = formData.phone.trim().replace(/\D/g, '');
+    if (digitsOnly.startsWith('0')) {
+      digitsOnly = digitsOnly.substring(1);
+    }
+
+    if (digitsOnly.length < 7 || digitsOnly.length > 15) {
+      setError('Please enter a valid mobile number.');
       return;
     }
 
-    let cleanPhone = formData.phone.trim().replace(/\s+/g, '');
-    if (cleanPhone.startsWith('05')) {
-      cleanPhone = '+971' + cleanPhone.slice(1);
-    } else if (cleanPhone.startsWith('5') && cleanPhone.length === 9) {
-      cleanPhone = '+971' + cleanPhone;
-    } else if (!cleanPhone.startsWith('+')) {
-      cleanPhone = '+' + cleanPhone;
-    }
-
-    if (!/^\+\d{8,15}$/.test(cleanPhone)) {
-      setError('Please enter a valid phone number (e.g. 0501234567 or +971501234567)');
-      return;
-    }
+    const fullPhone = countryCode + digitsOnly;
 
     setLoading(true);
 
     try {
-            const response = await fetch(`${API_BASE}/api/auth/register`, {
+      const response = await fetch(`${API_BASE}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          name: `${formData.firstName} ${formData.lastName}`.trim(),
-          email: formData.email,
-          phone: cleanPhone,
+          name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+          email: formData.email.trim().toLowerCase(),
+          phone: fullPhone,
           password: formData.password
         })
       });
@@ -478,7 +508,7 @@ const Signup = () => {
             )}
           </h1>
           <p className="auth-sub" style={{ color: '#475569', fontSize: '15px', lineHeight: '1.6', maxWidth: '460px', marginBottom: '32px', fontWeight: '500' }}>
-            {lang === 'en' ? 'Book services, track your car, and get instant quotes from verified garages — all in one place.' : 
+            {lang === 'en' ? 'Book services, track your car, and get quotations from verified garages — all in one place.' : 
              lang === 'ar' ? 'احجز الخدمات، وتتبع سيارتك، واحصل على عروض أسعار فورية من كراجات معتمدة - كل ذلك في مكان واحد.' :
              'سروسز بک کریں، اپنی کار کو ٹریک کریں، اور تصدیق شدہ گیراجز سے فوری کوٹیشنز حاصل کریں — سب ایک ہی جگہ پر۔'}
           </p>
@@ -561,7 +591,7 @@ const Signup = () => {
 
       {/* RIGHT PANEL */}
       <div className="auth-right" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 32px' }}>
-        <div style={{ maxWidth: '420px', width: '100%', margin: '0 auto' }}>
+        <div style={{ maxWidth: '520px', width: '100%', margin: '0 auto' }}>
           <Link to="/" className="auth-back" style={{ marginBottom: '24px' }}>
             <LuArrowLeft size={16} style={{ transform: lang === 'ar' || lang === 'ur' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             <span>{lt('back_to_site')}</span>
@@ -571,7 +601,7 @@ const Signup = () => {
             <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em' }}>
               {lt('create_account')}
             </h2>
-            <p style={{ fontSize: '14px', color: '#64748b', marginTop: '6px' }}>
+            <p style={{ fontSize: '14.5px', color: '#64748b', marginTop: '6px' }}>
               {lang === 'ar' ? 'يرجى ملء التفاصيل لإنشاء حسابك' : lang === 'ur' ? 'براہ کرم اپنا اکاؤنٹ بنانے کے لیے تفصیلات درج کریں' : 'Please fill in the details to create your account'}
             </p>
           </div>
@@ -586,14 +616,14 @@ const Signup = () => {
           <form onSubmit={handleSubmit}>
             <div className="row g-3 mb-3" style={{ display: 'flex', gap: '12px' }}>
               <div style={{ flex: 1 }}>
-                <label className="auth-label" style={{ fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>First Name</label>
+                <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>First Name</label>
                 <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
                   <LuUser className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
                   <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First name" required />
                 </div>
               </div>
               <div style={{ flex: 1 }}>
-                <label className="auth-label" style={{ fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>Last Name</label>
+                <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>Last Name</label>
                 <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
                   <LuUser className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
                   <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last name" required />
@@ -602,33 +632,36 @@ const Signup = () => {
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label className="auth-label" style={{ fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('email_address')}</label>
+              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('email_address')}</label>
               <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
                 <LuMail className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
-                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Enter your email address" required />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="name@domain.com" required />
               </div>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label className="auth-label" style={{ fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('phone_number')}</label>
-              <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
-                <LuPhone className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
-                <input 
-                  type="text" 
-                  name="phone" 
-                  value={formData.phone} 
-                  onChange={handleChange} 
-                  required 
-                  placeholder="e.g. +971501234567" 
-                />
+              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('phone_number')} *</label>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ width: '185px', flexShrink: 0 }}>
+                  <CustomDropdown
+                    options={COUNTRY_OPTIONS}
+                    value={countryCode}
+                    onChange={(val) => setCountryCode(val)}
+                    placeholder="🇦🇪 +971 (UAE)"
+                  />
+                </div>
+                <div className="auth-iw" style={{ marginBottom: 0, position: 'relative', flex: 1 }}>
+                  <LuPhone className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
+                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="e.g. 501234567 or 9876543210" required />
+                </div>
               </div>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label className="auth-label" style={{ fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('password')}</label>
+              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('password')}</label>
               <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
                 <LuLock className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
-                <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} placeholder="Create a strong password" required />
+                <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} placeholder="Minimum 6 characters" required />
                 <button type="button" className="auth-eye" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}>
                   {showPassword ? <LuEyeOff size={18} /> : <LuEye size={18} />}
                 </button>
@@ -636,7 +669,7 @@ const Signup = () => {
             </div>
 
             <div style={{ marginBottom: '20px' }}>
-              <label className="auth-label" style={{ fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('confirm_password')}</label>
+              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('confirm_password')}</label>
               <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
                 <LuLock className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
                 <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm your password" required />
@@ -645,11 +678,11 @@ const Signup = () => {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
               <input type="checkbox" id="terms" required style={{ width: '18px', height: '18px', accentColor: '#ff5c1a', cursor: 'pointer' }} />
-              <label htmlFor="terms" style={{ fontSize: '13px', color: '#475569', cursor: 'pointer', userSelect: 'none', fontWeight: '700' }}>
-                {lt('agree_to')}
-                <a href="#" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>{lt('terms')}</a>
-                {lt('and')}
-                <a href="#" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>{lt('privacy')}</a>
+              <label htmlFor="terms" style={{ fontSize: '13.5px', color: '#475569', cursor: 'pointer', userSelect: 'none', fontWeight: '700' }}>
+                {lt('agree_to')}{' '}
+                <Link to="/terms" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>{lt('terms')}</Link>
+                {' '}{lt('and')}{' '}
+                <Link to="/privacy" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>{lt('privacy')}</Link>
               </label>
             </div>
 
@@ -678,7 +711,7 @@ const Signup = () => {
           
           <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '11px', color: '#94a3b8' }}>
             By signing up, you agree to our{' '}
-            <a href="#" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '600' }}>Terms of Service</a>
+            <a href="#" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '600' }}>Terms & Conditions</a>
             {' '}and{' '}
             <a href="#" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '600' }}>Privacy Policy</a>.
           </div>

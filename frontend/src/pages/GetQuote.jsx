@@ -30,6 +30,7 @@ const GetQuote = () => {
   const [area, setArea] = useState('');
   const [urgency, setUrgency] = useState('');
   const [vinNumber, setVinNumber] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const [catalogBrands, setCatalogBrands] = useState([]);
   const [catalogServices, setCatalogServices] = useState([]);
@@ -117,6 +118,7 @@ const GetQuote = () => {
 
   const handleQuoteSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
 
     // Role guard — only customers may submit
     if (isHidden) return;
@@ -125,6 +127,7 @@ const GetQuote = () => {
       return;
     }
 
+    const formData = new FormData(e.target);
     const catVal = (formData.get('category') || category || '').trim();
     const subCatVal = (formData.get('sub_category') || subCategory || '').trim();
 
@@ -142,10 +145,17 @@ const GetQuote = () => {
     const car_model = formData.get('car_model') || carModel;
     const car_year = formData.get('car_year') || carYear;
     const city_name = formData.get('city_name') || cityName;
-    const area = formData.get('area');
+    const areaVal = formData.get('area') || area;
     const problem_title = formData.get('problem_title');
-    const phone = formData.get('phone');
-    const urgency = formData.get('urgency');
+    const phoneVal = formData.get('phone');
+    const urgencyVal = formData.get('urgency') || urgency;
+
+    if (phoneVal && phoneVal.trim() && !/^\+?\d{8,15}$/.test(phoneVal.replace(/\s+/g, ''))) {
+      toast.error('Please enter a valid phone number (e.g. 0501234567 or +971501234567).');
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
       const token = localStorage.getItem('token');
@@ -156,10 +166,10 @@ const GetQuote = () => {
         carModel: car_model,
         carYear: car_year,
         cityName: city_name,
-        area,
+        area: areaVal,
         problemTitle: problem_title,
-        phone,
-        urgency,
+        phone: phoneVal,
+        urgency: urgencyVal,
         vinNumber: formData.get('vin_number') || vinNumber || ''
       };
 
@@ -214,6 +224,8 @@ const GetQuote = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'Error submitting request. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -307,31 +319,30 @@ const GetQuote = () => {
               {/* Quick Select Saved Location */}
               {savedFavorites.length > 0 && (
                 <div className="col-12 mb-3">
-                  <div className="qform-label"><span className="material-icons-round">bookmark</span> Quick Select Saved Favorite Location</div>
-                  <select
-                    className="qform-input"
-                    style={{ height: '48px', borderRadius: '12px', border: '1.5px solid #cbd5e1', outline: 'none', width: '100%', background: '#fff' }}
-                    onChange={(e) => {
-                      const favIndex = e.target.value;
-                      if (favIndex !== '') {
-                        const selectedFav = savedFavorites[favIndex];
-                        const parts = selectedFav.address.split(',');
-                        if (parts.length >= 2) {
-                          const favArea = parts[0].trim();
-                          const favCity = parts[1].trim();
-                          setCityName(favCity);
-                          setArea(favArea);
-                        } else {
-                          setArea(selectedFav.address);
+                  <div className="qform-label mb-2" style={{ display: 'block' }}><span className="material-icons-round">bookmark</span> Quick Select Saved Favorite Location</div>
+                  <CustomDropdown
+                    options={savedFavorites.map((fav, i) => ({
+                      value: String(i),
+                      label: `${fav.label || 'Saved Location'}: ${fav.address}`
+                    }))}
+                    onChange={(val) => {
+                      if (val !== '') {
+                        const selectedFav = savedFavorites[Number(val)];
+                        if (selectedFav) {
+                          const parts = selectedFav.address.split(',');
+                          if (parts.length >= 2) {
+                            setCityName(parts[1].trim());
+                            setArea(parts[0].trim());
+                          } else {
+                            setCityName('Dubai');
+                            setArea(selectedFav.address);
+                          }
                         }
                       }
                     }}
-                  >
-                    <option value="">-- Choose a Saved Location --</option>
-                    {savedFavorites.map((fav, index) => (
-                      <option key={index} value={index}>{fav.label} ({fav.address})</option>
-                    ))}
-                  </select>
+                    placeholder="Select Saved Favorite Location"
+                    theme="light"
+                  />
                 </div>
               )}
 
@@ -445,18 +456,19 @@ const GetQuote = () => {
                 <button
                   type="submit"
                   className="btn-quote-submit"
+                  disabled={submitting || isReadOnly}
                   style={{
                     maxWidth: '340px',
                     padding: '14px 48px',
                     borderRadius: '12px',
                     fontSize: '15px',
                     height: 'auto',
-                    cursor: 'pointer',
-                    opacity: 1,
+                    cursor: submitting || isReadOnly ? 'not-allowed' : 'pointer',
+                    opacity: submitting || isReadOnly ? 0.7 : 1,
                     pointerEvents: 'auto'
                   }}
                 >
-                  {t('get_a_quote')}
+                  {submitting ? 'Submitting Request...' : t('get_a_quote')}
                 </button>
               </div>
             </div>

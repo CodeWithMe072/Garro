@@ -21,6 +21,7 @@ import {
 import { io } from 'socket.io-client';
 import { useLanguage } from '../context/LanguageContext';
 import StaffSidebar from '../components/StaffSidebar';
+import CustomDropdown from '../components/CustomDropdown';
 
 const StaffDashboard = () => {
   const { user } = useAuth();
@@ -68,7 +69,7 @@ const StaffDashboard = () => {
   useEffect(() => {
     fetchJobs();
 
-    const socket = io(API_BASE);
+    const socket = io(API_BASE, { transports: ['websocket', 'polling'], withCredentials: true });
 
     socket.on('job:status', (data) => {
       console.log('Real-time job:status update received in Staff:', data);
@@ -272,17 +273,22 @@ const StaffDashboard = () => {
       <StaffSidebar pendingJobsCount={stats.my_pending} />
 
       {/* ── MAIN ── */}
-      <main className="staff-main">
-        <div className="dash-header mb-4" style={{ display: 'block' }}>
-          <div className="dash-title">{t('staff_dashboard')}</div>
-          <div className="dash-subtitle">{t('welcome_back')}, {user?.firstName || 'Staff'}!</div>
+      <main className="staff-main" style={{ padding: '24px 32px' }}>
+        {/* Header */}
+        <div className="mb-4">
+          <h2 style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', margin: '0 0 4px' }}>
+            {t('staff_dashboard') !== 'staff_dashboard' ? t('staff_dashboard') : 'Staff Dashboard'}
+          </h2>
+          <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
+            {t('welcome_back') !== 'welcome_back' ? t('welcome_back') : 'Welcome back'}, <strong>{user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : (user?.name || user?.email?.split('@')[0] || 'Staff')}</strong>!
+          </p>
         </div>
 
         {/* 🚨 Emergency Pickup Alert Banner */}
         {emergencyJobs.length > 0 && (
           <div style={{
             background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
-            color: 'white', borderRadius: '16px', padding: '20px', marginBottom: '24px',
+            color: 'white', borderRadius: '16px', padding: '20px 24px', marginBottom: '24px',
             boxShadow: '0 10px 25px -5px rgba(220, 38, 38, 0.4)', border: '2px solid #fca5a5'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
@@ -321,40 +327,76 @@ const StaffDashboard = () => {
           </div>
         )}
 
-        {/* Stats */}
-        <div className="s-stats">
-          <div className="s-stat">
-            <div className="ico" style={{ display: 'flex', justifyContent: 'center' }}><LuClipboardList /></div>
-            <div className="val">{stats.my_total}</div>
-            <div className="lbl">{t('my_bookings')}</div>
-          </div>
-          <div className="s-stat">
-            <div className="ico" style={{ display: 'flex', justifyContent: 'center' }}><LuHourglass /></div>
-            <div className="val" style={{ color: '#f59e0b' }}>{stats.my_pending}</div>
-            <div className="lbl">{t('pending')}</div>
-          </div>
-          <div className="s-stat highlight">
-            <div className="ico" style={{ display: 'flex', justifyContent: 'center' }}><LuCircleCheck /></div>
-            <div className="val">{stats.my_completed}</div>
-            <div className="lbl">{t('completed')}</div>
-          </div>
-          <div className="s-stat">
-            <div className="ico" style={{ display: 'flex', justifyContent: 'center' }}><LuCalendar /></div>
-            <div className="val" style={{ color: '#3b82f6' }}>{stats.my_today}</div>
-            <div className="lbl">{t('today')}</div>
-          </div>
-          <div className="s-stat">
-            <div className="ico" style={{ display: 'flex', justifyContent: 'center' }}><LuMessageSquare /></div>
-            <div className="val" style={{ color: '#ef4444' }}>{stats.unread_msgs}</div>
-            <div className="lbl">{t('messages')}</div>
-          </div>
+        {/* Stats Row */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+          {[
+            { label: t('my_bookings') !== 'my_bookings' ? t('my_bookings') : 'My Bookings', value: stats.my_total, icon: <LuClipboardList size={22} />, color: '#ff5c1a', bg: '#fff5f0' },
+            { label: t('pending') !== 'pending' ? t('pending') : 'Pending', value: stats.my_pending, icon: <LuHourglass size={22} />, color: '#f59e0b', bg: '#fffbeb' },
+            { label: t('completed') !== 'completed' ? t('completed') : 'Completed', value: stats.my_completed, icon: <LuCircleCheck size={22} />, color: '#10b981', bg: '#f0fdf4' },
+            { label: t('today') !== 'today' ? t('today') : 'Today', value: stats.my_today, icon: <LuCalendar size={22} />, color: '#3b82f6', bg: '#eff6ff' },
+            { label: t('messages') !== 'messages' ? t('messages') : 'Messages', value: stats.unread_msgs, icon: <LuMessageSquare size={22} />, color: '#8b5cf6', bg: '#f5f3ff' }
+          ].map((item, idx) => (
+            <div key={idx} style={{
+              background: '#ffffff',
+              borderRadius: '16px',
+              padding: '18px 20px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                  {item.label}
+                </div>
+                <div style={{ fontSize: '26px', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
+                  {item.value}
+                </div>
+              </div>
+              <div style={{
+                width: '44px',
+                height: '44px',
+                borderRadius: '12px',
+                background: item.bg,
+                color: item.color,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                {item.icon}
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Today's Schedule */}
-        <div className="schedule-card">
-          <div className="schedule-head">
-            <h4><LuCalendarDays className="text-primary-garro me-2" size={18} />{t('todays_schedule')} <span className="today-badge">{t('active_jobs')}</span></h4>
-            <span style={{ fontSize: '13px', color: '#64748b' }}>{mappedBookings.length} {t('jobs_assigned')}</span>
+        {/* Today's Schedule Card */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+          padding: '24px'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid #f1f5f9' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: '#fff5f0', color: '#ff5c1a', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <LuCalendarDays size={22} />
+              </div>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {t('todays_schedule') !== 'todays_schedule' ? t('todays_schedule') : "Today's Schedule"}
+                  <span style={{ background: '#dcfce7', color: '#166534', fontSize: '11px', fontWeight: 700, padding: '3px 10px', borderRadius: '12px' }}>
+                    {t('active_jobs') !== 'active_jobs' ? t('active_jobs') : 'Active Jobs'}
+                  </span>
+                </h4>
+                <span style={{ fontSize: '12.5px', color: '#64748b' }}>Scheduled tasks &amp; assigned service jobs for today</span>
+              </div>
+            </div>
+            <span style={{ background: '#f8fafc', color: '#475569', border: '1px solid #e2e8f0', padding: '6px 14px', borderRadius: '20px', fontSize: '12.5px', fontWeight: 700 }}>
+              {mappedBookings.length} {mappedBookings.length === 1 ? 'Job Assigned' : 'Jobs Assigned'}
+            </span>
           </div>
 
           {mappedBookings.length > 0 ? (
@@ -472,10 +514,12 @@ const StaffDashboard = () => {
               ))}
             </div>
           ) : (
-            <div className="d-flex flex-column align-items-center justify-content-center py-5">
-              <LuCalendarDays size={48} className="text-muted mb-3" />
-              <div style={{ fontWeight: '700', fontSize: '15px', color: '#374151', marginBottom: '6px' }}>No bookings assigned</div>
-              <div style={{ fontSize: '13px', color: '#94a3b8' }}>Nothing scheduled for today.</div>
+            <div style={{ textAlign: 'center', padding: '48px 24px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#ffffff', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', color: '#ff5c1a' }}>
+                <LuCalendarDays size={28} />
+              </div>
+              <h5 style={{ fontWeight: 800, color: '#0f172a', margin: '0 0 4px', fontSize: '16px' }}>No Bookings Assigned</h5>
+              <p style={{ color: '#64748b', fontSize: '13.5px', margin: 0 }}>There are no active jobs or tasks scheduled for you today.</p>
             </div>
           )}
         </div>
@@ -505,20 +549,19 @@ const StaffDashboard = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-bold text-secondary">Fuel Level</label>
-                <select
-                  className="form-select text-dark bg-white"
-                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
+                <label className="form-label small fw-bold text-secondary mb-2" style={{ display: 'block' }}>Fuel Level</label>
+                <CustomDropdown
+                  options={[
+                    { value: 'empty', label: 'Empty' },
+                    { value: 'quarter', label: 'Quarter Tank' },
+                    { value: 'half', label: 'Half Tank' },
+                    { value: 'three_quarter', label: 'Three Quarter Tank' },
+                    { value: 'full', label: 'Full Tank' }
+                  ]}
                   value={vcrData.fuelLevel}
-                  onChange={(e) => setVcrData({ ...vcrData, fuelLevel: e.target.value })}
-                  required
-                >
-                  <option value="empty">Empty</option>
-                  <option value="quarter">Quarter Tank</option>
-                  <option value="half">Half Tank</option>
-                  <option value="three_quarter">Three Quarter Tank</option>
-                  <option value="full">Full Tank</option>
-                </select>
+                  onChange={(val) => setVcrData({ ...vcrData, fuelLevel: val })}
+                  theme="light"
+                />
               </div>
 
               <div className="mb-3">
@@ -567,21 +610,20 @@ const StaffDashboard = () => {
 
             <form onSubmit={handleExtendSubmit}>
               <div className="mb-3">
-                <label className="form-label small fw-bold text-secondary">Additional Hours to Add</label>
-                <select
-                  className="form-select text-dark bg-white"
-                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
-                  value={extendHours}
-                  onChange={(e) => setExtendHours(e.target.value)}
-                  required
-                >
-                  <option value="1">1 Hour</option>
-                  <option value="2">2 Hours</option>
-                  <option value="3">3 Hours</option>
-                  <option value="4">4 Hours</option>
-                  <option value="6">6 Hours</option>
-                  <option value="24">24 Hours (1 Day)</option>
-                </select>
+                <label className="form-label small fw-bold text-secondary mb-2" style={{ display: 'block' }}>Additional Hours to Add</label>
+                <CustomDropdown
+                  options={[
+                    { value: '1', label: '1 Hour' },
+                    { value: '2', label: '2 Hours' },
+                    { value: '3', label: '3 Hours' },
+                    { value: '4', label: '4 Hours' },
+                    { value: '6', label: '6 Hours' },
+                    { value: '24', label: '24 Hours (1 Day)' }
+                  ]}
+                  value={String(extendHours)}
+                  onChange={(val) => setExtendHours(val)}
+                  theme="light"
+                />
               </div>
 
               <div className="mb-3">

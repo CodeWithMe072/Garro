@@ -65,7 +65,8 @@ const AdminSupportChat = React.lazy(() => import('./pages/AdminSupportChat'));
 const AdminActivityLogs = React.lazy(() => import('./pages/AdminActivityLogs'));
 const AdminBulkMessage = React.lazy(() => import('./pages/AdminBulkMessage'));
 const HelpCenter = React.lazy(() => import('./pages/HelpCenter'));
-const MyReviews = React.lazy(() => import('./pages/MyReviews'));
+const Terms = React.lazy(() => import('./pages/Terms'));
+const Privacy = React.lazy(() => import('./pages/Privacy'));
 const CustomerDashboard = React.lazy(() => import('./pages/CustomerDashboard'));
 const AdminServicePricing = React.lazy(() => import('./pages/AdminServicePricing'));
 
@@ -104,10 +105,12 @@ const AdminPageLayout = () => {
 // Role-based redirect for "/dashboard" links/notifications
 const DashboardRedirect = () => {
   const { user } = useAuth();
-  if (user?.role === 'manager' || user?.role === 'superadmin' || user?.role === 'admin') {
+  if (['manager', 'superadmin', 'admin'].includes(user?.role)) {
     return <Navigate to="/admin" replace />;
-  } else if (user?.role === 'staff') {
+  } else if (['staff', 'helper'].includes(user?.role)) {
     return <Navigate to="/admin/staff" replace />;
+  } else if (user?.role === 'garage') {
+    return <Navigate to="/garage-portal" replace />;
   } else if (user?.role === 'customer') {
     return <Navigate to="/customer/dashboard" replace />;
   }
@@ -164,21 +167,22 @@ const App = () => {
             <Route path="/my-vehicles" element={<ProtectedRoute><PageLayout><MyVehicles /></PageLayout></ProtectedRoute>} />
             <Route path="/my-invoices" element={<ProtectedRoute><PageLayout><MyInvoices /></PageLayout></ProtectedRoute>} />
             <Route path="/my-quotes" element={<ProtectedRoute><PageLayout><MyQuotes /></PageLayout></ProtectedRoute>} />
-            <Route path="/my-reviews" element={<ProtectedRoute><PageLayout><MyReviews /></PageLayout></ProtectedRoute>} />
             <Route path="/help-center" element={<PageLayout><HelpCenter /></PageLayout>} />
+            <Route path="/terms" element={<PageLayout><Terms /></PageLayout>} />
+            <Route path="/privacy" element={<PageLayout><Privacy /></PageLayout>} />
             <Route path="/booking/:id" element={<ProtectedRoute><PageLayout><BookingDetails /></PageLayout></ProtectedRoute>} />
             
-            <Route path="/insurance" element={<ProtectedRoute><PageLayout><Insurance /></PageLayout></ProtectedRoute>} />
+            <Route path="/insurance" element={<PageLayout><Insurance /></PageLayout>} />
             <Route path="/insurance/:slug/quote" element={<ProtectedRoute><PageLayout><InsuranceQuote /></PageLayout></ProtectedRoute>} />
-            <Route path="/roadside" element={<ProtectedRoute><PageLayout><Roadside /></PageLayout></ProtectedRoute>} />
+            <Route path="/roadside" element={<PageLayout><Roadside /></PageLayout>} />
             <Route path="/emergency-pickup" element={<ProtectedRoute><PageLayout><EmergencyPickup /></PageLayout></ProtectedRoute>} />
-            <Route path="/end-of-life" element={<ProtectedRoute><PageLayout><EndOfLife /></PageLayout></ProtectedRoute>} />
+            <Route path="/end-of-life" element={<PageLayout><EndOfLife /></PageLayout>} />
             
-            <Route path="/search" element={<ProtectedRoute><PageLayout><Search /></PageLayout></ProtectedRoute>} />
-            <Route path="/garage/:id" element={<ProtectedRoute><PageLayout><GarageDetail /></PageLayout></ProtectedRoute>} />
+            <Route path="/search" element={<PageLayout><Search /></PageLayout>} />
+            <Route path="/garage/:id" element={<PageLayout><GarageDetail /></PageLayout>} />
             <Route path="/garage/:id/book" element={<ProtectedRoute><PageLayout><BookGarage /></PageLayout></ProtectedRoute>} />
-            <Route path="/service/:slug" element={<ProtectedRoute><PageLayout><ServiceDetail /></PageLayout></ProtectedRoute>} />
-            <Route path="/services" element={<ProtectedRoute><PageLayout><Services /></PageLayout></ProtectedRoute>} />
+            <Route path="/service/:slug" element={<PageLayout><ServiceDetail /></PageLayout>} />
+            <Route path="/services" element={<PageLayout><Services /></PageLayout>} />
             
             <Route path="/my-bookings" element={<ProtectedRoute><PageLayout><MyBookings /></PageLayout></ProtectedRoute>} />
             <Route path="/booking/confirm/:id" element={<ProtectedRoute><PageLayout><BookingConfirm /></PageLayout></ProtectedRoute>} />
@@ -213,7 +217,7 @@ const App = () => {
             </Route>
 
             <Route path="/admin/staff" element={
-              <ProtectedRoute roles={['staff', 'manager', 'superadmin', 'admin']}>
+              <ProtectedRoute roles={['staff', 'helper', 'manager', 'superadmin', 'admin']}>
                 <PageLayout><StaffDashboard /></PageLayout>
               </ProtectedRoute>
             } />

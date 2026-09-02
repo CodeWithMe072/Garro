@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../config/api';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
@@ -32,7 +33,7 @@ const MyVehicles = () => {
   const [registrationExpiryDate, setRegistrationExpiryDate] = useState('');
   const [adding, setAdding] = useState(false);
 
-  const { toast } = useNotification();
+  const { toast, confirm } = useNotification();
   const navigate = useNavigate();
 
   const fetchVehicles = async () => {
@@ -159,24 +160,31 @@ const MyVehicles = () => {
     }
   };
 
-  const handleDeleteVehicle = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this vehicle?')) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/vehicles/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to delete vehicle.');
+  const handleDeleteVehicle = (id) => {
+    confirm({
+      title: 'Delete Vehicle?',
+      message: 'Are you sure you want to delete this vehicle from your account? This action cannot be undone.',
+      confirmText: 'Delete Vehicle',
+      cancelText: 'Cancel',
+      isDelete: true,
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_BASE}/api/vehicles/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            throw new Error(data.message || 'Failed to delete vehicle.');
+          }
+          toast.success('Vehicle deleted successfully.');
+          fetchVehicles();
+        } catch (err) {
+          toast.error(err.message);
+        }
       }
-      toast.success('Vehicle deleted successfully.');
-      fetchVehicles();
-    } catch (err) {
-      toast.error(err.message);
-    }
+    });
   };
 
   const getReminderStatus = (expiryDate, prefix) => {
@@ -246,7 +254,7 @@ const MyVehicles = () => {
               <LuCar style={{ color: '#ff5c1a' }} size={32} /> My Registered Vehicles
             </h1>
             <p style={{ color: '#64748b', fontSize: '14px', margin: 0 }}>
-              Add, edit, or deactivate your vehicles for service bookings
+              Add and manage your vehicle details.
             </p>
           </div>
           <button
@@ -319,36 +327,6 @@ const MyVehicles = () => {
                       }}>
                         Plate: {v.registrationNumber}
                       </span>
-                    </div>
-
-                    {/* Reminders section */}
-                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {[
-                        getOilReminderStatus(v.lastOilChangeDate),
-                        getReminderStatus(v.insuranceExpiryDate, 'Insurance'),
-                        getReminderStatus(v.registrationExpiryDate, 'Registration')
-                      ].filter(Boolean).map((rem, index) => (
-                        <div key={index} style={{
-                          background: rem.bg,
-                          color: rem.color,
-                          padding: '6px 12px',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                          fontWeight: '700',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}>
-                          <span style={{
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            backgroundColor: rem.color,
-                            display: 'inline-block'
-                          }}></span>
-                          {rem.label}
-                        </div>
-                      ))}
                     </div>
                   </div>
 
@@ -547,63 +525,6 @@ const MyVehicles = () => {
                   value={vinNumber}
                   onChange={(e) => setVinNumber(e.target.value)}
                   placeholder={t('vin_placeholder')}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: '#ffffff',
-                    border: '1.5px solid #cbd5e1',
-                    borderRadius: '10px',
-                    color: '#0f172a',
-                    fontSize: '13.5px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Last Oil Change Date</label>
-                <input
-                  type="date"
-                  value={lastOilChangeDate}
-                  onChange={(e) => setLastOilChangeDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: '#ffffff',
-                    border: '1.5px solid #cbd5e1',
-                    borderRadius: '10px',
-                    color: '#0f172a',
-                    fontSize: '13.5px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Insurance Expiry Date</label>
-                <input
-                  type="date"
-                  value={insuranceExpiryDate}
-                  onChange={(e) => setInsuranceExpiryDate(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px',
-                    background: '#ffffff',
-                    border: '1.5px solid #cbd5e1',
-                    borderRadius: '10px',
-                    color: '#0f172a',
-                    fontSize: '13.5px',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#64748b', marginBottom: '6px' }}>Registration Expiry Date</label>
-                <input
-                  type="date"
-                  value={registrationExpiryDate}
-                  onChange={(e) => setRegistrationExpiryDate(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '10px 12px',

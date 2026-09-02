@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { LuCircleCheck, LuX } from 'react-icons/lu';
+import CustomDropdown from '../components/CustomDropdown';
 
 const BookGarage = () => {
   const { id } = useParams();
@@ -229,30 +230,33 @@ const BookGarage = () => {
                   <div className="card-body p-4">
                     <div className="row g-3">
                       <div className="col-md-5">
-                        <label className="form-label small fw-medium">Car Brand *</label>
-                        <select className="form-select" value={selectedBrand} onChange={handleBrandChange} required>
-                          <option value="">Select Brand</option>
-                          {carBrands.map(brand => (
-                            <option key={brand.id} value={brand.id}>{brand.name}</option>
-                          ))}
-                        </select>
+                        <label className="form-label small fw-medium mb-2" style={{ display: 'block' }}>Car Brand *</label>
+                        <CustomDropdown
+                          options={carBrands.map(b => ({ value: b.id, label: b.name }))}
+                          value={selectedBrand}
+                          onChange={(val) => handleBrandChange({ target: { value: val } })}
+                          placeholder="Select Brand"
+                          theme="light"
+                        />
                       </div>
                       <div className="col-md-5">
-                        <label className="form-label small fw-medium">Car Model *</label>
-                        <select className="form-select" value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} required>
-                          <option value="">Select Model</option>
-                          {availableModels.map(model => (
-                            <option key={model.id} value={model.id}>{model.name}</option>
-                          ))}
-                        </select>
+                        <label className="form-label small fw-medium mb-2" style={{ display: 'block' }}>Car Model *</label>
+                        <CustomDropdown
+                          options={availableModels.map(m => ({ value: m.id, label: m.name }))}
+                          value={selectedModel}
+                          onChange={(val) => setSelectedModel(val)}
+                          placeholder="Select Model"
+                          theme="light"
+                        />
                       </div>
                       <div className="col-md-2">
-                        <label className="form-label small fw-medium">Year *</label>
-                        <select className="form-select" value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} required>
-                          {years.map(year => (
-                            <option key={year} value={year}>{year}</option>
-                          ))}
-                        </select>
+                        <label className="form-label small fw-medium mb-2" style={{ display: 'block' }}>Year *</label>
+                        <CustomDropdown
+                          options={years.map(y => ({ value: String(y), label: String(y) }))}
+                          value={String(selectedYear)}
+                          onChange={(val) => setSelectedYear(val)}
+                          theme="light"
+                        />
                       </div>
                       <div className="col-md-12">
                         <label className="form-label small fw-medium">Registration Plate Number *</label>
@@ -318,19 +322,24 @@ const BookGarage = () => {
                         />
                       </div>
                       <div className="col-md-6">
-                        <label className="form-label small fw-medium">Preferred Time *</label>
-                        <select className="form-select" value={prefTime} onChange={(e) => setPrefTime(e.target.value)} required>
-                          <option value="08:00">8:00 AM</option>
-                          <option value="09:00">9:00 AM</option>
-                          <option value="10:00">10:00 AM</option>
-                          <option value="11:00">11:00 AM</option>
-                          <option value="12:00">12:00 PM</option>
-                          <option value="13:00">1:00 PM</option>
-                          <option value="14:00">2:00 PM</option>
-                          <option value="15:00">3:00 PM</option>
-                          <option value="16:00">4:00 PM</option>
-                          <option value="17:00">5:00 PM</option>
-                        </select>
+                        <label className="form-label small fw-medium mb-2" style={{ display: 'block' }}>Preferred Time *</label>
+                        <CustomDropdown
+                          options={[
+                            { value: '08:00', label: '8:00 AM' },
+                            { value: '09:00', label: '9:00 AM' },
+                            { value: '10:00', label: '10:00 AM' },
+                            { value: '11:00', label: '11:00 AM' },
+                            { value: '12:00', label: '12:00 PM' },
+                            { value: '13:00', label: '1:00 PM' },
+                            { value: '14:00', label: '2:00 PM' },
+                            { value: '15:00', label: '3:00 PM' },
+                            { value: '16:00', label: '4:00 PM' },
+                            { value: '17:00', label: '5:00 PM' }
+                          ]}
+                          value={prefTime}
+                          onChange={(val) => setPrefTime(val)}
+                          theme="light"
+                        />
                       </div>
                     </div>
                   </div>

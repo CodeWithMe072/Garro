@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import CustomDropdown from '../components/CustomDropdown';
 
 const plansData = {
   comprehensive: {
@@ -47,6 +48,9 @@ const defaultPlan = {
 const InsuranceQuote = () => {
   const { slug } = useParams();
   const [showOverlay, setShowOverlay] = useState(false);
+  const [selectedMake, setSelectedMake] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedEmirate, setSelectedEmirate] = useState('');
   const [plan, setPlan] = useState(defaultPlan);
 
   useEffect(() => {
@@ -152,29 +156,55 @@ const InsuranceQuote = () => {
                       <input type="email" className="form-control" placeholder="you@example.com" required />
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label">Vehicle Make</label>
-                      <select className="form-select">
-                        <option value="">Select Make</option>
-                        <option>Toyota</option><option>Nissan</option><option>Honda</option>
-                        <option>BMW</option><option>Mercedes-Benz</option><option>Audi</option>
-                        <option>Hyundai</option><option>Kia</option><option>Ford</option>
-                        <option>Land Rover</option><option>Lexus</option><option>Other</option>
-                      </select>
+                      <label className="form-label mb-2" style={{ display: 'block' }}>Vehicle Make</label>
+                      <CustomDropdown
+                        options={[
+                          { value: 'Toyota', label: 'Toyota' },
+                          { value: 'Nissan', label: 'Nissan' },
+                          { value: 'Honda', label: 'Honda' },
+                          { value: 'BMW', label: 'BMW' },
+                          { value: 'Mercedes-Benz', label: 'Mercedes-Benz' },
+                          { value: 'Audi', label: 'Audi' },
+                          { value: 'Hyundai', label: 'Hyundai' },
+                          { value: 'Kia', label: 'Kia' },
+                          { value: 'Ford', label: 'Ford' },
+                          { value: 'Land Rover', label: 'Land Rover' },
+                          { value: 'Lexus', label: 'Lexus' },
+                          { value: 'Other', label: 'Other' }
+                        ]}
+                        value={selectedMake}
+                        onChange={(val) => setSelectedMake(val)}
+                        placeholder="Select Make"
+                        theme="light"
+                      />
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label">Vehicle Year</label>
-                      <select className="form-select">
-                        <option value="">Select Year</option>
-                        {years.map(y => <option key={y}>{y}</option>)}
-                      </select>
+                      <label className="form-label mb-2" style={{ display: 'block' }}>Vehicle Year</label>
+                      <CustomDropdown
+                        options={years.map(y => ({ value: String(y), label: String(y) }))}
+                        value={selectedYear}
+                        onChange={(val) => setSelectedYear(val)}
+                        placeholder="Select Year"
+                        theme="light"
+                      />
                     </div>
                     <div className="col-md-6">
-                      <label className="form-label">Emirate</label>
-                      <select className="form-select">
-                        <option value="">Select Emirate</option>
-                        <option>Dubai</option><option>Abu Dhabi</option><option>Sharjah</option>
-                        <option>Ajman</option><option>Ras Al Khaimah</option><option>Fujairah</option><option>Umm Al Quwain</option>
-                      </select>
+                      <label className="form-label mb-2" style={{ display: 'block' }}>Emirate</label>
+                      <CustomDropdown
+                        options={[
+                          { value: 'Dubai', label: 'Dubai' },
+                          { value: 'Abu Dhabi', label: 'Abu Dhabi' },
+                          { value: 'Sharjah', label: 'Sharjah' },
+                          { value: 'Ajman', label: 'Ajman' },
+                          { value: 'Ras Al Khaimah', label: 'Ras Al Khaimah' },
+                          { value: 'Fujairah', label: 'Fujairah' },
+                          { value: 'Umm Al Quwain', label: 'Umm Al Quwain' }
+                        ]}
+                        value={selectedEmirate}
+                        onChange={(val) => setSelectedEmirate(val)}
+                        placeholder="Select Emirate"
+                        theme="light"
+                      />
                     </div>
                     <div className="col-md-6">
                       <label className="form-label">{plan.extra_field_label}</label>

@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { useNotification } from '../context/NotificationContext';
 import AdminSidebar from '../components/AdminSidebar';
+import CustomDropdown from '../components/CustomDropdown';
 import { LuMegaphone, LuMail, LuUsers, LuCircleCheck } from 'react-icons/lu';
 
 const STATUS_STEPS = [
@@ -123,17 +124,12 @@ const AdminBulkMessage = () => {
                   <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#475569', marginBottom: '8px' }}>
                     Select Request Status
                   </label>
-                  <select
+                  <CustomDropdown
+                    options={STATUS_STEPS.map(s => ({ value: s.id, label: s.label }))}
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    style={{
-                      width: '100%', padding: '10px 12px', background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '10px', color: '#0f172a', fontSize: '14px', outline: 'none'
-                    }}
-                  >
-                    {STATUS_STEPS.map(step => (
-                      <option key={step.id} value={step.id}>{step.label}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setStatusFilter(val)}
+                    theme="light"
+                  />
                 </div>
               )}
 

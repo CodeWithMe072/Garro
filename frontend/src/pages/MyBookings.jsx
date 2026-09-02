@@ -7,6 +7,7 @@ import { io } from 'socket.io-client';
 import CustomDropdown from '../components/CustomDropdown';
 import AdminSidebar from '../components/AdminSidebar';
 import StaffSidebar from '../components/StaffSidebar';
+import GarageSidebar from '../components/GarageSidebar';
 import { useLanguage } from '../context/LanguageContext';
 import {
   LuClipboardList,
@@ -164,8 +165,9 @@ import {
 
           // 2. Slot + buffer zone check
           const conflict = slots.some(slot => {
+            if (!slot || !slot.startTime) return false;
             const sStart = new Date(slot.startTime);
-            const bEnd   = new Date(slot.bufferEndTime || slot.endTime);
+            const bEnd   = new Date(slot.bufferEndTime || slot.endTime || slot.startTime);
             const slotStartMin  = sStart.getHours() * 60 + sStart.getMinutes();
             const bufferEndMin  = bEnd.getHours()   * 60 + bEnd.getMinutes();
             return proposedStart < bufferEndMin && proposedEnd > slotStartMin;
@@ -173,15 +175,18 @@ import {
 
           if (conflict) {
             const slot = slots.find(slot => {
+              if (!slot || !slot.startTime) return false;
               const sStart = new Date(slot.startTime);
-              const bEnd   = new Date(slot.bufferEndTime || slot.endTime);
+              const bEnd   = new Date(slot.bufferEndTime || slot.endTime || slot.startTime);
               const slotStartMin = sStart.getHours() * 60 + sStart.getMinutes();
               const bufferEndMin = bEnd.getHours()   * 60 + bEnd.getMinutes();
               return proposedStart < bufferEndMin && proposedEnd > slotStartMin;
             });
-            const bEndTime = new Date(slot.bufferEndTime || slot.endTime);
-            setHasConflict(true);
-            setConflictReason(`Helper busy until ${bEndTime.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} (includes recovery buffer after ${slot.serviceType?.replace('_',' ')} job)`);
+            if (slot) {
+              const bEndTime = new Date(slot.bufferEndTime || slot.endTime || slot.startTime);
+              setHasConflict(true);
+              setConflictReason(`Helper busy until ${bEndTime.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} (includes recovery buffer after ${slot.serviceType?.replace('_',' ') || ''} job)`);
+            }
           } else {
             setHasConflict(false);
             setConflictReason('');
@@ -217,7 +222,7 @@ import {
     fetchBookings();
 
     // Socket.IO Listeners
-        const socket = io(API_BASE);
+    const socket = io(API_BASE, { transports: ['websocket', 'polling'], withCredentials: true });
 
     socket.on('request:new', (data) => {
       console.log('Real-time new request received in Bookings:', data);
@@ -705,22 +710,22 @@ import {
                   </div>
                 </div>
                 <div>
-                  <label className="form-label small fw-semibold text-dark mb-1">Est. Duration *</label>
-                  <select
-                    className="form-select form-select-sm"
-                    value={assignDuration}
-                    onChange={e => setAssignDuration(e.target.value)}
-                    required
-                  >
-                    <option value="1">1 Hour</option>
-                    <option value="2">2 Hours</option>
-                    <option value="3">3 Hours</option>
-                    <option value="4">4 Hours (Standard)</option>
-                    <option value="5">5 Hours</option>
-                    <option value="6">6 Hours</option>
-                    <option value="8">8 Hours</option>
-                    <option value="12">12 Hours (Full Day)</option>
-                  </select>
+                  <label className="form-label small fw-semibold text-dark mb-1" style={{ display: 'block' }}>Est. Duration *</label>
+                  <CustomDropdown
+                    options={[
+                      { value: '1', label: '1 Hour' },
+                      { value: '2', label: '2 Hours' },
+                      { value: '3', label: '3 Hours' },
+                      { value: '4', label: '4 Hours (Standard)' },
+                      { value: '5', label: '5 Hours' },
+                      { value: '6', label: '6 Hours' },
+                      { value: '8', label: '8 Hours' },
+                      { value: '12', label: '12 Hours (Full Day)' }
+                    ]}
+                    value={String(assignDuration)}
+                    onChange={(val) => setAssignDuration(val)}
+                    theme="light"
+                  />
                 </div>
                 {assignDate && assignTime && (
                   <div className="mt-3">
@@ -754,9 +759,9 @@ import {
                       const propEnd   = propStart + Number(assignDuration) * 60;
 
                       // Build busy intervals (actual job time)
-                      const busyIntervals = helperSchedule.map(slot => {
+                      const busyIntervals = (helperSchedule || []).filter(slot => slot && slot.startTime).map(slot => {
                         const s = new Date(slot.startTime);
-                        const e = new Date(slot.endTime);
+                        const e = new Date(slot.endTime || slot.startTime);
                         return {
                           start: s.getHours() * 60 + s.getMinutes(),
                           end:   e.getHours() * 60 + e.getMinutes(),
@@ -765,9 +770,9 @@ import {
                       });
 
                       // Build buffer intervals (after each job, job-duration length, max 4hrs)
-                      const bufferIntervals = helperSchedule.map(slot => {
-                        const jobEnd = new Date(slot.endTime);
-                        const bufEnd = new Date(slot.bufferEndTime || slot.endTime);
+                      const bufferIntervals = (helperSchedule || []).filter(slot => slot && slot.startTime).map(slot => {
+                        const jobEnd = new Date(slot.endTime || slot.startTime);
+                        const bufEnd = new Date(slot.bufferEndTime || slot.endTime || slot.startTime);
                         return {
                           start: jobEnd.getHours() * 60 + jobEnd.getMinutes(),
                           end:   bufEnd.getHours() * 60 + bufEnd.getMinutes(),
@@ -859,7 +864,8 @@ import {
     </div>
   );
 
-  const isStaff = user?.role === 'staff';
+  const isStaff = ['staff', 'helper'].includes(user?.role);
+  const isGarage = user?.role === 'garage';
 
   if (isAdmin) {
     return (
@@ -876,6 +882,17 @@ import {
     return (
       <div className="staff-wrapper">
         <StaffSidebar pendingJobsCount={bookings.filter(b => b.status === 'pickup_scheduled' || b.status === 'picked_up' || b.status === 'ready_for_delivery').length} />
+        <main className="staff-main">
+          {renderContent()}
+        </main>
+      </div>
+    );
+  }
+
+  if (isGarage) {
+    return (
+      <div className="staff-wrapper">
+        <GarageSidebar activeJobsCount={bookings.filter(b => b.status === 'in_garage' || b.status === 'assigned').length} />
         <main className="staff-main">
           {renderContent()}
         </main>

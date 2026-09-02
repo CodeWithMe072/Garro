@@ -108,11 +108,6 @@ const CustomerDashboard = () => {
               Welcome back to your Garro portal. Manage your vehicles and service requests in one place.
             </p>
           </div>
-          <div className="d-flex gap-2">
-            <Link to="/get-quote" className="btn d-flex align-items-center gap-2 rounded-3 fw-semibold px-3 py-2 shadow-sm text-white" style={{ background: 'linear-gradient(135deg, #ff5c1a 0%, #ff8c42 100%)', border: 'none' }}>
-              <LuPlus size={16} /> Schedule New Service
-            </Link>
-          </div>
         </div>
       </div>
 
@@ -176,11 +171,11 @@ const CustomerDashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions (Horizontal full width) */}
+      {/* Quick Actions */}
       <div className="card border-0 rounded-4 shadow-sm p-4 mb-4" style={{ background: '#ffffff' }}>
         <h5 className="fw-bold text-slate-800 mb-3">Quick Actions</h5>
-        <div className="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
-          <div className="col">
+        <div className="row g-3">
+          <div className="col-12 col-md-6 col-lg-4">
             <Link to="/get-quote" className="g-quick-action-link h-100">
               <div className="d-flex align-items-center gap-3 me-2">
                 <div className="action-icon-box flex-shrink-0">
@@ -189,51 +184,6 @@ const CustomerDashboard = () => {
                 <div>
                   <div className="fw-semibold text-slate-800" style={{ fontSize: '0.88rem' }}>Schedule New Service</div>
                   <div className="text-secondary" style={{ fontSize: '0.73rem' }}>Request custom quotes</div>
-                </div>
-              </div>
-              <LuChevronRight size={16} className="chevron ms-auto flex-shrink-0" />
-            </Link>
-          </div>
-
-          <div className="col">
-            <Link to="/my-requests" className="g-quick-action-link h-100">
-              <div className="d-flex align-items-center gap-3 me-2">
-                <div className="action-icon-box flex-shrink-0">
-                  <LuList size={20} />
-                </div>
-                <div>
-                  <div className="fw-semibold text-slate-800" style={{ fontSize: '0.88rem' }}>View All Requests</div>
-                  <div className="text-secondary" style={{ fontSize: '0.73rem' }}>Track list of all bookings</div>
-                </div>
-              </div>
-              <LuChevronRight size={16} className="chevron ms-auto flex-shrink-0" />
-            </Link>
-          </div>
-
-          <div className="col">
-            <Link to="/my-requests" state={{ activeTab: 'quotes' }} className="g-quick-action-link h-100">
-              <div className="d-flex align-items-center gap-3 me-2">
-                <div className="action-icon-box flex-shrink-0">
-                  <LuFileText size={20} />
-                </div>
-                <div>
-                  <div className="fw-semibold text-slate-800" style={{ fontSize: '0.88rem' }}>Check My Quotes</div>
-                  <div className="text-secondary" style={{ fontSize: '0.73rem' }}>Approve garage prices</div>
-                </div>
-              </div>
-              <LuChevronRight size={16} className="chevron ms-auto flex-shrink-0" />
-            </Link>
-          </div>
-
-          <div className="col">
-            <Link to="/my-vehicles" className="g-quick-action-link h-100">
-              <div className="d-flex align-items-center gap-3 me-2">
-                <div className="action-icon-box flex-shrink-0">
-                  <LuCar size={20} />
-                </div>
-                <div>
-                  <div className="fw-semibold text-slate-800" style={{ fontSize: '0.88rem' }}>Manage Vehicles</div>
-                  <div className="text-secondary" style={{ fontSize: '0.73rem' }}>Update your vehicle assets</div>
                 </div>
               </div>
               <LuChevronRight size={16} className="chevron ms-auto flex-shrink-0" />

@@ -315,20 +315,107 @@ const GarageManagement = () => {
   const handleToggleStatus = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/garages/${id}/toggle-status`, {
+      const res = await fetch(`${API_BASE}/api/garages/${id}/status`, {
         method: 'PATCH',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success(data.message || 'Status updated');
-        fetchGarages();
+        toast.success('Garage status updated successfully');
+        await fetchGarages();
       } else {
-        toast.error(data.message || 'Failed to update status');
+        toast.error(data.message || 'Failed to toggle status');
       }
     } catch (err) {
-      toast.error(err.message);
+      toast.error('Failed to toggle garage status');
     }
+  };
+
+  const handleApproveDeletion = async (garageId, garageName) => {
+    confirm({
+      title: 'Approve Garage Deletion & Permanent Closure',
+      message: `Are you sure you want to approve account deletion for "${garageName}"? This will permanently close the garage and deactivate all associated staff and helper accounts.`,
+      confirmText: 'Approve & Close Garage',
+      cancelText: 'Cancel',
+      isDelete: true,
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_BASE}/api/garages/admin/deletion-requests/${garageId}/approve`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({})
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            toast.success(data.message);
+            fetchGarages();
+          } else {
+            toast.error(data.message || 'Failed to approve deletion request');
+          }
+        } catch {
+          toast.error('Failed to approve deletion request');
+        }
+      }
+    });
+  };
+
+  const handleRejectDeletion = async (garageId, garageName) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/garages/admin/deletion-requests/${garageId}/reject`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message);
+        fetchGarages();
+      } else {
+        toast.error(data.message || 'Failed to reject deletion request');
+      }
+    } catch {
+      toast.error('Failed to reject deletion request');
+    }
+  };
+
+  const handleReopenGarage = async (garageId, garageName) => {
+    confirm({
+      title: 'Reopen Garage & Restore Access',
+      message: `Are you sure you want to reopen "${garageName}"? This will reactivate the garage listing and restore login access for all associated staff members.`,
+      confirmText: 'Reopen & Restore Access',
+      cancelText: 'Cancel',
+      isDelete: false,
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_BASE}/api/garages/admin/${garageId}/reopen`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({})
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            toast.success(data.message);
+            fetchGarages();
+          } else {
+            toast.error(data.message || 'Failed to reopen garage');
+          }
+        } catch {
+          toast.error('Failed to reopen garage');
+        }
+      }
+    });
   };
 
   const handleDelete = async (id, name) => {
@@ -344,7 +431,7 @@ const GarageManagement = () => {
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success('Garage deleted successfully');
-        fetchGarages();
+        await fetchGarages();
       } else {
         toast.error(data.message || 'Failed to delete garage');
       }
@@ -390,6 +477,68 @@ const GarageManagement = () => {
               <LuStore size={18} /> {t('add_garage')}
             </button>
           </div>
+
+          {/* Pending Deletion Requests Alert Banner */}
+          {garages.filter(g => g.deletionRequest?.status === 'pending').length > 0 && (
+            <div className="card border-danger border-2 shadow-sm mb-4" style={{ borderRadius: '16px', background: '#fff5f5' }}>
+              <div className="card-body p-4">
+                <div className="d-flex align-items-center justify-content-between mb-3">
+                  <h5 className="fw-bold text-danger m-0 d-flex align-items-center gap-2">
+                    <LuTrash2 size={20} /> Garage Account Deletion Requests ({garages.filter(g => g.deletionRequest?.status === 'pending').length})
+                  </h5>
+                  <span className="badge bg-danger text-white px-3 py-1.5 fw-bold" style={{ borderRadius: '8px' }}>Admin Action Required</span>
+                </div>
+                <p className="text-muted small mb-3">
+                  The following garage partners have requested permanent account deletion & workshop closure. Contact the owner to verify details before approving closure.
+                </p>
+                <div className="table-responsive">
+                  <table className="table align-middle mb-0 bg-white rounded-3 overflow-hidden shadow-sm" style={{ fontSize: '13px' }}>
+                    <thead style={{ background: '#fee2e2', color: '#991b1b', fontSize: '11px', textTransform: 'uppercase' }}>
+                      <tr>
+                        <th style={{ padding: '10px 14px' }}>GARAGE NAME</th>
+                        <th style={{ padding: '10px 14px' }}>CONTACT PERSON</th>
+                        <th style={{ padding: '10px 14px' }}>PHONE & EMAIL</th>
+                        <th style={{ padding: '10px 14px' }}>DATE REQUESTED</th>
+                        <th style={{ padding: '10px 14px' }}>REASON</th>
+                        <th className="text-end" style={{ padding: '10px 14px' }}>ACTIONS</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {garages.filter(g => g.deletionRequest?.status === 'pending').map(g => (
+                        <tr key={g._id}>
+                          <td className="fw-bold text-dark" style={{ padding: '12px 14px' }}>{g.name}</td>
+                          <td style={{ padding: '12px 14px' }}>{g.contactPerson || 'Garage Owner'}</td>
+                          <td style={{ padding: '12px 14px', fontSize: '12.5px' }}>
+                            <a href={`tel:${g.phone}`} className="d-block text-decoration-none text-dark fw-semibold"><LuPhone size={12} className="me-1" />{g.phone}</a>
+                            {g.email && <a href={`mailto:${g.email}`} className="d-block text-decoration-none text-muted"><LuMail size={12} className="me-1" />{g.email}</a>}
+                          </td>
+                          <td style={{ padding: '12px 14px', fontSize: '12px', color: '#64748b' }}>
+                            {new Date(g.deletionRequest?.requestedAt || g.updatedAt).toLocaleDateString()}
+                          </td>
+                          <td style={{ padding: '12px 14px', fontSize: '12px', maxWidth: '200px' }} className="text-truncate" title={g.deletionRequest?.reason}>
+                            {g.deletionRequest?.reason || 'Account closure requested'}
+                          </td>
+                          <td className="text-end" style={{ padding: '12px 14px' }}>
+                            <div className="d-flex justify-content-end gap-2">
+                              <a href={`tel:${g.phone}`} className="btn btn-sm btn-outline-primary py-1 px-2 text-decoration-none d-inline-flex align-items-center" style={{ borderRadius: '6px', fontSize: '12px' }}>
+                                <LuPhone size={13} className="me-1" /> Contact
+                              </a>
+                              <button onClick={() => handleApproveDeletion(g._id, g.name)} className="btn btn-sm btn-danger py-1 px-2 fw-bold d-inline-flex align-items-center" style={{ borderRadius: '6px', fontSize: '12px' }}>
+                                ✓ Approve & Close
+                              </button>
+                              <button onClick={() => handleRejectDeletion(g._id, g.name)} className="btn btn-sm btn-outline-secondary py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px', fontSize: '12px' }}>
+                                ✕ Reject
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Quick Stats Cards */}
           <div className="row g-3 mb-4">
@@ -486,18 +635,34 @@ const GarageManagement = () => {
                           </td>
                           <td>{g.commissionPercent ?? 10}%</td>
                           <td>
-                            <span className={`badge py-2 px-3 fs-8 ${g.status === 'active' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning'}`}>
-                              {g.status === 'active' ? t('active').toUpperCase() : t('inactive').toUpperCase()}
-                            </span>
+                            {g.deletionRequest?.status === 'pending' ? (
+                              <span className="badge bg-warning text-dark py-2 px-3 fw-bold" style={{ borderRadius: '8px', fontSize: '11px' }}>
+                                ⏳ DELETION REQUESTED
+                              </span>
+                            ) : g.status === 'active' ? (
+                              <span className="badge bg-success-subtle text-success py-2 px-3 fw-bold" style={{ borderRadius: '8px', fontSize: '11px' }}>
+                                ACTIVE
+                              </span>
+                            ) : (
+                              <span className="badge bg-danger-subtle text-danger py-2 px-3 fw-bold" style={{ borderRadius: '8px', fontSize: '11px' }}>
+                                PERMANENTLY CLOSED
+                              </span>
+                            )}
                           </td>
                           <td className="text-end pe-4">
                             <div className="d-flex justify-content-end gap-2">
                               <button onClick={() => handleOpenEditModal(g)} className="btn btn-sm btn-outline-secondary py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
                                 <LuPencil className="me-1" /> {t('edit')}
                               </button>
-                              <button onClick={() => handleToggleStatus(g._id)} className="btn btn-sm btn-outline-warning py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
-                                <LuRefreshCw className="me-1" /> {t('toggle_active')}
-                              </button>
+                              {g.status === 'inactive' || g.deletionRequest?.status === 'approved' ? (
+                                <button onClick={() => handleReopenGarage(g._id, g.name)} className="btn btn-sm btn-success py-1 px-2 fw-bold d-inline-flex align-items-center" style={{ borderRadius: '6px', fontSize: '12px' }}>
+                                  <LuRefreshCw className="me-1" /> Reopen Garage
+                                </button>
+                              ) : (
+                                <button onClick={() => handleToggleStatus(g._id)} className="btn btn-sm btn-outline-warning py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
+                                  <LuRefreshCw className="me-1" /> {t('toggle_active')}
+                                </button>
+                              )}
                               <button onClick={() => handleDelete(g._id, g.name)} className="btn btn-sm btn-outline-danger py-1 px-2 d-inline-flex align-items-center" style={{ borderRadius: '6px' }}>
                                 <LuTrash2 className="me-1" /> {t('delete')}
                               </button>
@@ -588,17 +753,17 @@ const GarageManagement = () => {
                   />
                 </div>
                 <div className="col-md-6">
-                  <label className="form-label small fw-bold text-light">Status</label>
-                  <select 
-                    className="form-select" 
-                    style={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', color: 'white' }}
+                  <label className="form-label small fw-bold text-light mb-2" style={{ display: 'block' }}>Status</label>
+                  <CustomDropdown 
+                    options={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'inactive', label: 'Inactive' },
+                      { value: 'suspended', label: 'Suspended' }
+                    ]}
                     value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="suspended">Suspended</option>
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, status: val })}
+                    theme="dark"
+                  />
                 </div>
                 <div className="col-12">
                   <label className="form-label small fw-bold text-light">Services Supported</label>

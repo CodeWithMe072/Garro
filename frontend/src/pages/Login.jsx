@@ -25,7 +25,7 @@ import {
 const localT = {
   en: {
     welcome_back: "Welcome Back.",
-    sign_in_sub: "Sign in to access your garage bookings, service quotes, and roadside requests.",
+    sign_in_sub: "Sign in to manage your vehicles, service requests, quotations and bookings with Garro.",
     why_garro: "Why Garro?",
     trusted_garages: "500+ Certified Garages",
     trusted_garages_desc: "All vetted for quality, transparent pricing, and fast delivery",
@@ -36,6 +36,7 @@ const localT = {
     support: "24/7 Dedicated Support",
     support_desc: "Our auto specialists are ready to help you anytime",
     back_to_home: "Back to Home",
+    back_to_site: "Back to Home",
     sign_in: "Sign In",
     sign_in_desc: "Enter your email address or phone number",
     email_or_phone: "Email or Phone Number *",
@@ -514,7 +515,7 @@ const Login = () => {
             )}
           </h1>
           <p className="auth-sub" style={{ color: '#475569', fontSize: '15px', lineHeight: '1.6', maxWidth: '460px', marginBottom: '32px', fontWeight: '500' }}>
-            {lang === 'en' ? 'Book services, track your car, and get instant quotes from verified garages — all in one place.' : 
+            {lang === 'en' ? 'Book services, track your car, and get quotations from verified garages — all in one place.' : 
              lang === 'ar' ? 'احجز الخدمات، وتتبع سيارتك، واحصل على عروض أسعار فورية من كراجات معتمدة - كل ذلك في مكان واحد.' :
              'سروسز بک کریں، اپنی کار کو ٹریک کریں، اور تصدیق شدہ گیراجز سے فوری کوٹیشنز حاصل کریں — سب ایک ہی جگہ پر۔'}
           </p>
@@ -585,8 +586,8 @@ const Login = () => {
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <a href="tel:0552830456" style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', textDecoration: 'none', display: 'block' }}>
-              055 283 0456
+            <a href="tel:+971501234567" style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', textDecoration: 'none', display: 'block' }}>
+              +971 50 123 4567
             </a>
             <span style={{ fontSize: '10px', color: '#64748b' }}>
               {lang === 'ar' ? 'دعم نفس اليوم' : 'Same Day Support'}
@@ -597,7 +598,7 @@ const Login = () => {
 
       {/* RIGHT */}
       <div className="auth-right" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ maxWidth: '420px', width: '100%', margin: '0 auto' }}>
+        <div style={{ maxWidth: '520px', width: '100%', margin: '0 auto', padding: '0 12px' }}>
           <Link to="/" className="auth-back" style={{ marginBottom: '24px' }}>
             <LuArrowLeft size={16} style={{ transform: lang === 'ar' || lang === 'ur' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             <span>{lt('back_to_site')}</span>
@@ -606,7 +607,7 @@ const Login = () => {
             <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#0f172a', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '8px' }}>
               {lt('welcome_back')}<span className="waving-emoji">👋</span>
             </h2>
-            <p style={{ fontSize: '14px', color: '#64748b', marginTop: '6px' }}>{lt('sign_in_sub')}</p>
+            <p style={{ fontSize: '14.5px', color: '#64748b', marginTop: '6px' }}>{lt('sign_in_sub')}</p>
           </div>
 
           {error && (
@@ -618,22 +619,22 @@ const Login = () => {
 
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom: '20px' }}>
-              <label className="auth-label" style={{ fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: '8px' }}>{lt('email_or_phone')}</label>
+              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px' }}>{lt('email_or_phone')}</label>
               <div className="auth-iw">
                 <LuUser className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
                 <input 
                   type="text" 
                   value={identifier} 
                   onChange={(e) => setIdentifier(e.target.value)} 
-                  placeholder={lt('enter_details')}
+                  placeholder={lt('email_or_phone_placeholder')}
                   required 
                 />
               </div>
             </div>
             <div style={{ marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <label className="auth-label" style={{ fontSize: '13px', fontWeight: '700', color: '#334155', marginBottom: 0 }}>{lt('password')}</label>
-                <a href="#" style={{ fontSize: '13px', color: '#ff5c1a', fontWeight: '700', textDecoration: 'none' }}>{lt('forgot_password')}</a>
+                <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: 0 }}>{lt('password')}</label>
+                <Link to="/forgot-password" style={{ fontSize: '13px', color: '#ff5c1a', fontWeight: '700', textDecoration: 'none' }}>{lt('forgot_password')}</Link>
               </div>
               <div className="auth-iw" style={{ position: 'relative' }}>
                 <LuLock className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
@@ -659,6 +660,8 @@ const Login = () => {
               <input 
                 type="checkbox" 
                 id="remember_me"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
                 style={{
                   width: '18px',
                   height: '18px',
@@ -666,7 +669,7 @@ const Login = () => {
                   cursor: 'pointer'
                 }}
               />
-              <label htmlFor="remember_me" style={{ fontSize: '13px', color: '#475569', cursor: 'pointer', userSelect: 'none', fontWeight: '700' }}>
+              <label htmlFor="remember_me" style={{ fontSize: '13.5px', color: '#475569', cursor: 'pointer', userSelect: 'none', fontWeight: '700' }}>
                 {lt('remember_me')}
               </label>
             </div>
@@ -691,51 +694,49 @@ const Login = () => {
           {/* Trust features row */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '32px', borderTop: '1.5px solid #f1f5f9', paddingTop: '20px' }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <LuShield size={14} color="#10b981" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <LuShield size={16} color="#10b981" />
               </div>
               <div>
-                <div style={{ fontSize: '10.5px', fontWeight: '800', color: '#0f172a', lineHeight: '1.1' }}>Secure & Safe</div>
-                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>Data protected</div>
+                <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' }}>Secure & Safe</div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Data protected</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <LuLock className="auth-input-icon" size={14} color="#3b82f6" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <LuLock className="auth-input-icon" size={16} color="#3b82f6" />
               </div>
               <div>
-                <div style={{ fontSize: '10.5px', fontWeight: '800', color: '#0f172a', lineHeight: '1.1' }}>Easy & Fast</div>
-                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>Login in seconds</div>
+                <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' }}>Easy & Fast</div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Login in seconds</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <LuHeadphones size={14} color="#ea580c" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <LuHeadphones size={16} color="#ea580c" />
               </div>
               <div>
-                <div style={{ fontSize: '10.5px', fontWeight: '800', color: '#0f172a', lineHeight: '1.1' }}>Need help?</div>
-                <div style={{ fontSize: '9px', color: '#64748b', marginTop: '2px' }}>We're here to help</div>
+                <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' }}>Need help?</div>
+                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>We're here to help</div>
               </div>
             </div>
           </div>
 
           {/* Footer terms */}
-          <div style={{ textAlign: 'center', marginTop: '28px', fontSize: '11.5px', color: '#94a3b8' }}>
+          <div style={{ textAlign: 'center', marginTop: '28px', fontSize: '13px', color: '#64748b' }}>
             {lang === 'ar' ? 'من خلال الاستمرار، فإنك توافق على ' : lang === 'ur' ? 'جاری رکھ کر، آپ متفق ہیں ' : 'By continuing, you agree to our '}
-            <a href="#" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '600' }}>
-              {lang === 'ar' ? 'شروط الخدمة' : lang === 'ur' ? 'سروس کی شرائط' : 'Terms of Service'}
-            </a>
+            <Link to="/terms" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>
+              {lang === 'ar' ? 'شروط الخدمة' : lang === 'ur' ? 'سروس کی شرائط' : 'Terms & Conditions'}
+            </Link>
             {lang === 'ar' ? ' و ' : lang === 'ur' ? ' اور ' : ' and '}
-            <a href="#" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '600' }}>
+            <Link to="/privacy" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>
               {lang === 'ar' ? 'سياسة الخصوصية' : lang === 'ur' ? 'رازداری کی پالیسی' : 'Privacy Policy'}
-            </a>
+            </Link>
           </div>
-
         </div>
       </div>
     </div>
   );
-
 };
 
 export default Login;

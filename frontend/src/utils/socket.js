@@ -5,7 +5,9 @@ let socket = null;
 
 export const getSocket = () => {
   if (!socket) {
-        socket = io(API_BASE, {
+    socket = io(API_BASE, {
+      transports: ['websocket', 'polling'],
+      withCredentials: true,
       auth: { token: localStorage.getItem('token') }
     });
   }

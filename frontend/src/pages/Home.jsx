@@ -30,6 +30,7 @@ const Home = () => {
   const [area, setArea] = useState('');
   const [urgency, setUrgency] = useState('');
   const [vinNumber, setVinNumber] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Catalog states
   const [catalogBrands, setCatalogBrands] = useState([]);
@@ -87,6 +88,8 @@ const Home = () => {
   const handleQuoteSubmit = async (e) => {
     e.preventDefault();
 
+    if (submitting) return;
+
     // Role guard — only customers may submit
     if (isHidden) return;
     if (isReadOnly) {
@@ -110,31 +113,36 @@ const Home = () => {
       return;
     }
 
-    const category_name = catVal;
-    const sub_category = subCatVal;
     const car_brand = formData.get('car_brand') || carBrand;
     const car_model = formData.get('car_model') || carModel;
     const car_year = formData.get('car_year') || carYear;
     const city_name = formData.get('city_name') || cityName;
-    const area = formData.get('area');
+    const areaVal = formData.get('area') || area;
     const problem_title = formData.get('problem_title');
-    const phone = formData.get('phone');
-    const urgency = formData.get('urgency');
+    const phoneVal = formData.get('phone');
+    const urgencyVal = formData.get('urgency') || urgency;
     const vin_number = formData.get('vin_number') || vinNumber;
+
+    if (phoneVal && phoneVal.trim() && !/^\+?\d{8,15}$/.test(phoneVal.replace(/\s+/g, ''))) {
+      toast.error('Please enter a valid phone number (e.g. 0501234567 or +971501234567).');
+      return;
+    }
+
+    setSubmitting(true);
 
     try {
       const token = localStorage.getItem('token');
       const payload = {
         category: catVal,
         subCategory: subCatVal,
-        carBrand,
-        carModel,
-        carYear,
+        carBrand: car_brand,
+        carModel: car_model,
+        carYear: car_year,
         cityName: city_name,
-        area,
+        area: areaVal,
         problemTitle: problem_title,
-        phone,
-        urgency,
+        phone: phoneVal,
+        urgency: urgencyVal,
         vinNumber: vin_number
       };
 
@@ -168,6 +176,8 @@ const Home = () => {
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'Error submitting request. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -322,8 +332,13 @@ const Home = () => {
                 <button
                   type="submit"
                   className="btn-quote-submit"
+                  disabled={submitting || isReadOnly}
+                  style={{
+                    cursor: submitting || isReadOnly ? 'not-allowed' : 'pointer',
+                    opacity: submitting || isReadOnly ? 0.7 : 1
+                  }}
                 >
-                  {t('get_a_quote')}
+                  {submitting ? 'Submitting...' : t('get_a_quote')}
                 </button>
               </div>
             </div>

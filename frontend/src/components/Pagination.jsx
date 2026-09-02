@@ -1,5 +1,6 @@
 import React from 'react';
 import { LuChevronLeft, LuChevronRight } from 'react-icons/lu';
+import CustomDropdown from './CustomDropdown';
 
 const Pagination = ({ page, totalPages, totalResults, limit, onPageChange, onLimitChange }) => {
   if (totalPages <= 1 && totalResults <= 10) return null;
@@ -14,16 +15,18 @@ const Pagination = ({ page, totalPages, totalResults, limit, onPageChange, onLim
           Showing <strong>{totalResults > 0 ? `${startIdx}-${endIdx}` : '0'}</strong> of <strong>{totalResults}</strong> refund requests
         </span>
         {onLimitChange && (
-          <select
-            className="form-select form-select-sm ms-2"
-            value={limit}
-            onChange={(e) => onLimitChange(Number(e.target.value))}
-            style={{ width: '80px', borderRadius: '8px', fontSize: '12px' }}
-          >
-            <option value={10}>10 / pg</option>
-            <option value={20}>20 / pg</option>
-            <option value={50}>50 / pg</option>
-          </select>
+          <div style={{ width: '100px' }}>
+            <CustomDropdown
+              options={[
+                { value: '10', label: '10 / pg' },
+                { value: '20', label: '20 / pg' },
+                { value: '50', label: '50 / pg' }
+              ]}
+              value={String(limit)}
+              onChange={(val) => onLimitChange(Number(val))}
+              theme="light"
+            />
+          </div>
         )}
       </div>
 

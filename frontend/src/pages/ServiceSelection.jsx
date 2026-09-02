@@ -2,6 +2,7 @@ import { API_BASE } from '../config/api';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import CustomDropdown from '../components/CustomDropdown';
 
 // Roles that cannot see the form at all
 const HIDDEN_ROLES = ['helper', 'garage', 'staff'];
@@ -24,8 +25,11 @@ const ServiceSelection = () => {
   const [catalogLocations, setCatalogLocations] = useState([]);
   
   const [selectedCat, setSelectedCat] = useState('');
+  const [selectedSubCat, setSelectedSubCat] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedUrgency, setSelectedUrgency] = useState('flexible');
 
   
   useEffect(() => {
@@ -87,8 +91,8 @@ const ServiceSelection = () => {
     return (
       <section className="gq-page">
         <div className="container">
-          <h1 className="gq-title">Get Instant Quotes from <span>Top-Rated Garages</span></h1>
-          <p className="gq-sub">Transparent pricing <span>·</span> Verified garages <span>·</span> Instant quotes</p>
+          <h1 className="gq-title">Request a Quote for Your Car Service</h1>
+          <p className="gq-sub">Tell us what your vehicle needs and Garro will arrange the right service and quotation for you.</p>
           <div className="gq-form-wrap" style={{ textAlign: 'center', padding: '48px 24px' }}>
             <div style={{
               display: 'inline-flex', flexDirection: 'column', alignItems: 'center',
@@ -111,83 +115,76 @@ const ServiceSelection = () => {
   return (
     <section className="gq-page">
       <div className="container">
-        <h1 className="gq-title">Get Instant Quotes from <span>Top-Rated Garages</span></h1>
-        <p className="gq-sub">Transparent pricing <span>·</span> Verified garages <span>·</span> Instant quotes</p>
+        <h1 className="gq-title">Request a Quote for Your Car Service</h1>
+        <p className="gq-sub">Tell us what your vehicle needs and Garro will arrange the right service and quotation for you.</p>
 
         <div className="gq-form-wrap">
           <form onSubmit={handleSubmit}>
             {/* Row 1: Service Category + Sub-Category */}
             <div className="gq-row gq-row-2">
               <div>
-                <div className="gq-label"><span className="material-icons-round">search</span> Service Category</div>
-                <select 
-                  name="category" 
-                  className="gq-select" 
-                  required 
-                  value={selectedCat} 
-                  onChange={e => setSelectedCat(e.target.value)}
-                >
-                  <option value="">Select main category</option>
-                  {catalogServices.map(c => (
-                    <option key={c._id} value={c.slug}>{c.name}</option>
-                  ))}
-                </select>
+                <div className="gq-label mb-2" style={{ display: 'block' }}><span className="material-icons-round">search</span> Service Category</div>
+                <CustomDropdown
+                  options={catalogServices.map(c => ({ value: c.slug, label: c.name }))}
+                  value={selectedCat}
+                  onChange={(val) => setSelectedCat(val)}
+                  placeholder="Select main category"
+                  theme="light"
+                />
               </div>
               <div>
-                <div className="gq-label"><span className="material-icons-round">list</span> Sub-Category</div>
-                <select name="sub_category" className="gq-select" defaultValue="" required>
-                  <option value="">Select sub-category</option>
-                  {catalogServices.find(c => c.slug === selectedCat)?.subCategories.map(s => (
-                    <option key={s._id} value={s.slug}>{s.name}</option>
-                  ))}
-                </select>
+                <div className="gq-label mb-2" style={{ display: 'block' }}><span className="material-icons-round">list</span> Sub-Category</div>
+                <CustomDropdown
+                  options={(catalogServices.find(c => c.slug === selectedCat)?.subCategories || []).map(s => ({ value: s.slug, label: s.name }))}
+                  value={selectedSubCat}
+                  onChange={(val) => setSelectedSubCat(val)}
+                  placeholder="Select sub-category"
+                  theme="light"
+                />
               </div>
             </div>
 
             {/* Row 2: Brand, Model, Year, City, Area */}
             <div className="gq-row gq-row-5">
               <div>
-                <div className="gq-label"><span className="material-icons-round">directions_car</span> Brand</div>
-                <select 
-                  name="car_brand" 
-                  className="gq-select" 
-                  value={selectedBrand} 
-                  onChange={e => setSelectedBrand(e.target.value)}
-                >
-                  <option value="">Select Brand</option>
-                  {catalogBrands.map(b => (
-                    <option key={b._id} value={b.name}>{b.name}</option>
-                  ))}
-                  <option value="Other">Other</option>
-                </select>
+                <div className="gq-label mb-2" style={{ display: 'block' }}><span className="material-icons-round">directions_car</span> Brand</div>
+                <CustomDropdown
+                  options={[
+                    ...catalogBrands.map(b => ({ value: b.name, label: b.name })),
+                    { value: 'Other', label: 'Other' }
+                  ]}
+                  value={selectedBrand}
+                  onChange={(val) => setSelectedBrand(val)}
+                  placeholder="Select Brand"
+                  theme="light"
+                />
               </div>
               <div>
                 <div className="gq-label"><span className="material-icons-round">tune</span> Model</div>
                 <input type="text" name="car_model_name" className="gq-input" placeholder="Any Model" />
               </div>
               <div>
-                <div className="gq-label"><span className="material-icons-round">calendar_today</span> Year</div>
-                <select name="car_year" className="gq-select" defaultValue="">
-                  <option value="">Year</option>
-                  {[...Array(20)].map((_, i) => {
-                    const year = new Date().getFullYear() - i;
-                    return <option key={year} value={year}>{year}</option>;
+                <div className="gq-label mb-2" style={{ display: 'block' }}><span className="material-icons-round">calendar_today</span> Year</div>
+                <CustomDropdown
+                  options={[...Array(20)].map((_, i) => {
+                    const y = String(new Date().getFullYear() - i);
+                    return { value: y, label: y };
                   })}
-                </select>
+                  value={selectedYear}
+                  onChange={(val) => setSelectedYear(val)}
+                  placeholder="Year"
+                  theme="light"
+                />
               </div>
               <div>
-                <div className="gq-label"><span className="material-icons-round">location_city</span> City</div>
-                <select 
-                  name="city" 
-                  className="gq-select" 
-                  value={selectedCity} 
-                  onChange={e => setSelectedCity(e.target.value)}
-                >
-                  <option value="">City</option>
-                  {catalogLocations.map(c => (
-                    <option key={c._id} value={c.name}>{c.name}</option>
-                  ))}
-                </select>
+                <div className="gq-label mb-2" style={{ display: 'block' }}><span className="material-icons-round">location_city</span> City</div>
+                <CustomDropdown
+                  options={catalogLocations.map(c => ({ value: c.name, label: c.name }))}
+                  value={selectedCity}
+                  onChange={(val) => setSelectedCity(val)}
+                  placeholder="City"
+                  theme="light"
+                />
               </div>
               <div>
                 <div className="gq-label"><span className="material-icons-round">location_on</span> Area</div>
@@ -206,13 +203,18 @@ const ServiceSelection = () => {
                 <input type="tel" name="phone" className="gq-input" placeholder="Enter mobile number" />
               </div>
               <div>
-                <div className="gq-label"><span className="material-icons-round">access_time</span> Preferred Time</div>
-                <select name="urgency" className="gq-select" defaultValue="flexible">
-                  <option value="asap">ASAP — Urgent</option>
-                  <option value="today">Today</option>
-                  <option value="this_week">This Week</option>
-                  <option value="flexible">Flexible</option>
-                </select>
+                <div className="gq-label mb-2" style={{ display: 'block' }}><span className="material-icons-round">access_time</span> Preferred Time</div>
+                <CustomDropdown
+                  options={[
+                    { value: 'asap', label: 'ASAP — Urgent' },
+                    { value: 'today', label: 'Today' },
+                    { value: 'this_week', label: 'This Week' },
+                    { value: 'flexible', label: 'Flexible' }
+                  ]}
+                  value={selectedUrgency}
+                  onChange={(val) => setSelectedUrgency(val)}
+                  theme="light"
+                />
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-end', flexDirection: 'column', gap: '6px' }}>
                 {isGuest && (

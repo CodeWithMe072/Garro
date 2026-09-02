@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import { LuCar, LuLock, LuShieldAlert, LuUser, LuLightbulb, LuShieldCheck, LuDownload, LuTrash2 } from 'react-icons/lu';
+import AdminSidebar from '../components/AdminSidebar';
+import GarageSidebar from '../components/GarageSidebar';
+import StaffSidebar from '../components/StaffSidebar';
 
 const Profile = () => {
   const { user, login, logout } = useAuth();
@@ -77,6 +80,82 @@ const Profile = () => {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [garageDeletionStatus, setGarageDeletionStatus] = useState('none');
+  const [staffDeletionStatus, setStaffDeletionStatus] = useState('none');
+  const [deletionReason, setDeletionReason] = useState('');
+  const [requestingDeletion, setRequestingDeletion] = useState(false);
+
+  useEffect(() => {
+    if (user?.role === 'garage') {
+      const fetchGarageStatus = async () => {
+        try {
+          const res = await fetch(`${API_BASE}/api/garages/portal/status`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.success && data.garage) {
+            setGarageDeletionStatus(data.garage.deletionRequest?.status || 'none');
+          }
+        } catch {}
+      };
+      fetchGarageStatus();
+    } else if (['staff', 'helper'].includes(user?.role)) {
+      fetch(`${API_BASE}/api/helpers/me/deletion-status`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.deletionRequest) {
+          setStaffDeletionStatus(data.deletionRequest.status || 'none');
+        }
+      })
+      .catch(() => {});
+    }
+  }, [token, user]);
+
+  const handleRequestGarageDeletion = async () => {
+    setRequestingDeletion(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/garages/portal/request-deletion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ reason: deletionReason })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setGarageDeletionStatus('pending');
+        setShowDeleteModal(false);
+        toast.success(data.message);
+      } else {
+        toast.error(data.message || 'Failed to submit deletion request');
+      }
+    } catch {
+      toast.error('Failed to submit deletion request');
+    } finally {
+      setRequestingDeletion(false);
+    }
+  };
+
+  const handleCancelGarageDeletion = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/garages/portal/request-deletion`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setGarageDeletionStatus('none');
+        toast.success(data.message);
+      } else {
+        toast.error(data.message || 'Failed to cancel request');
+      }
+    } catch {
+      toast.error('Failed to cancel request');
+    }
+  };
 
   const handleDownloadData = async () => {
     try {
@@ -102,6 +181,34 @@ const Profile = () => {
     if (deleteConfirmText !== 'DELETE') {
       return toast.error("Please type 'DELETE' to confirm.");
     }
+
+    // If staff user -> submit deletion request to Garage (if linked) or Admin (if unassigned)
+    if (['staff', 'helper'].includes(user?.role)) {
+      try {
+        const res = await fetch(`${API_BASE}/api/helpers/me/request-deletion`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ reason: 'Staff member requested account deletion from Profile' })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.success(data.message || 'Account deletion request submitted for approval.');
+          setStaffDeletionStatus('pending');
+          setShowDeleteModal(false);
+          setDeleteConfirmText('');
+        } else {
+          toast.error(data.message || 'Failed to submit deletion request.');
+        }
+      } catch {
+        toast.error('An error occurred submitting account deletion request.');
+      }
+      return;
+    }
+
+    // Normal customer deletion
     try {
       const res = await fetch(`${API_BASE}/api/users/me`, {
         method: 'DELETE',
@@ -117,6 +224,24 @@ const Profile = () => {
       }
     } catch (err) {
       toast.error('An error occurred during account deletion');
+    }
+  };
+
+  const handleCancelStaffDeletion = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/helpers/me/request-deletion`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message);
+        setStaffDeletionStatus('none');
+      } else {
+        toast.error(data.message || 'Failed to cancel deletion request');
+      }
+    } catch {
+      toast.error('An error occurred cancelling deletion request');
     }
   };
 
@@ -387,8 +512,13 @@ const Profile = () => {
     });
   };
 
-  return (
-    <div className="container py-5" style={{ minHeight: 'calc(100vh - 80px)' }}>
+  const role = user?.role || 'customer';
+  const isAdminRole = ['admin', 'superadmin', 'manager'].includes(role);
+  const isGarageRole = role === 'garage';
+  const isStaffRole = role === 'staff' || role === 'helper';
+
+  const profileBody = (
+    <>
       <h3 className="fw-bold mb-4">{t('profile_title')}</h3>
 
       <div className="row g-4">
@@ -500,253 +630,401 @@ const Profile = () => {
               </div>
 
               <div className="d-flex justify-content-end">
-                <button type="submit" className="btn btn-primary-garro px-4" disabled={profileSaving || emailOtpSending || phoneOtpSending}>
-                  {profileSaving ? t('updating') : t('save_profile_changes')}
+                <button type="submit" className="btn btn-primary-garro py-2 px-4 fw-bold" disabled={profileSaving}>
+                  {profileSaving ? 'Saving...' : t('save_profile_changes')}
                 </button>
               </div>
             </form>
           </div>
 
-          {/* CHANGE PASSWORD SEPARATE FLOW */}
+          {/* CHANGE PASSWORD CARD */}
           <div className="card border-0 shadow-sm p-4 mb-4" style={{ borderRadius: '16px' }}>
             <h5 className="fw-bold mb-1 text-dark d-flex align-items-center gap-2">
-              <LuLock size={20} style={{ color: '#ff5c1a' }} /> {t('change_pwd_title')}
+              <LuLock className="text-warning" size={20} /> Change Account Password
             </h5>
-            <p className="text-muted small mb-4">{t('change_pwd_desc')}</p>
+            <p className="text-muted small mb-4">Verification code will be sent to your email to confirm this action</p>
 
-            {/* STEP 1: VERIFY CURRENT PASSWORD */}
-            {pwdStep === 1 && (
-              <form onSubmit={handleRequestPasswordOtp}>
-                <div className="mb-4">
-                  <label className="form-label small fw-medium">{t('current_pwd_label')}</label>
+            {pwdStep === 1 ? (
+              <div>
+                <div className="mb-3">
+                  <label className="form-label small fw-medium text-dark">Current Account Password</label>
                   <input 
                     type="password" 
                     className="form-control" 
-                    placeholder={t('current_pwd_placeholder')} 
+                    placeholder="Enter current password to request OTP"
                     value={currentPassword}
                     onChange={e => setCurrentPassword(e.target.value)}
-                    required
                   />
                 </div>
                 <div className="d-flex justify-content-end">
-                  <button type="submit" className="btn btn-primary-garro px-4" disabled={requestingOtp}>
-                    {requestingOtp ? t('updating') : t('verify_send_otp')}
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-dark fw-bold px-4 py-2"
+                    onClick={handleRequestPasswordOtp}
+                    disabled={requestingOtp}
+                  >
+                    {requestingOtp ? 'Sending OTP...' : 'Send Verification OTP →'}
                   </button>
                 </div>
-              </form>
-            )}
-
-            {/* STEP 2: VERIFY OTP AND CHANGE PASSWORD */}
-            {pwdStep === 2 && (
-              <form onSubmit={handleVerifyPasswordChange}>
-                {demoCode && (
-                  <div className="alert alert-info py-2 small mb-3" style={{ borderRadius: '10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <LuLightbulb size={16} /> <span><strong>{t('demo_mode')}:</strong> {t('use_code')} <strong>{demoCode}</strong> {t('to_verify')}.</span>
-                  </div>
-                )}
-                
-                <div className="mb-3">
-                  <label className="form-label small fw-medium text-primary">{t('enter_otp')}</label>
-                  <input 
-                    type="text" 
-                    className="form-control fw-bold text-center letter-spacing-2" 
-                    placeholder="000000" 
-                    maxLength={6}
-                    value={otpCode}
-                    onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                    required
-                  />
+              </div>
+            ) : (
+              <div>
+                <div className="alert alert-success small mb-3">
+                  ✓ Verification code sent to <strong>{user?.email}</strong>
+                  {demoCode && <div className="mt-1 fw-bold">Demo OTP Code: {demoCode}</div>}
                 </div>
 
-                <div className="row g-3 mb-4">
-                  <div className="col-md-6">
-                    <label className="form-label small fw-medium">{t('new_password')}</label>
+                <div className="row g-3 mb-3">
+                  <div className="col-md-4">
+                    <label className="form-label small fw-medium text-dark">6-Digit OTP Code</label>
+                    <input 
+                      type="text" 
+                      className="form-control text-center fw-bold" 
+                      placeholder="123456"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={e => setOtpCode(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-md-4">
+                    <label className="form-label small fw-medium text-dark">New Password</label>
                     <input 
                       type="password" 
                       className="form-control" 
-                      placeholder={t('new_pwd_placeholder')} 
+                      placeholder="Min 6 characters"
                       value={newPassword}
                       onChange={e => setNewPassword(e.target.value)}
-                      required
                     />
                   </div>
-                  <div className="col-md-6">
-                    <label className="form-label small fw-medium">{t('confirm_new_password')}</label>
+                  <div className="col-md-4">
+                    <label className="form-label small fw-medium text-dark">Confirm New Password</label>
                     <input 
                       type="password" 
                       className="form-control" 
-                      placeholder={t('confirm_pwd_placeholder')} 
+                      placeholder="Repeat password"
                       value={confirmPassword}
                       onChange={e => setConfirmPassword(e.target.value)}
-                      required
                     />
                   </div>
                 </div>
 
-                <div className="d-flex justify-content-between">
-                  <button type="button" className="btn btn-outline-secondary px-3" onClick={() => setPwdStep(1)}>
-                    {t('back')}
+                <div className="d-flex justify-content-between align-items-center">
+                  <button 
+                    type="button" 
+                    className="btn btn-link text-secondary btn-sm p-0 text-decoration-none"
+                    onClick={() => { setPwdStep(1); setOtpCode(''); setNewPassword(''); setConfirmPassword(''); }}
+                  >
+                    ← Cancel & Reset
                   </button>
-                  <button type="submit" className="btn btn-success px-4" disabled={verifyingOtp}>
-                    {verifyingOtp ? t('updating') : t('submit_pwd_change')}
+                  <button 
+                    type="button" 
+                    className="btn btn-primary-garro fw-bold px-4 py-2"
+                    onClick={handleVerifyPasswordChange}
+                    disabled={verifyingOtp}
+                  >
+                    {verifyingOtp ? 'Updating Password...' : 'Verify OTP & Update Password'}
                   </button>
                 </div>
-              </form>
+              </div>
             )}
+          </div>
+
+          {/* PRIVACY & DATA EXPORT CARD */}
+          <div className="card border-0 shadow-sm p-4 mb-4" style={{ borderRadius: '16px' }}>
+            <h5 className="fw-bold mb-1 text-dark d-flex align-items-center gap-2">
+              <LuShieldCheck className="text-success" size={20} /> Data & Account Governance
+            </h5>
+            <p className="text-muted small mb-4">Export your personal data archive or request permanent account deletion</p>
+
+            <div className="row g-3">
+              <div className="col-md-6">
+                <div className="border rounded-3 p-3 h-100 d-flex flex-column justify-content-between bg-light">
+                  <div>
+                    <h6 className="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+                      <LuDownload size={16} /> Download Data Archive
+                    </h6>
+                    <p className="text-muted small mb-3">Export a copy of your account profile, vehicles, quotes, and booking history in JSON format.</p>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="btn btn-outline-dark btn-sm fw-bold w-100 py-2"
+                    onClick={handleDownloadData}
+                  >
+                    Download Data Export
+                  </button>
+                </div>
+              </div>
+
+              <div className="col-md-6">
+                <div className="border border-danger-subtle rounded-3 p-3 h-100 d-flex flex-column justify-content-between bg-danger-subtle bg-opacity-10">
+                  <div>
+                    <h6 className="fw-bold text-danger mb-1 d-flex align-items-center gap-2">
+                      <LuTrash2 size={16} /> {isGarageRole || isStaffRole ? 'Request Account Deletion' : 'Delete Account'}
+                    </h6>
+                    <p className="text-muted small mb-3">
+                      {isGarageRole 
+                        ? 'Submits an account deletion & garage closure request to Admin. Upon approval, your garage and all staff accounts will be permanently closed.'
+                        : isStaffRole
+                        ? `Submits an account deletion request to your ${user?.garageId ? 'Garage Manager' : 'Admin'} for review and approval.`
+                        : 'Permanently remove your personal profile and account credentials. This action cannot be undone.'}
+                    </p>
+                  </div>
+                  {isGarageRole && garageDeletionStatus === 'pending' ? (
+                    <div className="d-flex flex-column gap-2">
+                      <span className="badge bg-warning text-dark p-2 fw-bold" style={{ fontSize: '11px', borderRadius: '6px' }}>
+                        ⏳ Deletion Request Pending Admin Review
+                      </span>
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary btn-sm fw-bold w-100 py-1.5"
+                        onClick={handleCancelGarageDeletion}
+                        style={{ fontSize: '12px' }}
+                      >
+                        Cancel Deletion Request
+                      </button>
+                    </div>
+                  ) : isStaffRole && staffDeletionStatus === 'pending' ? (
+                    <div className="d-flex flex-column gap-2">
+                      <span className="badge bg-warning text-dark p-2 fw-bold" style={{ fontSize: '11px', borderRadius: '6px' }}>
+                        ⏳ Deletion Request Pending {user?.garageId ? 'Garage' : 'Admin'} Review
+                      </span>
+                      <button 
+                        type="button" 
+                        className="btn btn-outline-secondary btn-sm fw-bold w-100 py-1.5"
+                        onClick={handleCancelStaffDeletion}
+                        style={{ fontSize: '12px' }}
+                      >
+                        Cancel Deletion Request
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      type="button" 
+                      className="btn btn-outline-danger btn-sm fw-bold w-100 py-2"
+                      onClick={() => setShowDeleteModal(true)}
+                    >
+                      {isGarageRole || isStaffRole ? 'Request Account Deletion' : 'Delete Account'}
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* EMAIL OTP VERIFICATION MODAL */}
+      {/* EMAIL OTP MODAL */}
       {showEmailOtpModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }} tabIndex="-1">
           <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content border-0 shadow" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-              <div className="modal-header bg-primary text-white">
-                <h5 className="modal-title fw-bold">✉️ Verify New Email Address</h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setShowEmailOtpModal(false)}></button>
+            <div className="modal-content" style={{ borderRadius: '16px' }}>
+              <div className="modal-header border-0 pb-0">
+                <h5 className="modal-title fw-bold">Verify New Email Address</h5>
+                <button type="button" className="btn-close" onClick={() => setShowEmailOtpModal(false)}></button>
               </div>
-              <form onSubmit={handleVerifyEmailOtp}>
-                <div className="modal-body p-4">
-                  <p className="text-dark fw-medium mb-3">
-                    We sent a 6-digit verification OTP code to <strong className="text-primary">{pendingNewEmail}</strong>.
-                  </p>
-
-                  {emailDemoCode && (
-                    <div className="alert alert-info py-2 px-3 small fw-bold mb-3" style={{ borderRadius: '8px' }}>
-                      💡 Demo Email OTP Code: <span className="text-primary fs-6 ms-1">{emailDemoCode}</span>
-                    </div>
-                  )}
-
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold text-dark">Enter 6-Digit Email OTP:</label>
-                    <input 
-                      type="text" 
-                      className="form-control text-center fs-4 fw-bold" 
-                      style={{ letterSpacing: '6px' }}
-                      maxLength="6"
-                      value={emailOtpCode} 
-                      onChange={e => setEmailOtpCode(e.target.value.replace(/\D/g, ''))} 
-                      placeholder="000000"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="modal-footer bg-light border-0">
-                  <button type="button" className="btn btn-outline-secondary" onClick={() => setShowEmailOtpModal(false)}>
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary px-4" 
-                    disabled={emailOtpVerifying || emailOtpCode.length < 6}
-                  >
-                    {emailOtpVerifying ? 'Verifying...' : 'Verify Email & Save'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* PHONE SMS OTP VERIFICATION MODAL */}
-      {showPhoneOtpModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content border-0 shadow" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-              <div className="modal-header bg-success text-white">
-                <h5 className="modal-title fw-bold">📱 Verify New Phone Number</h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => setShowPhoneOtpModal(false)}></button>
-              </div>
-              <form onSubmit={handleVerifyPhoneOtp}>
-                <div className="modal-body p-4">
-                  <p className="text-dark fw-medium mb-3">
-                    We sent a 6-digit SMS OTP code to <strong className="text-success">{pendingNewPhone}</strong>.
-                  </p>
-
-                  {phoneDemoCode && (
-                    <div className="alert alert-info py-2 px-3 small fw-bold mb-3" style={{ borderRadius: '8px' }}>
-                      💡 Demo SMS OTP Code: <span className="text-success fs-6 ms-1">{phoneDemoCode}</span>
-                    </div>
-                  )}
-
-                  <div className="mb-3">
-                    <label className="form-label small fw-bold text-dark">Enter 6-Digit SMS OTP:</label>
-                    <input 
-                      type="text" 
-                      className="form-control text-center fs-4 fw-bold" 
-                      style={{ letterSpacing: '6px' }}
-                      maxLength="6"
-                      value={phoneOtpCode} 
-                      onChange={e => setPhoneOtpCode(e.target.value.replace(/\D/g, ''))} 
-                      placeholder="000000"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="modal-footer bg-light border-0">
-                  <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPhoneOtpModal(false)}>
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="btn btn-success px-4" 
-                    disabled={phoneOtpVerifying || phoneOtpCode.length < 6}
-                  >
-                    {phoneOtpVerifying ? 'Verifying...' : 'Verify Phone & Save'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* GDPR Account Deletion Confirmation Modal */}
-      {showDeleteModal && (
-        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050 }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content border-0" style={{ borderRadius: '16px', overflow: 'hidden' }}>
-              <div className="modal-header bg-danger text-white">
-                <h5 className="modal-title fw-bold">⚠️ Delete Account Permanently?</h5>
-                <button type="button" className="btn-close btn-close-white" onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); }}></button>
-              </div>
-              <div className="modal-body p-4">
-                <p className="text-dark fw-medium mb-3">
-                  This action is irreversible. All of your personal profile data, email, phone number, and vehicle listings will be anonymized or deleted.
+              <div className="modal-body py-4">
+                <p className="text-muted small mb-3">
+                  We sent a 6-digit verification code to <strong>{pendingNewEmail}</strong>. Please enter it below to confirm your new email.
                 </p>
-                <p className="text-muted small mb-4">
-                  Note: Transactional receipts and tax invoices will be retained for accounting audit trails.
-                </p>
+                {emailDemoCode && (
+                  <div className="alert alert-info small mb-3 py-2">
+                    🔑 <strong>Demo OTP Code:</strong> {emailDemoCode}
+                  </div>
+                )}
                 <div className="mb-3">
-                  <label className="form-label small fw-bold text-danger">To confirm deletion, type 'DELETE' below:</label>
+                  <label className="form-label small fw-bold">6-Digit Verification Code</label>
                   <input 
                     type="text" 
-                    className="form-control" 
-                    value={deleteConfirmText} 
-                    onChange={e => setDeleteConfirmText(e.target.value)} 
-                    placeholder="DELETE"
+                    className="form-control text-center fw-bold fs-4" 
+                    placeholder="123456" 
+                    maxLength={6}
+                    value={emailOtpCode} 
+                    onChange={e => setEmailOtpCode(e.target.value)} 
                   />
                 </div>
               </div>
+              <div className="modal-footer border-0 pt-0">
+                <button type="button" className="btn btn-outline-secondary" onClick={() => setShowEmailOtpModal(false)}>Cancel</button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary-garro fw-bold px-4" 
+                  onClick={handleVerifyEmailOtp} 
+                  disabled={emailOtpVerifying || emailOtpCode.length < 6}
+                >
+                  {emailOtpVerifying ? 'Verifying...' : 'Confirm Email Update'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PHONE OTP MODAL */}
+      {showPhoneOtpModal && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }} tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content" style={{ borderRadius: '16px' }}>
+              <div className="modal-header border-0 pb-0">
+                <h5 className="modal-title fw-bold">Verify New Phone Number</h5>
+                <button type="button" className="btn-close" onClick={() => setShowPhoneOtpModal(false)}></button>
+              </div>
+              <div className="modal-body py-4">
+                <p className="text-muted small mb-3">
+                  We sent an SMS verification code to <strong>{pendingNewPhone}</strong>. Enter the 6-digit code below to confirm.
+                </p>
+                {phoneDemoCode && (
+                  <div className="alert alert-info small mb-3 py-2">
+                    🔑 <strong>Demo SMS OTP:</strong> {phoneDemoCode}
+                  </div>
+                )}
+                <div className="mb-3">
+                  <label className="form-label small fw-bold">6-Digit SMS Code</label>
+                  <input 
+                    type="text" 
+                    className="form-control text-center fw-bold fs-4" 
+                    placeholder="123456" 
+                    maxLength={6}
+                    value={phoneOtpCode} 
+                    onChange={e => setPhoneOtpCode(e.target.value)} 
+                  />
+                </div>
+              </div>
+              <div className="modal-footer border-0 pt-0">
+                <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPhoneOtpModal(false)}>Cancel</button>
+                <button 
+                  type="button" 
+                  className="btn btn-primary-garro fw-bold px-4" 
+                  onClick={handleVerifyPhoneOtp} 
+                  disabled={phoneOtpVerifying || phoneOtpCode.length < 6}
+                >
+                  {phoneOtpVerifying ? 'Verifying...' : 'Confirm Phone Update'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION MODAL */}
+      {showDeleteModal && (
+        <div className="modal fade show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1060 }} tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content" style={{ borderRadius: '16px' }}>
+              <div className="modal-header border-0 pb-0">
+                <h5 className="modal-title fw-bold text-danger">
+                  {isGarageRole ? 'Request Account Deletion & Garage Closure' : 'Delete Account Confirmation'}
+                </h5>
+                <button type="button" className="btn-close" onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); }}></button>
+              </div>
+              {isGarageRole ? (
+                <div className="modal-body py-3">
+                  <p className="text-dark small mb-2 fw-semibold">
+                    Submitting this request will notify Garro Platform Administrators. Upon approval by Admin, your garage profile, staff accounts, and services will be permanently closed.
+                  </p>
+                  <div className="mb-3">
+                    <label className="form-label small fw-bold text-secondary">Reason for Deletion (Optional):</label>
+                    <textarea 
+                      className="form-control" 
+                      rows="3"
+                      value={deletionReason} 
+                      onChange={e => setDeletionReason(e.target.value)} 
+                      placeholder="e.g. Closing workshop, relocating, or changing business entity..."
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="modal-body py-3">
+                  <p className="text-dark small mb-2 fw-semibold">
+                    This action is irreversible. All of your personal profile data, email, phone number, and vehicle listings will be anonymized or deleted.
+                  </p>
+                  <p className="text-muted small mb-4">
+                    Note: Transactional receipts and tax invoices will be retained for accounting audit trails.
+                  </p>
+                  <div className="mb-3">
+                    <label className="form-label small fw-bold text-danger">To confirm deletion, type 'DELETE' below:</label>
+                    <input 
+                      type="text" 
+                      className="form-control" 
+                      value={deleteConfirmText} 
+                      onChange={e => setDeleteConfirmText(e.target.value)} 
+                      placeholder="DELETE"
+                    />
+                  </div>
+                </div>
+              )}
               <div className="modal-footer bg-light border-0">
                 <button type="button" className="btn btn-outline-secondary" onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); }}>
                   Cancel
                 </button>
-                <button 
-                  type="button" 
-                  className="btn btn-danger" 
-                  disabled={deleteConfirmText !== 'DELETE'} 
-                  onClick={handleDeleteAccount}
-                >
-                  Confirm Permanent Deletion
-                </button>
+                {isGarageRole ? (
+                  <button 
+                    type="button" 
+                    className="btn btn-danger fw-bold px-4" 
+                    onClick={handleRequestGarageDeletion}
+                    disabled={requestingDeletion}
+                  >
+                    {requestingDeletion ? 'Submitting...' : 'Submit Request to Admin'}
+                  </button>
+                ) : (
+                  <button 
+                    type="button" 
+                    className="btn btn-danger" 
+                    disabled={deleteConfirmText !== 'DELETE'} 
+                    onClick={handleDeleteAccount}
+                  >
+                    Confirm Permanent Deletion
+                  </button>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
+    </>
+  );
+
+  if (isGarageRole) {
+    return (
+      <div className="staff-wrapper">
+        <GarageSidebar />
+        <main className="staff-main">
+          <div className="container-fluid py-4">
+            {profileBody}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isStaffRole) {
+    return (
+      <div className="staff-wrapper">
+        <StaffSidebar />
+        <main className="staff-main">
+          <div className="container-fluid py-4">
+            {profileBody}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (isAdminRole) {
+    return (
+      <div className="dash-wrapper">
+        <AdminSidebar />
+        <main className="dash-main">
+          <div className="container-fluid py-4">
+            {profileBody}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container py-5" style={{ minHeight: 'calc(100vh - 80px)' }}>
+      {profileBody}
     </div>
   );
 };

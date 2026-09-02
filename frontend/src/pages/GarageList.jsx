@@ -229,8 +229,17 @@ const GarageList = () => {
                   <div className="col-8 p-3 d-flex flex-column justify-content-between">
                     <div>
                       <div className="d-flex justify-content-between align-items-start mb-2">
-                        <h6 className="fw-bold mb-0 text-dark" style={{ fontSize: '13.5px', lineHeight: '1.3' }}>
+                        <h6 className="fw-bold mb-0 text-dark d-flex align-items-center gap-1" style={{ fontSize: '13.5px', lineHeight: '1.3' }}>
                           {garage.name}
+                          {garage.isOpen === false || garage.status !== 'active' ? (
+                            <span className="badge bg-danger text-white px-1.5 py-0.5" style={{ fontSize: '9.5px', borderRadius: '4px' }}>
+                              CLOSED
+                            </span>
+                          ) : (
+                            <span className="badge bg-success text-white px-1.5 py-0.5" style={{ fontSize: '9.5px', borderRadius: '4px' }}>
+                              OPEN
+                            </span>
+                          )}
                         </h6>
                         <span className="rating-badge flex-shrink-0 d-inline-flex align-items-center gap-1" style={{ background: 'var(--brand-light)', color: 'var(--brand)', padding: '2px 6px', borderRadius: '6px', fontSize: '11px', fontWeight: '700' }}>
                           <LuStar size={11} style={{ fill: 'currentColor' }} /> {garage.rating || 0}
@@ -259,9 +268,15 @@ const GarageList = () => {
                       <Link to={`/garage/${garage._id}`} className="btn-garro btn-outline-garro btn-sm py-2 flex-fill text-center" style={{ fontSize: '12px' }}>
                         Details
                       </Link>
-                      <Link to={`/garage/${garage._id}/book`} className="btn-garro btn-primary-garro btn-sm py-2 flex-fill text-center" style={{ fontSize: '12px' }}>
-                        Book Now
-                      </Link>
+                      {garage.isOpen === false || garage.status !== 'active' ? (
+                        <button className="btn btn-secondary btn-sm py-2 flex-fill text-center" style={{ fontSize: '12px', cursor: 'not-allowed' }} disabled title="Garage is currently closed for bookings">
+                          Closed
+                        </button>
+                      ) : (
+                        <Link to={`/garage/${garage._id}/book`} className="btn-garro btn-primary-garro btn-sm py-2 flex-fill text-center" style={{ fontSize: '12px' }}>
+                          Book Now
+                        </Link>
+                      )}
                     </div>
                   </div>
                 </div>

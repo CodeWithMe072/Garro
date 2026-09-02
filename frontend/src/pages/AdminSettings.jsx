@@ -22,6 +22,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import AdminSidebar from '../components/AdminSidebar';
+import CustomDropdown from '../components/CustomDropdown';
 
 const AdminSettings = () => {
   const [vat, setVat] = useState(5);
@@ -154,21 +155,14 @@ const AdminSettings = () => {
               <label style={{ display: 'block', fontSize: '13.5px', fontWeight: '600', marginBottom: '8px', color: '#475569' }}>
                 {lang === 'ar' ? 'وضع تعيين المساعد' : (lang === 'ur' ? 'مددگار تفویض کا طریقہ' : 'Helper Assignment Mode')}
               </label>
-              <select
+              <CustomDropdown
+                options={[
+                  { value: 'manual', label: lang === 'ar' ? 'تعيين يدوي (يختاره المسؤول)' : (lang === 'ur' ? 'دستی تفویض (ایڈمن کے ذریعہ منتخب کردہ)' : 'Manual Assignment (Admin selected)') }
+                ]}
                 value={assignMode}
-                onChange={(e) => setAssignMode(e.target.value)}
-                className="form-select text-dark"
-                style={{
-                  background: '#fff',
-                  border: '1.5px solid #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '10px 14px',
-                  fontSize: '13.5px'
-                }}
-                required
-              >
-                <option value="manual">{lang === 'ar' ? 'تعيين يدوي (يختاره المسؤول)' : (lang === 'ur' ? 'دستی تفویض (ایڈمن کے ذریعہ منتخب کردہ)' : 'Manual Assignment (Admin selected)')}</option>
-              </select>
+                onChange={(val) => setAssignMode(val)}
+                theme="light"
+              />
               <span style={{ fontSize: '12px', color: '#64748b', display: 'block', marginTop: '6px' }}>
                 {lang === 'ar' ? 'التحكم في كيفية تعيين المساعدين لبطاقات الحجز. حالياً يتم دعم الوضع اليدوي فقط.' : (lang === 'ur' ? 'بکنگ کارڈز پر ہیلپرز کو تفویض کرنے کا طریقہ کار۔ فی الحال صرف دستی طریقہ سپورٹڈ ہے۔' : 'Control how helpers are assigned to booking cards. Currently only Manual mode is supported.')}
               </span>

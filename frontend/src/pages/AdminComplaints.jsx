@@ -21,8 +21,10 @@ import { useLanguage } from '../context/LanguageContext';
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useNotification } from '../context/NotificationContext';
+import AdminSidebar, { useAdminLayout } from '../components/AdminSidebar';
 import PageLoader from '../components/PageLoader';
+import CustomDropdown from '../components/CustomDropdown';
+import { useNotification } from '../context/NotificationContext';
 
 const AdminComplaints = () => {
   const [complaints, setComplaints] = useState([]);
@@ -217,24 +219,18 @@ const AdminComplaints = () => {
                     <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                       <div style={{ flex: 1, minWidth: '200px' }}>
                         <label style={{ display: 'block', fontSize: '12.5px', marginBottom: '6px', color: '#64748b', fontWeight: '500' }}>{lang === 'ar' ? 'نوع القرار' : (lang === 'ur' ? 'حل کی قسم' : 'Resolution Type')}</label>
-                        <select
+                        <CustomDropdown
+                          options={[
+                            { value: 'refund', label: lang === 'ar' ? 'إصدار استرداد (معاملة Stripe)' : (lang === 'ur' ? 'ریفنڈ جاری کریں (اسٹرائپ ٹرانزیکشن)' : 'Issue Refund (Stripe Transaction)') },
+                            { value: 'compensation', label: lang === 'ar' ? 'التعويض (ائتمان مباشر)' : (lang === 'ur' ? 'معاوضہ (براہ راست کریڈٹ)' : 'Compensation (Direct Credit)') },
+                            { value: 'fix_at_garage', label: 'Fix vehicle at Garage' },
+                            { value: 'replacement', label: 'Replacement vehicle provided' },
+                            { value: 'no_action', label: lang === 'ar' ? 'إغلاق بدون إجراء' : (lang === 'ur' ? 'بغیر کسی اقدام کے بند کریں' : 'Close No Action') }
+                          ]}
                           value={resolutionType}
-                          onChange={(e) => setResolutionType(e.target.value)}
-                          className="form-select text-dark"
-                          style={{
-                            background: '#fff',
-                            border: '1.5px solid #cbd5e1',
-                            borderRadius: '10px',
-                            padding: '10px 14px',
-                            fontSize: '13.5px'
-                          }}
-                        >
-                          <option value="refund">{lang === 'ar' ? 'إصدار استرداد (معاملة Stripe)' : (lang === 'ur' ? 'ریفنڈ جاری کریں (اسٹرائپ ٹرانزیکشن)' : 'Issue Refund (Stripe Transaction)')}</option>
-                          <option value="compensation">{lang === 'ar' ? 'التعويض (ائتمان مباشر)' : (lang === 'ur' ? 'معاوضہ (براہ راست کریڈٹ)' : 'Compensation (Direct Credit)')}</option>
-                          <option value="fix_at_garage">Fix vehicle at Garage</option>
-                          <option value="replacement">Replacement vehicle provided</option>
-                          <option value="no_action">{lang === 'ar' ? 'إغلاق بدون إجراء' : (lang === 'ur' ? 'بغیر کسی اقدام کے بند کریں' : 'Close No Action')}</option>
-                        </select>
+                          onChange={(val) => setResolutionType(val)}
+                          theme="light"
+                        />
                       </div>
  
                       {['refund', 'compensation'].includes(resolutionType) && (

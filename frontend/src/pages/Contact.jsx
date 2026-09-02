@@ -3,6 +3,8 @@ import {
   LuPhone, LuMail, LuMapPin, LuClock, LuSend, LuInstagram,
   LuTwitter, LuLinkedin, LuFacebook, LuMessageSquare, LuCircleCheck
 } from 'react-icons/lu';
+import { useLanguage } from '../context/LanguageContext';
+import CustomDropdown from '../components/CustomDropdown';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -20,20 +22,20 @@ const Contact = () => {
 
   const contactInfo = [
     {
-      icon: LuPhone, title: 'Phone', detail: '055 283 0456',
-      sub: 'Support Available Same Day', color: '#ff5c1a'
+      icon: LuPhone, title: 'Phone', detail: '+971 50 123 4567',
+      sub: 'Mon – Sat 09:00 AM – 06:00 PM', color: '#ff5c1a'
     },
     {
-      icon: LuMail, title: 'Email', detail: 'contact.noorrmannwaliya@gmail.com',
+      icon: LuMail, title: 'Email', detail: 'hello@garro.ae',
       sub: 'We reply within 24 hours', color: '#3b82f6'
     },
     {
-      icon: LuMapPin, title: 'Location', detail: 'Dubai, United Arab Emirates',
-      sub: 'Also serving Kerala, India', color: '#10b981'
+      icon: LuMapPin, title: 'Location', detail: '1604, City Bay, Business Bay, Dubai, UAE',
+      sub: 'Serving Dubai and across the UAE', color: '#10b981'
     },
     {
-      icon: LuClock, title: 'Working Hours', detail: 'Same Day Support',
-      sub: 'Open 365 Days a Year', color: '#8b5cf6'
+      icon: LuClock, title: 'Working Hours', detail: '09:00 AM – 06:00 PM',
+      sub: 'Monday to Saturday', color: '#8b5cf6'
     },
   ];
 
@@ -212,15 +214,19 @@ const Contact = () => {
                         </div>
                         <div className="col-12">
                           <label dir="auto" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px', fontFamily: "'Poppins', sans-serif" }}>{t('contact_subject')} *</label>
-                          <select name="subject" required value={formData.subject} onChange={handleChange}
-                            style={{ ...inputStyle, cursor: 'pointer', appearance: 'auto' }} dir="auto">
-                            <option value="">{t('contact_subject')}...</option>
-                            <option value="general">{t('contact_subj_general')}</option>
-                            <option value="service">{t('contact_subj_service')}</option>
-                            <option value="partnership">{t('contact_subj_partner')}</option>
-                            <option value="billing">{t('contact_subj_billing')}</option>
-                            <option value="other">{t('contact_subj_other')}</option>
-                          </select>
+                          <CustomDropdown
+                            options={[
+                              { value: 'general', label: t('contact_subj_general') },
+                              { value: 'service', label: t('contact_subj_service') },
+                              { value: 'partnership', label: t('contact_subj_partner') },
+                              { value: 'billing', label: t('contact_subj_billing') },
+                              { value: 'other', label: t('contact_subj_other') }
+                            ]}
+                            value={formData.subject}
+                            onChange={(val) => setFormData({ ...formData, subject: val })}
+                            placeholder={`${t('contact_subject')}...`}
+                            theme="light"
+                          />
                         </div>
                         <div className="col-12">
                           <label dir="auto" style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#475569', marginBottom: '6px', fontFamily: "'Poppins', sans-serif" }}>{t('contact_message')} *</label>

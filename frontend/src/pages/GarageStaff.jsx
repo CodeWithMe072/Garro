@@ -16,7 +16,11 @@ import {
   LuEye,
   LuEyeOff,
   LuClock,
-  LuX
+  LuX,
+  LuPencil,
+  LuTrash2,
+  LuShieldAlert,
+  LuShieldCheck
 } from 'react-icons/lu';
 
 const defaultDays = [
@@ -33,6 +37,7 @@ const GarageStaff = () => {
   const [staffList, setStaffList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editStaffId, setEditStaffId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -46,8 +51,34 @@ const GarageStaff = () => {
 
   const [schedule, setSchedule] = useState(defaultDays);
 
-  const { toast } = useNotification();
+  const { toast, confirm } = useNotification();
   const { lang } = useLanguage();
+
+  const handleOpenAddModal = () => {
+    setEditStaffId(null);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      password: '',
+      role: 'staff'
+    });
+    setSchedule(defaultDays);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (st) => {
+    setEditStaffId(st._id);
+    setFormData({
+      name: st.name || '',
+      email: st.email || '',
+      phone: st.phone || '',
+      password: '',
+      role: st.role || 'staff'
+    });
+    setSchedule(st.schedule && st.schedule.length > 0 ? st.schedule : defaultDays);
+    setIsModalOpen(true);
+  };
 
   const handleDayChange = (index, field, value) => {
     const updated = schedule.map((item, idx) =>
@@ -74,22 +105,136 @@ const GarageStaff = () => {
     }
   };
 
+  const [deletionRequests, setDeletionRequests] = useState([]);
+
+  const fetchDeletionRequests = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/garages/portal/staff-deletion-requests`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setDeletionRequests(data.requests || []);
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     fetchStaff();
+    fetchDeletionRequests();
   }, []);
+
+  const handleApproveStaffDeletion = async (staffId, staffName) => {
+    confirm({
+      title: 'Approve Staff Account Deletion',
+      message: `Are you sure you want to approve deletion for "${staffName}"? This will permanently delete their staff account and profile data.`,
+      confirmText: 'Approve & Delete',
+      cancelText: 'Cancel',
+      isDelete: true,
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_BASE}/api/garages/portal/staff-deletion-requests/${staffId}/approve`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            toast.success(data.message);
+            fetchStaff();
+            fetchDeletionRequests();
+          } else {
+            toast.error(data.message || 'Failed to approve deletion request');
+          }
+        } catch {
+          toast.error('Failed to approve staff deletion request');
+        }
+      }
+    });
+  };
+
+  const handleRejectStaffDeletion = async (staffId, staffName) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/garages/portal/staff-deletion-requests/${staffId}/reject`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message);
+        fetchStaff();
+        fetchDeletionRequests();
+      } else {
+        toast.error(data.message || 'Failed to reject deletion request');
+      }
+    } catch {
+      toast.error('Failed to reject staff deletion request');
+    }
+  };
+
+  const handleToggleStatus = async (staffId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/garages/portal/staff/${staffId}/toggle-status`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to update staff status.');
+      }
+      toast.success(data.message || 'Staff status updated successfully');
+      fetchStaff();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleDeleteStaff = async (staffId, staffName) => {
+    const isConfirmed = await confirm(`Are you sure you want to delete staff member "${staffName}"?`);
+    if (!isConfirmed) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${API_BASE}/api/garages/portal/staff/${staffId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Failed to delete staff member.');
+      }
+      toast.success(data.message || 'Staff member deleted successfully');
+      fetchStaff();
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.phone || !formData.password) {
-      toast.error('All fields are required.');
+    if (!formData.name || !formData.email || !formData.phone) {
+      toast.error('Name, email, and phone are required.');
+      return;
+    }
+
+    if (!editStaffId && !formData.password) {
+      toast.error('Password is required for new staff members.');
       return;
     }
 
     setSubmitting(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/garages/portal/staff`, {
-        method: 'POST',
+      const url = editStaffId
+        ? `${API_BASE}/api/garages/portal/staff/${editStaffId}`
+        : `${API_BASE}/api/garages/portal/staff`;
+      const method = editStaffId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -98,10 +243,11 @@ const GarageStaff = () => {
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Failed to add staff member.');
+        throw new Error(data.message || 'Failed to save staff member.');
       }
-      toast.success(data.message || 'Staff member added successfully!');
+      toast.success(data.message || (editStaffId ? 'Staff member updated successfully!' : 'Staff member added successfully!'));
       setIsModalOpen(false);
+      setEditStaffId(null);
       setFormData({
         name: '',
         email: '',
@@ -139,7 +285,7 @@ const GarageStaff = () => {
           </div>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={handleOpenAddModal}
             className="btn btn-garro btn-primary-garro fw-bold d-inline-flex align-items-center gap-2 px-4 py-2"
             style={{ borderRadius: '10px', fontSize: '13.5px' }}
           >
@@ -147,6 +293,37 @@ const GarageStaff = () => {
             {lang === 'ar' ? 'إضافة موظف جديد' : 'Add New Staff Member'}
           </button>
         </div>
+
+        {/* Staff Deletion Requests Banner */}
+        {deletionRequests.length > 0 && (
+          <div className="alert alert-danger bg-danger-subtle border-danger text-dark p-3 mb-4 rounded-3 shadow-sm">
+            <h5 className="fw-bold text-danger d-flex align-items-center gap-2 m-0 mb-2">
+              <LuShieldAlert size={20} /> Pending Staff Account Deletion Requests ({deletionRequests.length})
+            </h5>
+            <p className="small text-secondary mb-3">
+              The following staff members have requested permanent account deletion. Please review and accept or reject their requests:
+            </p>
+            <div className="d-flex flex-column gap-2">
+              {deletionRequests.map(req => (
+                <div key={req._id} className="bg-white p-3 rounded-2 border d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <div>
+                    <div className="fw-bold text-dark">{req.name}</div>
+                    <div className="small text-muted">{req.phone} • {req.userId?.email || 'No email'}</div>
+                    <div className="small text-danger fw-semibold">Requested: {new Date(req.deletionRequest?.requestedAt || Date.now()).toLocaleDateString()}</div>
+                  </div>
+                  <div className="d-flex gap-2">
+                    <button onClick={() => handleApproveStaffDeletion(req._id, req.name)} className="btn btn-sm btn-danger fw-bold px-3">
+                      Accept & Delete Account
+                    </button>
+                    <button onClick={() => handleRejectStaffDeletion(req._id, req.name)} className="btn btn-sm btn-outline-secondary fw-bold px-3">
+                      Reject Request
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Staff Table Card */}
         <div className="schedule-card" style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '28px' }}>
@@ -181,12 +358,13 @@ const GarageStaff = () => {
                     <th style={{ padding: '12px 16px' }}>ASSIGNED ROLE</th>
                     <th style={{ padding: '12px 16px' }}>WORK SHIFT</th>
                     <th style={{ padding: '12px 16px' }}>STATUS</th>
-                    <th style={{ padding: '12px 16px', borderRadius: '0 8px 8px 0' }}>DATE ADDED</th>
+                    <th style={{ padding: '12px 16px' }}>DATE ADDED</th>
+                    <th className="text-end pe-4" style={{ padding: '12px 16px', borderRadius: '0 8px 8px 0' }}>ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {staffList.map(st => (
-                    <tr key={st._id} style={{ background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9' }}>
+                  {staffList.map((st, idx) => (
+                    <tr key={st._id} style={{ background: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9', position: 'relative', zIndex: staffList.length - idx }}>
                       <td style={{ padding: '14px 16px', borderRadius: '8px 0 0 8px' }}>
                         <div className="d-flex align-items-center gap-3">
                           <div style={{
@@ -241,12 +419,58 @@ const GarageStaff = () => {
                         </div>
                       </td>
                       <td style={{ padding: '14px 16px' }}>
-                        <span className="badge bg-success text-white px-3 py-1.5 fw-bold" style={{ borderRadius: '8px', fontSize: '11.5px' }}>
-                          ✓ Active
-                        </span>
+                        <div className="d-flex flex-column gap-1 align-items-start">
+                          {st.status === 'blocked' ? (
+                            <span className="badge bg-danger text-white px-2.5 py-1 fw-bold" style={{ borderRadius: '6px', fontSize: '11px' }}>
+                              ✕ Blocked
+                            </span>
+                          ) : (
+                            <span className="badge bg-success text-white px-2.5 py-1 fw-bold" style={{ borderRadius: '6px', fontSize: '11px' }}>
+                              ✓ Active
+                            </span>
+                          )}
+                          {st.dutyStatus === 'off_duty' || st.isAvailable === false ? (
+                            <span className="badge bg-warning text-dark px-2.5 py-1 fw-bold" style={{ borderRadius: '6px', fontSize: '11px' }}>
+                              🔴 Off Duty
+                            </span>
+                          ) : (
+                            <span className="badge bg-primary text-white px-2.5 py-1 fw-bold" style={{ borderRadius: '6px', fontSize: '11px' }}>
+                              🟢 On Duty
+                            </span>
+                          )}
+                        </div>
                       </td>
-                      <td style={{ padding: '14px 16px', color: '#64748b', fontSize: '13px', borderRadius: '0 8px 8px 0' }}>
+                      <td style={{ padding: '14px 16px', color: '#64748b', fontSize: '13px' }}>
                         {new Date(st.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="text-end pe-4" style={{ padding: '14px 16px', borderRadius: '0 8px 8px 0' }}>
+                        <div className="d-flex justify-content-end gap-2">
+                          <button
+                            onClick={() => handleOpenEditModal(st)}
+                            className="btn btn-sm btn-outline-secondary py-1 px-2 d-inline-flex align-items-center"
+                            style={{ borderRadius: '6px', fontSize: '12px' }}
+                            title="Edit Staff Member"
+                          >
+                            <LuPencil className="me-1" size={13} /> {lang === 'ar' ? 'تعديل' : 'Edit'}
+                          </button>
+                          <button
+                            onClick={() => handleToggleStatus(st._id)}
+                            className={`btn btn-sm py-1 px-2 d-inline-flex align-items-center ${st.status === 'blocked' ? 'btn-outline-success' : 'btn-outline-warning'}`}
+                            style={{ borderRadius: '6px', fontSize: '12px' }}
+                            title={st.status === 'blocked' ? 'Unblock Staff' : 'Block Staff'}
+                          >
+                            {st.status === 'blocked' ? <LuShieldCheck className="me-1" size={13} /> : <LuShieldAlert className="me-1" size={13} />}
+                            {st.status === 'blocked' ? (lang === 'ar' ? 'إلغاء الحظر' : 'Unblock') : (lang === 'ar' ? 'حظر' : 'Block')}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteStaff(st._id, st.name)}
+                            className="btn btn-sm btn-outline-danger py-1 px-2 d-inline-flex align-items-center"
+                            style={{ borderRadius: '6px', fontSize: '12px' }}
+                            title="Delete Staff Member"
+                          >
+                            <LuTrash2 className="me-1" size={13} /> {lang === 'ar' ? 'حذف' : 'Delete'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -257,13 +481,13 @@ const GarageStaff = () => {
         </div>
       </main>
 
-      {/* ── Add Staff Modal ── */}
+      {/* ── Add / Edit Staff Modal ── */}
       {isModalOpen && (
         <div className="custom-modal-overlay" onClick={() => setIsModalOpen(false)} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(15,23,42,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1050, backdropFilter: 'blur(4px)' }}>
           <div className="custom-modal confirm no-scrollbar" onClick={(e) => e.stopPropagation()} style={{ background: '#ffffff', padding: '28px', borderRadius: '16px', maxWidth: '580px', width: '92%', color: '#0f172a', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #e2e8f0', textAlign: 'left', maxHeight: '90vh', overflowY: 'auto', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             <div className="d-flex justify-content-between align-items-center mb-1">
               <h4 className="fw-bold m-0 d-flex align-items-center gap-2" style={{ color: '#0f172a' }}>
-                <LuUserPlus className="text-primary-garro" size={22} /> Add Garage Staff Member
+                <LuUserPlus className="text-primary-garro" size={22} /> {editStaffId ? 'Edit Garage Staff Member' : 'Add Garage Staff Member'}
               </h4>
               <button
                 type="button"
@@ -275,7 +499,9 @@ const GarageStaff = () => {
                 <LuX size={20} />
               </button>
             </div>
-            <p className="text-muted small mb-3">Create a login account and configure individual 7-day shift working hours.</p>
+            <p className="text-muted small mb-3">
+              {editStaffId ? 'Update account details, role, and 7-day shift schedule.' : 'Create a login account and configure individual 7-day shift working hours.'}
+            </p>
 
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
@@ -319,16 +545,18 @@ const GarageStaff = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-bold text-secondary">Password *</label>
+                <label className="form-label small fw-bold text-secondary">
+                  {editStaffId ? 'Password (Leave blank to keep current)' : 'Password *'}
+                </label>
                 <div className="position-relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     className="form-control text-dark bg-white pe-5"
                     style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
-                    placeholder="Minimum 6 characters"
+                    placeholder={editStaffId ? 'Enter new password if changing' : 'Minimum 6 characters'}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
+                    required={!editStaffId}
                   />
                   <button
                     type="button"
@@ -431,7 +659,7 @@ const GarageStaff = () => {
               <div style={{ display: 'flex', justifyContent: 'end', gap: '10px', marginTop: '24px' }}>
                 <button type="button" className="btn-garro btn-outline-garro btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px' }} onClick={() => setIsModalOpen(false)}>Cancel</button>
                 <button type="submit" className="btn-garro btn-primary-garro btn-sm py-2 px-4 fw-semibold" style={{ fontSize: '13px', borderRadius: '8px' }} disabled={submitting}>
-                  {submitting ? 'Adding...' : 'Add Staff Member'}
+                  {submitting ? (editStaffId ? 'Updating...' : 'Adding...') : (editStaffId ? 'Save Changes' : 'Add Staff Member')}
                 </button>
               </div>
             </form>

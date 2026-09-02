@@ -63,8 +63,8 @@ const HelpCenter = () => {
           <div className="card border-0 shadow-sm p-4 text-center" style={{ borderRadius: '16px', background: '#fff' }}>
             <LuPhoneCall size={28} style={{ color: '#ff5c1a', marginBottom: '12px' }} />
             <h5 className="fw-bold mb-1">Call Us</h5>
-            <p className="text-muted small mb-2">Available 9 AM - 6 PM (Mon-Sat)</p>
-            <a href="tel:+97140000000" className="fw-bold text-decoration-none" style={{ color: '#ff5c1a' }}>+971 4 000 0000</a>
+            <p className="text-muted small mb-2">Available 09:00 AM – 06:00 PM (Mon–Sat)</p>
+            <a href="tel:+971501234567" className="fw-bold text-decoration-none" style={{ color: '#ff5c1a' }}>+971 50 123 4567</a>
           </div>
           <div className="card border-0 shadow-sm p-4 text-center" style={{ borderRadius: '16px', background: '#fff' }}>
             <LuMessageSquare size={28} style={{ color: '#ff5c1a', marginBottom: '12px' }} />

@@ -223,6 +223,10 @@ const AdminSidebar = ({ pendingBookings, isPersistentLayout }) => {
 
       <div className="sidebar-divider"></div>
       <div className="sidebar-section">
+        <Link to="/profile" className={`sidebar-link ${isActive('/profile')}`}>
+          <span className="icon"><LuUser /></span>
+          <span className="link-text">{t('profile') || 'My Profile'}</span>
+        </Link>
         <Link to="/home" className="sidebar-link">
           <span className="icon"><LuGlobe /></span>
           <span className="link-text">{t('back_to_site')}</span>

@@ -41,6 +41,23 @@ const CreateStaff = () => {
     notes: ''
   });
 
+  const [garages, setGarages] = useState([]);
+  const [selectedGarageId, setSelectedGarageId] = useState('');
+
+  useEffect(() => {
+    const fetchGarages = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch(`${API_BASE}/api/garages`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) setGarages(data.garages || []);
+      } catch {}
+    };
+    fetchGarages();
+  }, []);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -66,7 +83,10 @@ const CreateStaff = () => {
           email: formData.email,
           phone: formData.phone || '+971501111111',
           password: formData.password,
-          role: role === 'staff' ? 'helper' : 'manager'
+          role: role === 'staff' ? 'helper' : 'manager',
+          department: formData.department || 'General',
+          employeeId: formData.employeeId || '',
+          garageId: selectedGarageId || null
         })
       });
 
@@ -186,11 +206,25 @@ const CreateStaff = () => {
               </div>
             </div>
 
-            <div className="fg">
-              <label>Department</label>
-              <div className="inp-wrap">
-                <span className="material-icons-round">business</span>
-                <input type="text" className="inp" name="department" value={formData.department} onChange={handleChange} />
+            <div className="form-row">
+              <div className="fg">
+                <label>Department</label>
+                <div className="inp-wrap">
+                  <span className="material-icons-round">business</span>
+                  <input type="text" className="inp" name="department" value={formData.department} onChange={handleChange} placeholder="e.g. Service, Diagnostics" />
+                </div>
+              </div>
+              <div className="fg">
+                <label>Assigned Garage</label>
+                <div className="inp-wrap">
+                  <span className="material-icons-round">store</span>
+                  <select className="inp" value={selectedGarageId} onChange={e => setSelectedGarageId(e.target.value)}>
+                    <option value="">Unassigned (General Platform Staff)</option>
+                    {garages.map(g => (
+                      <option key={g._id} value={g._id}>{g.name}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 

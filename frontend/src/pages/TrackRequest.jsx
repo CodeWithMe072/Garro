@@ -345,7 +345,7 @@ const TrackRequest = () => {
     fetchRequestDetails();
 
     const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    const socket = io(API_BASE);
+    const socket = io(API_BASE, { transports: ['websocket', 'polling'], withCredentials: true });
 
     socket.on('request:assigned', (data) => {
       console.log('Real-time request:assigned event received in TrackRequest:', data);
@@ -482,8 +482,9 @@ const TrackRequest = () => {
 
           // 2. Slot + buffer zone check
           const conflict = filteredSlots.some(slot => {
+            if (!slot || !slot.startTime) return false;
             const sStart = new Date(slot.startTime);
-            const bEnd   = new Date(slot.bufferEndTime || slot.endTime);
+            const bEnd   = new Date(slot.bufferEndTime || slot.endTime || slot.startTime);
             const slotStartMin  = sStart.getHours() * 60 + sStart.getMinutes();
             const bufferEndMin  = bEnd.getHours()   * 60 + bEnd.getMinutes();
             return proposedStart < bufferEndMin && proposedEnd > slotStartMin;
@@ -491,15 +492,18 @@ const TrackRequest = () => {
 
           if (conflict) {
             const slot = filteredSlots.find(slot => {
+              if (!slot || !slot.startTime) return false;
               const sStart = new Date(slot.startTime);
-              const bEnd   = new Date(slot.bufferEndTime || slot.endTime);
+              const bEnd   = new Date(slot.bufferEndTime || slot.endTime || slot.startTime);
               const slotStartMin = sStart.getHours() * 60 + sStart.getMinutes();
               const bufferEndMin = bEnd.getHours()   * 60 + bEnd.getMinutes();
               return proposedStart < bufferEndMin && proposedEnd > slotStartMin;
             });
-            const bEndTime = new Date(slot.bufferEndTime || slot.endTime);
-            setHasConflict(true);
-            setConflictReason(`Helper busy until ${bEndTime.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} (includes recovery buffer after ${slot.serviceType?.replace('_',' ')} job)`);
+            if (slot) {
+              const bEndTime = new Date(slot.bufferEndTime || slot.endTime || slot.startTime);
+              setHasConflict(true);
+              setConflictReason(`Helper busy until ${bEndTime.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} (includes recovery buffer after ${slot.serviceType?.replace('_',' ') || ''} job)`);
+            }
           } else {
             setHasConflict(false);
             setConflictReason('');
@@ -1445,22 +1449,22 @@ const TrackRequest = () => {
                 </div>
 
                 <div className="mb-2">
-                  <label className="form-label small fw-semibold text-dark mb-1">Est. Duration *</label>
-                  <select
-                    className="form-select form-select-sm"
-                    value={assignDuration}
-                    onChange={e => setAssignDuration(e.target.value)}
-                    required
-                  >
-                    <option value="1">1 Hour</option>
-                    <option value="2">2 Hours</option>
-                    <option value="3">3 Hours</option>
-                    <option value="4">4 Hours (Standard)</option>
-                    <option value="5">5 Hours</option>
-                    <option value="6">6 Hours</option>
-                    <option value="8">8 Hours</option>
-                    <option value="12">12 Hours (Full Day)</option>
-                  </select>
+                  <label className="form-label small fw-semibold text-dark mb-1" style={{ display: 'block' }}>Est. Duration *</label>
+                  <CustomDropdown
+                    options={[
+                      { value: '1', label: '1 Hour' },
+                      { value: '2', label: '2 Hours' },
+                      { value: '3', label: '3 Hours' },
+                      { value: '4', label: '4 Hours (Standard)' },
+                      { value: '5', label: '5 Hours' },
+                      { value: '6', label: '6 Hours' },
+                      { value: '8', label: '8 Hours' },
+                      { value: '12', label: '12 Hours (Full Day)' }
+                    ]}
+                    value={String(assignDuration)}
+                    onChange={(val) => setAssignDuration(val)}
+                    theme="light"
+                  />
                 </div>
 
                 {/* Visual Timeline */}
@@ -1484,13 +1488,13 @@ const TrackRequest = () => {
                       const [ph, pm] = assignTime.split(':').map(Number);
                       const propStart = ph * 60 + pm;
                       const propEnd   = propStart + Number(assignDuration) * 60;
-                      const busyIntervals = helperSchedule.map(slot => {
-                        const s = new Date(slot.startTime), e = new Date(slot.endTime);
+                      const busyIntervals = (helperSchedule || []).filter(slot => slot && slot.startTime).map(slot => {
+                        const s = new Date(slot.startTime), e = new Date(slot.endTime || slot.startTime);
                         return { start: s.getHours()*60+s.getMinutes(), end: e.getHours()*60+e.getMinutes(), label: slot.serviceType?.replace('_',' ')||'Busy' };
                       });
-                      const bufferIntervals = helperSchedule.map(slot => {
-                        const jobEnd = new Date(slot.endTime);
-                        const bufEnd = new Date(slot.bufferEndTime || slot.endTime);
+                      const bufferIntervals = (helperSchedule || []).filter(slot => slot && slot.startTime).map(slot => {
+                        const jobEnd = new Date(slot.endTime || slot.startTime);
+                        const bufEnd = new Date(slot.bufferEndTime || slot.endTime || slot.startTime);
                         return {
                           start: jobEnd.getHours() * 60 + jobEnd.getMinutes(),
                           end:   bufEnd.getHours() * 60 + bufEnd.getMinutes(),
@@ -1595,20 +1599,19 @@ const TrackRequest = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-bold text-secondary">Fuel Level</label>
-                <select 
-                  className="form-select text-dark bg-white" 
-                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
+                <label className="form-label small fw-bold text-secondary mb-2" style={{ display: 'block' }}>Fuel Level</label>
+                <CustomDropdown 
+                  options={[
+                    { value: 'empty', label: 'Empty' },
+                    { value: 'quarter', label: 'Quarter Tank' },
+                    { value: 'half', label: 'Half Tank' },
+                    { value: 'three_quarter', label: 'Three Quarter Tank' },
+                    { value: 'full', label: 'Full Tank' }
+                  ]}
                   value={vcrData.fuelLevel}
-                  onChange={(e) => setVcrData({ ...vcrData, fuelLevel: e.target.value })}
-                  required
-                >
-                  <option value="empty">Empty</option>
-                  <option value="quarter">Quarter Tank</option>
-                  <option value="half">Half Tank</option>
-                  <option value="three_quarter">Three Quarter Tank</option>
-                  <option value="full">Full Tank</option>
-                </select>
+                  onChange={(val) => setVcrData({ ...vcrData, fuelLevel: val })}
+                  theme="light"
+                />
               </div>
 
               <div className="mb-3">
@@ -1657,21 +1660,20 @@ const TrackRequest = () => {
 
             <form onSubmit={handleExtendSubmit}>
               <div className="mb-3">
-                <label className="form-label small fw-bold text-secondary">Additional Hours to Add</label>
-                <select 
-                  className="form-select text-dark bg-white" 
-                  style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px' }}
-                  value={extendHours}
-                  onChange={(e) => setExtendHours(e.target.value)}
-                  required
-                >
-                  <option value="1">1 Hour</option>
-                  <option value="2">2 Hours</option>
-                  <option value="3">3 Hours</option>
-                  <option value="4">4 Hours</option>
-                  <option value="6">6 Hours</option>
-                  <option value="24">24 Hours (1 Day)</option>
-                </select>
+                <label className="form-label small fw-bold text-secondary mb-2" style={{ display: 'block' }}>Additional Hours to Add</label>
+                <CustomDropdown 
+                  options={[
+                    { value: '1', label: '1 Hour' },
+                    { value: '2', label: '2 Hours' },
+                    { value: '3', label: '3 Hours' },
+                    { value: '4', label: '4 Hours' },
+                    { value: '6', label: '6 Hours' },
+                    { value: '24', label: '24 Hours (1 Day)' }
+                  ]}
+                  value={String(extendHours)}
+                  onChange={(val) => setExtendHours(val)}
+                  theme="light"
+                />
               </div>
 
               <div className="mb-3">

@@ -23,18 +23,15 @@ const Footer = () => {
 
 
   const quickLinks = [
-    { to: '/home', label: t('home') },
     { to: '/insurance', label: t('insurance') },
     { to: '/roadside', label: t('roadside') },
     { to: '/end-of-life', label: t('scrap') },
-    { to: '/my-requests', label: t('requests') },
   ];
 
   const supportLinks = [
-    { href: '#', label: 'Help Centre' },
-    { href: '#', label: 'How It Works' },
-    { href: '#', label: 'Terms of Service' },
-    { href: '#', label: 'Privacy Policy' },
+    { to: '/help-center', label: 'Help Centre' },
+    { to: '/terms', label: 'Terms & Conditions' },
+    { to: '/privacy', label: 'Privacy Policy' },
   ];
 
   const contactItems = [
@@ -75,20 +72,19 @@ const Footer = () => {
           <div className="col-lg-3 col-6">
             <h6>{t('support_title')}</h6>
             <ul className="g-footer-links">
-              {supportLinks.map(({ href, label }) => (
+              {supportLinks.map(({ to, href, label }) => (
                 <li key={label}>
-                  <a href={href}>
-                    <LuChevronRight size={14} />{label}
-                  </a>
+                  {to ? (
+                    <Link to={to}>
+                      <LuChevronRight size={14} />{label}
+                    </Link>
+                  ) : (
+                    <a href={href}>
+                      <LuChevronRight size={14} />{label}
+                    </a>
+                  )}
                 </li>
               ))}
-              {isAuthenticated && (
-                <li>
-                  <Link to="/my-requests">
-                    <LuChevronRight size={14} />{t('requests')}
-                  </Link>
-                </li>
-              )}
             </ul>
           </div>
 
@@ -148,8 +144,8 @@ const Footer = () => {
         <div className="g-footer-bottom d-flex flex-wrap align-items-center justify-content-between gap-3">
           <span>{t('copyright')}</span>
           <div style={{ display: 'flex', gap: '16px' }}>
-            <a href="#" style={{ color: '#64748b', fontSize: '12px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", transition: 'color .15s' }}>{t('privacy')}</a>
-            <a href="#" style={{ color: '#64748b', fontSize: '12px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", transition: 'color .15s' }}>{t('terms')}</a>
+            <Link to="/privacy" style={{ color: '#64748b', fontSize: '12px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", transition: 'color .15s' }}>{t('privacy')}</Link>
+            <Link to="/terms" style={{ color: '#64748b', fontSize: '12px', textDecoration: 'none', fontFamily: "'Poppins',sans-serif", transition: 'color .15s' }}>{t('terms')}</Link>
           </div>
         </div>
       </div>

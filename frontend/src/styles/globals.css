@@ -334,7 +334,7 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
 
 /* ── SERVICE SELECTION (GET QUOTE) ── */
 .gq-page{background:linear-gradient(135deg,#0a0f1e 0%,#0f2040 60%,#1a0a0a 100%);min-height:100vh;padding:60px 0}
-.gq-title{font-family:'Poppins',sans-serif;font-weight:900;font-size:clamp(1.8rem,3.5vw,2.8rem);color:#fff;text-align:center;margin-bottom:8px;letter-spacing:-.03em}
+.gq-title{font-family:'Poppins',sans-serif;font-weight:800;font-size:clamp(1.8rem,3.5vw,2.8rem);color:#fff;text-align:center;margin-bottom:8px;letter-spacing:normal;word-spacing:0.05em}
 .gq-title span{color:var(--brand)}
 .gq-sub{text-align:center;font-size:14px;color:rgba(255,255,255,.45);font-family:'Poppins',sans-serif;margin-bottom:40px;letter-spacing:.02em}
 .gq-sub span{margin:0 8px;opacity:.4}
@@ -1587,6 +1587,19 @@ body:has(.dash-wrapper) .g-footer{margin-top:0}
   justify-content: center;
   z-index: 10000;
   animation: modal-fade-in 0.25s ease forwards;
+}
+
+.custom-modal,
+.no-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.custom-modal::-webkit-scrollbar,
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 /* Modal Body */

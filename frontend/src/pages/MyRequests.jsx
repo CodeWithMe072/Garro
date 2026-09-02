@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
 import { io } from 'socket.io-client';
+import AdminSidebar from '../components/AdminSidebar';
+import GarageSidebar from '../components/GarageSidebar';
 import {
   LuClock,
   LuUser,
@@ -22,7 +24,7 @@ import {
 
 const MyRequests = () => {
   const { user }        = useAuth();
-  const { toast }       = useNotification();
+  const { toast, confirm } = useNotification();
   const navigate        = useNavigate();
   const location        = useLocation();
   const { t }           = useLanguage();
@@ -84,6 +86,11 @@ const MyRequests = () => {
   }, []);
 
   useEffect(() => {
+    if (['staff', 'helper'].includes(user?.role)) {
+      navigate('/my-bookings', { replace: true });
+      return;
+    }
+
     // Show success toast if redirected from payment page
     if (location.state?.justPaid) {
       const invoiceNo = location.state?.invoiceNumber;
@@ -98,7 +105,7 @@ const MyRequests = () => {
 
     fetchData();
 
-    const socket = io(API_BASE);
+    const socket = io(API_BASE, { transports: ['websocket', 'polling'], withCredentials: true });
 
     socket.on('request:updated', () => {
       fetchData();
@@ -220,24 +227,31 @@ const MyRequests = () => {
     }
   };
 
-  const handleRejectQuote = async (id) => {
-    if (!window.confirm('Warning: Rejecting this quote will cancel and delete your service request completely. Proceed?')) return;
-
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/quotes/${id}/reject`, {
-        method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.message || 'Rejection failed.');
+  const handleRejectQuote = (id) => {
+    confirm({
+      title: 'Reject Quote?',
+      message: 'Rejecting this quote will cancel your service request. Proceed?',
+      confirmText: 'Reject Quote',
+      cancelText: 'Cancel',
+      isDelete: true,
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_BASE}/api/quotes/${id}/reject`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) {
+            throw new Error(data.message || 'Rejection failed.');
+          }
+          toast.success('Quote rejected.');
+          fetchData();
+        } catch (err) {
+          toast.error(err.message);
+        }
       }
-      toast.info('Quote rejected. Request deleted.');
-      fetchData();
-    } catch (err) {
-      toast.error(err.message);
-    }
+    });
   };
 
   const mockTransactions = [
@@ -274,6 +288,7 @@ const MyRequests = () => {
     { key: 'all',       label: t('all_requests') },
     { key: 'active',    label: t('active_requests') },
     { key: 'completed', label: `✅ ${t('completed') || 'Completed'} (${requests.filter(r => ['delivered', 'completed', 'closed'].includes(r.status)).length})` },
+    { key: 'cancelled', label: `❌ Cancelled (${requests.filter(r => r.status === 'cancelled').length})` },
     { key: 'invoices',  label: `📄 My Invoices (${invoices.length})` }
   ];
 
@@ -288,6 +303,8 @@ const MyRequests = () => {
     ? requests.filter(r => activeStatuses.includes(r.status))
     : activeTab === 'completed'
     ? requests.filter(r => completedStatuses.includes(r.status))
+    : activeTab === 'cancelled'
+    ? requests.filter(r => r.status === 'cancelled')
     : requests;
 
   const downloadInvoice = (invoiceId) => {
@@ -306,8 +323,8 @@ const MyRequests = () => {
     );
   }
 
-  return (
-    <div style={{ minHeight: 'calc(100vh - 80px)', background: '#ffffff', paddingBottom: 60 }}>
+  const renderContent = () => (
+    <div style={{ minHeight: 'calc(100vh - 80px)', background: '#ffffff', paddingBottom: 60, width: '100%' }}>
 
       {/* Header */}
       <div style={{
@@ -330,11 +347,12 @@ const MyRequests = () => {
       <div style={{ maxWidth: 900, margin: '24px auto 0', padding: '0 16px' }}>
 
         {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
           {[
             { label: 'Total Requests', value: requests.length, icon: <LuClipboardList style={{ color: '#ff5c1a' }} />, color: '#ff5c1a' },
             { label: 'Active',  value: requests.filter(r => activeStatuses.includes(r.status)).length, icon: <LuSettings style={{ color: '#f59e0b' }} />, color: '#f59e0b' },
             { label: 'Completed', value: requests.filter(r => completedStatuses.includes(r.status)).length, icon: <LuCircleCheck style={{ color: '#10b981' }} />, color: '#10b981' },
+            { label: 'Cancelled', value: requests.filter(r => r.status === 'cancelled').length, icon: <LuX style={{ color: '#ef4444' }} />, color: '#ef4444' },
             { label: 'Invoices', value: invoices.length, icon: <LuFileText style={{ color: '#8b5cf6' }} />, color: '#8b5cf6' }
           ].map(s => (
             <div key={s.label} style={{
@@ -805,6 +823,33 @@ const MyRequests = () => {
       })()}
     </div>
   );
+
+  const isAdmin = ['manager', 'superadmin', 'admin'].includes(user?.role);
+  const isGarage = user?.role === 'garage';
+
+  if (isAdmin) {
+    return (
+      <div className="dash-wrapper">
+        <AdminSidebar />
+        <main className="dash-main">
+          {renderContent()}
+        </main>
+      </div>
+    );
+  }
+
+  if (isGarage) {
+    return (
+      <div className="staff-wrapper">
+        <GarageSidebar />
+        <main className="staff-main">
+          {renderContent()}
+        </main>
+      </div>
+    );
+  }
+
+  return renderContent();
 };
 
 export default MyRequests;

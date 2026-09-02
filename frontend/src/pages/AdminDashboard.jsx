@@ -173,6 +173,9 @@ const AdminDashboard = () => {
   const getMatchingGarages = (req, garages) => {
     if (!req) return [];
 
+    // Exclude closed or inactive garages from assignment matching
+    const openGarages = (garages || []).filter(g => g.isOpen !== false && g.status === 'active');
+
     const reqService = (req.serviceType || '').toLowerCase().trim();
     const reqSub = (req.subCategory || '').toLowerCase().trim();
     const reqCity = (req.location?.city || '').toLowerCase().trim();
@@ -218,16 +221,16 @@ const AdminDashboard = () => {
     };
 
     // Priority 1: Garages matching BOTH Service AND Area
-    const exactMatches = garages.filter(g => matchesService(g) && matchesArea(g));
+    const exactMatches = openGarages.filter(g => matchesService(g) && matchesArea(g));
     if (exactMatches.length > 0) return exactMatches;
 
     // Priority 2: Garages matching BOTH Service AND City
-    const cityMatches = garages.filter(g => matchesService(g) && matchesCity(g));
+    const cityMatches = openGarages.filter(g => matchesService(g) && matchesCity(g));
     if (cityMatches.length > 0) return cityMatches;
 
     // Priority 3: Garages matching Service
-    const serviceMatches = garages.filter(g => matchesService(g));
-    return serviceMatches.length > 0 ? serviceMatches : garages;
+    const serviceMatches = openGarages.filter(g => matchesService(g));
+    return serviceMatches.length > 0 ? serviceMatches : openGarages;
   };
 
 
@@ -285,8 +288,9 @@ const AdminDashboard = () => {
           const proposedStart = h * 60 + m;
           const proposedEnd   = proposedStart + Number(assignDuration) * 60;
           const conflict = slots.some(slot => {
+            if (!slot || !slot.startTime) return false;
             const sStart = new Date(slot.startTime);
-            const sEnd   = new Date(slot.endTime);
+            const sEnd   = new Date(slot.endTime || slot.startTime);
             const slotS  = sStart.getHours() * 60 + sStart.getMinutes();
             const slotE  = sEnd.getHours()   * 60 + sEnd.getMinutes();
             return proposedStart < slotE && proposedEnd > slotS;
@@ -586,7 +590,7 @@ const AdminDashboard = () => {
 
     // Socket.IO Listeners
     const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    const socket = io(API_BASE);
+    const socket = io(API_BASE, { transports: ['websocket', 'polling'], withCredentials: true });
 
     socket.on('request:new', (data) => {
       console.log('Real-time new request received:', data);
@@ -1677,10 +1681,10 @@ const AdminDashboard = () => {
                   name="helperId"
                   placeholder={assignGarageId ? "Choose Helper..." : "Please select a garage first"}
                   options={availableHelpersList
-                    .filter(h => h.garageId?._id === assignGarageId)
+                    .filter(h => h.garageId?._id === assignGarageId && h.garageId?.isOpen !== false && h.garageId?.status === 'active')
                     .map(h => ({
                       value: h._id,
-                      label: `${h.name} (Rating: ${h.rating || 5}/5) ${!h.isAvailable ? '[Shift Conflict]' : (h.upcomingSlots && h.upcomingSlots.length > 0 ? `[Job commitments: ${h.upcomingSlots.length}]` : '[Free]')}`
+                      label: `${h.name} (${h.dutyStatus === 'off_duty' || !h.isAvailable ? '🔴 OFF DUTY' : '🟢 ON DUTY'}) - Rating: ${h.rating || 5}/5 ${h.upcomingSlots && h.upcomingSlots.length > 0 ? `[Commitments: ${h.upcomingSlots.length}]` : '[Free]'}`
                     }))
                   }
                   value={assignHelperId}
@@ -1688,9 +1692,9 @@ const AdminDashboard = () => {
                   required
                 />
                 {!assignGarageId && <p className="text-muted small mt-1">Please select a garage first to view available helpers.</p>}
-                {assignGarageId && availableHelpersList.filter(h => h.garageId?._id === assignGarageId).length === 0 && (
+                {assignGarageId && availableHelpersList.filter(h => h.garageId?._id === assignGarageId && h.garageId?.isOpen !== false && h.garageId?.status === 'active').length === 0 && (
                   <p className="text-danger small mt-1" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <LuTriangleAlert size={12} /> <span>No available helpers found for this garage.</span>
+                    <LuTriangleAlert size={12} /> <span>No available helpers found for this garage (or garage is marked CLOSED).</span>
                   </p>
                 )}
               </div>
@@ -1733,22 +1737,22 @@ const AdminDashboard = () => {
                 </div>
 
                 <div className="mb-2">
-                  <label className="form-label small fw-semibold text-dark mb-1">Est. Duration *</label>
-                  <select
-                    className="form-select form-select-sm"
-                    value={assignDuration}
-                    onChange={e => setAssignDuration(e.target.value)}
-                    required
-                  >
-                    <option value="1">1 Hour</option>
-                    <option value="2">2 Hours</option>
-                    <option value="3">3 Hours</option>
-                    <option value="4">4 Hours (Standard)</option>
-                    <option value="5">5 Hours</option>
-                    <option value="6">6 Hours</option>
-                    <option value="8">8 Hours</option>
-                    <option value="12">12 Hours (Full Day)</option>
-                  </select>
+                  <label className="form-label small fw-semibold text-dark mb-1" style={{ display: 'block' }}>Est. Duration *</label>
+                  <CustomDropdown
+                    options={[
+                      { value: '1', label: '1 Hour' },
+                      { value: '2', label: '2 Hours' },
+                      { value: '3', label: '3 Hours' },
+                      { value: '4', label: '4 Hours (Standard)' },
+                      { value: '5', label: '5 Hours' },
+                      { value: '6', label: '6 Hours' },
+                      { value: '8', label: '8 Hours' },
+                      { value: '12', label: '12 Hours (Full Day)' }
+                    ]}
+                    value={String(assignDuration)}
+                    onChange={(val) => setAssignDuration(val)}
+                    theme="light"
+                  />
                 </div>
 
                 {/* Visual Timeline */}
@@ -1770,8 +1774,8 @@ const AdminDashboard = () => {
                       const [ph, pm] = assignTime.split(':').map(Number);
                       const propStart = ph * 60 + pm;
                       const propEnd   = propStart + Number(assignDuration) * 60;
-                      const busyIntervals = helperSchedule.map(slot => {
-                        const s = new Date(slot.startTime), e = new Date(slot.endTime);
+                      const busyIntervals = (helperSchedule || []).filter(slot => slot && slot.startTime).map(slot => {
+                        const s = new Date(slot.startTime), e = new Date(slot.endTime || slot.startTime);
                         return { start: s.getHours()*60+s.getMinutes(), end: e.getHours()*60+e.getMinutes(), label: slot.serviceType?.replace('_',' ')||'Busy' };
                       });
                       const cells = [];

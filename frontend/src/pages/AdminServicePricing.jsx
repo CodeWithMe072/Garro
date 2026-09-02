@@ -24,7 +24,7 @@ const SERVICE_LABELS = {
 const VAT_RATE = 0.05;
 
 const AdminServicePricing = () => {
-  const { toast } = useNotification();
+  const { toast, confirm } = useNotification();
   const [pricing, setPricing]   = useState([]);
   const [loading, setLoading]   = useState(true);
   const [saving, setSaving]     = useState({});  // { serviceType: true/false }
@@ -99,21 +99,29 @@ const AdminServicePricing = () => {
     }
   };
 
-  const handleDelete = async (serviceType, label) => {
-    if (!window.confirm(`Are you sure you want to delete the service "${label}"?`)) return;
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${API_BASE}/api/admin/service-pricing/${serviceType}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.message || 'Delete failed');
-      if (toast) toast.success(`Service "${label}" deleted successfully`);
-      fetchPricing();
-    } catch (err) {
-      alert(`Failed to delete: ${err.message}`);
-    }
+  const handleDelete = (serviceType, label) => {
+    confirm({
+      title: 'Delete Service?',
+      message: `Are you sure you want to delete the service "${label}"?`,
+      confirmText: 'Delete Service',
+      cancelText: 'Cancel',
+      isDelete: true,
+      onConfirm: async () => {
+        try {
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${API_BASE}/api/admin/service-pricing/${serviceType}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.message || 'Delete failed');
+          if (toast) toast.success(`Service "${label}" deleted successfully`);
+          fetchPricing();
+        } catch (err) {
+          toast.error(`Failed to delete: ${err.message}`);
+        }
+      }
+    });
   };
 
   const handleCreateService = async (e) => {

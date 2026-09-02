@@ -11,7 +11,11 @@ const ProtectedRoute = ({ children, roles }) => {
   }
 
   if (roles && roles.length > 0) {
-    if (!roles.includes(user?.role)) {
+    const userRole = user?.role;
+    const isAllowed = roles.includes(userRole) || 
+                      (roles.includes('staff') && userRole === 'helper') || 
+                      (roles.includes('helper') && userRole === 'staff');
+    if (!isAllowed) {
       return <Navigate to="/home" replace />;
     }
   }

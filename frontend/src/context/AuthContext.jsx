@@ -57,15 +57,40 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // Intercept 403 Access Revoked responses globally to force automatic logout
+    const originalFetch = window.fetch;
+    window.fetch = async (...args) => {
+      const response = await originalFetch(...args);
+      if (response.status === 403) {
+        try {
+          const clone = response.clone();
+          const data = await clone.json();
+          if (data && data.message && (data.message.includes('Access revoked') || data.message.includes('account has been closed'))) {
+            logout();
+            if (!window.location.pathname.startsWith('/login')) {
+              window.location.href = '/login';
+            }
+          }
+        } catch (e) {}
+      }
+      return response;
+    };
+
+    return () => {
+      window.fetch = originalFetch;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Refresh token every 14 minutes
+    // Check user & garage status every 30 seconds or on token refresh
     const interval = setInterval(async () => {
       const success = await triggerRefresh();
       if (!success) {
         logout();
       }
-    }, 14 * 60 * 1000);
+    }, 30 * 1000);
 
     return () => clearInterval(interval);
   }, [isAuthenticated]);
