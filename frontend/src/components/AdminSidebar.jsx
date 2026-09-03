@@ -215,10 +215,6 @@ const AdminSidebar = ({ pendingBookings, isPersistentLayout }) => {
           <span className="icon"><LuBriefcase /></span>
           <span className="link-text">{t('staff_view')}</span>
         </Link>
-        <Link to="/admin/manage-staff" className={`sidebar-link ${isActive('/admin/manage-staff')}`}>
-          <span className="icon"><LuUser /></span>
-          <span className="link-text">{t('manage_staff')}</span>
-        </Link>
       </div>
 
       <div className="sidebar-divider"></div>

@@ -39,9 +39,9 @@ const translations = {
     invite_new_staff: "Invite New Staff",
 
     // Hero Home
-    trusted_platform: "UAE's Trusted Car Service Platform",
-    get_help: "Your Car Care, Managed End to End.",
-    hero_sub: "From maintenance and repairs to pickup, approvals and delivery, manage your complete car-service experience through Garro.",
+    trusted_platform: "UAE'S TRUSTED CAR SERVICE PLATFORM",
+    get_help: "Get Instant Help From Verified UAE Garages",
+    hero_sub: "Emergency or regular service, we connect you with top-rated garages near you.",
     verified_garages: "Verified Garages",
     support: "Support",
     transparent: "Transparent",

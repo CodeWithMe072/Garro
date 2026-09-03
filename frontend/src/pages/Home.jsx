@@ -195,7 +195,7 @@ const Home = () => {
           </div>
           <div className="hm-hero-right">
             <div className="hm-hero-img">
-              <img src="/assets/images/hero-home.jpg" alt="Garro mechanic" loading="lazy" />
+              <img src="/assets/images/hero.png" alt="Garro diagnostic car" loading="eager" />
             </div>
           </div>
         </div>

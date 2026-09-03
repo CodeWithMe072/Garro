@@ -84,13 +84,10 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Check user & garage status every 30 seconds or on token refresh
+    // Proactive background session refresh check every 10 minutes (renews 15m access token seamlessly before expiry)
     const interval = setInterval(async () => {
-      const success = await triggerRefresh();
-      if (!success) {
-        logout();
-      }
-    }, 30 * 1000);
+      await triggerRefresh();
+    }, 10 * 60 * 1000);
 
     return () => clearInterval(interval);
   }, [isAuthenticated]);

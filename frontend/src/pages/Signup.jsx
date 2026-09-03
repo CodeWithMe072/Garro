@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../context/NotificationContext';
 import { useLanguage } from '../context/LanguageContext';
-import { LuGlobe, LuChevronDown, LuCheck, LuUser, LuLock, LuEye, LuEyeOff, LuArrowLeft, LuLogIn, LuUserPlus, LuShield, LuChevronRight, LuCircleAlert, LuClock, LuTag, LuHeadphones, LuMail, LuPhone } from 'react-icons/lu';
+import { LuGlobe, LuChevronDown, LuCheck, LuUser, LuLock, LuEye, LuEyeOff, LuArrowLeft, LuLogIn, LuUserPlus, LuShield, LuZap, LuChevronRight, LuCircleAlert, LuClock, LuTag, LuHeadphones, LuMail, LuPhone } from 'react-icons/lu';
 import CustomDropdown from '../components/CustomDropdown';
 
 const localT = {
@@ -132,6 +132,7 @@ const Signup = () => {
     confirmPassword: ''
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useNotification();
@@ -235,13 +236,15 @@ const Signup = () => {
         }
         
         .auth-left {
-          background: #f8fafc url('/assets/images/login-hero.jpg') no-repeat center center / cover !important;
-          padding: 32px !important;
+          background: radial-gradient(circle at 70% 45%, #08255c 0%, #020b1c 100%) !important;
+          padding: 36px 40px !important;
           display: flex !important;
           flex-direction: column !important;
           justify-content: space-between !important;
-          min-height: 100vh !important;
+          min-height: 100% !important;
           position: relative !important;
+          overflow: hidden !important;
+          color: #ffffff !important;
         }
         
         /* Input fields styling */
@@ -367,6 +370,32 @@ const Signup = () => {
         html[lang="ar"] .auth-back:hover, html[lang="ur"] .auth-back:hover {
           transform: translateX(-3px) !important;
         }
+
+        /* Responsive small screen support */
+        @media (max-width: 1200px) {
+          .auth-mascot-img {
+            max-height: 280px !important;
+          }
+        }
+        @media (max-width: 992px) {
+          .auth-left {
+            padding: 24px 20px !important;
+          }
+          .auth-mascot-img {
+            max-height: 220px !important;
+          }
+        }
+        @media (max-width: 860px) {
+          .auth-body {
+            grid-template-columns: 1fr !important;
+          }
+          .auth-left {
+            display: none !important;
+          }
+          .auth-right {
+            padding: 24px 16px !important;
+          }
+        }
       `}</style>
 
       {/* Floating Language Switcher */}
@@ -469,129 +498,129 @@ const Signup = () => {
 
       {/* LEFT PANEL */}
       <div className="auth-left">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '40px', zIndex: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '24px', zIndex: 2 }}>
           <Link to="/" className="auth-brand" style={{ marginBottom: 0 }}>
-            <div className="auth-brand-ico">
-              <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+            <div className="auth-brand-ico" style={{ background: 'linear-gradient(135deg, #ff5c1a, #ff7c40)' }}>
+              <svg viewBox="0 0 24 24"><path fill="#ffffff" d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
             </div>
-            <span className="auth-brand-nm" style={{ color: '#0f172a' }}>Ga<span style={{ color: '#ff5c1a' }}>rro</span></span>
+            <span className="auth-brand-nm" style={{ color: '#ffffff' }}>Ga<span style={{ color: '#ff5c1a' }}>rro</span></span>
           </Link>
           <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
+            background: 'rgba(255, 255, 255, 0.08)',
             backdropFilter: 'blur(8px)',
-            border: '1.5px solid #e2e8f0',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '20px',
             padding: '6px 14px',
             fontSize: '12px',
-            color: '#1e293b',
+            color: '#ffffff',
             fontWeight: '700',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
-            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)'
+            gap: '8px'
           }}>
-            <span>🇦🇪</span> {lang === 'ar' ? 'نطلق الآن في دبي' : lang === 'ur' ? 'اب دبئی میں لانچ ہو رہا ہے' : 'Now Launching in Dubai'}
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
+            <span>100% Trustworthy & Safe</span>
           </div>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', margin: '24px 0', zIndex: 2 }}>
-          <div style={{ color: '#ff5c1a', fontSize: '12px', fontWeight: '800', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', margin: '20px 0 24px', zIndex: 2, position: 'relative' }}>
+          <div style={{ color: '#ff7c40', fontSize: '12px', fontWeight: '800', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
             {lang === 'ar' ? 'منصة خدمات السيارات الحديثة في الإمارات' : lang === 'ur' ? 'یو اے ای کا جدید کار سروس پلیٹ فارم' : "UAE'S MODERN CAR SERVICE PLATFORM"}
           </div>
-          <h1 className="auth-headline" style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: '900', lineHeight: '1.15', color: '#0f172a', marginBottom: '16px' }}>
+          <h1 className="auth-headline" style={{ fontSize: 'clamp(2rem, 3.2vw, 2.7rem)', fontWeight: '900', lineHeight: '1.15', color: '#ffffff', marginBottom: '14px' }}>
             {lang === 'en' ? (
-              <>Smart car care.<br/>Simplified <span style={{ color: '#ff5c1a' }}>for you.</span></>
+              <>Smart car care.<br/>Simplified <span style={{ color: '#ff7c40' }}>for you.</span></>
             ) : lang === 'ar' ? (
-              <>رعاية ذكية للسيارات.<br/><span style={{ color: '#ff5c1a' }}>مبسطة لأجلك.</span></>
+              <>رعاية ذكية للسيارات.<br/><span style={{ color: '#ff7c40' }}>مبسطة لأجلك.</span></>
             ) : (
-              <>سمارٹ کار کیئر۔<br/><span style={{ color: '#ff5c1a' }}>آپ کے لیے آسان۔</span></>
+              <>سمارٹ کار کیئر۔<br/><span style={{ color: '#ff7c40' }}>آپ کے لیے آسان۔</span></>
             )}
           </h1>
-          <p className="auth-sub" style={{ color: '#475569', fontSize: '15px', lineHeight: '1.6', maxWidth: '460px', marginBottom: '32px', fontWeight: '500' }}>
-            {lang === 'en' ? 'Book services, track your car, and get quotations from verified garages — all in one place.' : 
+          <p className="auth-sub" style={{ color: '#94a3b8', fontSize: '14.5px', lineHeight: '1.6', maxWidth: '480px', marginBottom: '16px', fontWeight: '500' }}>
+            {lang === 'en' ? 'Book service, track your car, and get instant quotes from verified garages — all in one place.' : 
              lang === 'ar' ? 'احجز الخدمات، وتتبع سيارتك، واحصل على عروض أسعار فورية من كراجات معتمدة - كل ذلك في مكان واحد.' :
              'سروسز بک کریں، اپنی کار کو ٹریک کریں، اور تصدیق شدہ گیراجز سے فوری کوٹیشنز حاصل کریں — سب ایک ہی جگہ پر۔'}
           </p>
 
-          {/* Features Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginTop: '20px', maxWidth: '500px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ffffff', border: '1.5px solid #ffe8df', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(255, 92, 26, 0.08)' }}>
-                <LuShield size={20} color="#ff5c1a" />
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', textShadow: '0 1px 3px #ffffff, 0 1px 6px #ffffff' }}>
-                {lang === 'ar' ? 'كراجات معتمدة' : lang === 'ur' ? 'تصدیق شدہ گیراجز' : 'Verified Garages'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ffffff', border: '1.5px solid #ffe8df', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(255, 92, 26, 0.08)' }}>
-                <LuClock size={20} color="#ff5c1a" />
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', textShadow: '0 1px 3px #ffffff, 0 1px 6px #ffffff' }}>
-                {lang === 'ar' ? 'استجابة سريعة' : lang === 'ur' ? 'فوری جواب' : 'Quick Response'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ffffff', border: '1.5px solid #ffe8df', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(255, 92, 26, 0.08)' }}>
-                <LuTag size={20} color="#ff5c1a" />
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', textShadow: '0 1px 3px #ffffff, 0 1px 6px #ffffff' }}>
-                {lang === 'ar' ? 'تسعير شفاف' : lang === 'ur' ? 'شفاف قیمتیں' : 'Transparent Pricing'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ffffff', border: '1.5px solid #ffe8df', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(255, 92, 26, 0.08)' }}>
-                <LuHeadphones size={20} color="#ff5c1a" />
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', textShadow: '0 1px 3px #ffffff, 0 1px 6px #ffffff' }}>
-                {lang === 'ar' ? 'دعم مخصص' : lang === 'ur' ? 'مخصوص سپورٹ' : 'Dedicated Support'}
-              </span>
-            </div>
+          {/* Center Mascot Image — Large & Responsive */}
+          <div style={{ textAlign: 'center', margin: '10px 0 20px', position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <img 
+              src="/assets/images/login-signup.png" 
+              alt="Garro Mascot" 
+              className="auth-mascot-img"
+              style={{ 
+                maxHeight: '340px', 
+                maxWidth: '100%', 
+                objectFit: 'contain', 
+                filter: 'drop-shadow(0 14px 30px rgba(0,0,0,0.6))'
+              }} 
+            />
           </div>
-        </div>
 
-        {/* Help card */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(8px)',
-          borderRadius: '16px',
-          padding: '16px 20px',
-          border: '1.5px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          marginTop: 'auto',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-          zIndex: 2
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <LuHeadphones size={18} color="#ff5c1a" />
-            </div>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>
-                {lang === 'ar' ? 'تحتاج إلى مساعدة؟' : lang === 'ur' ? 'مدد چاہیے؟' : 'Need help?'}
+          {/* Features Row — Approved Continuous 4-Card Container Layout */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '16px 8px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            width: '100%',
+            marginTop: 'auto',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+          }}>
+            <div style={{ textAlign: 'center', padding: '0 8px', borderRight: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                <LuShield size={18} color="#38bdf8" />
               </div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>
-                {lang === 'ar' ? 'نحن هنا لمساعدتك.' : lang === 'ur' ? 'ہم آپ کی مدد کے لیے حاضر ہیں۔' : "We're here to assist you."}
+              <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#ffffff', marginBottom: '4px' }}>
+                {lang === 'ar' ? 'كراجات معتمدة' : lang === 'ur' ? 'تصدیق شدہ گیراجز' : 'Verified Garages'}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: '1.3' }}>
+                Only trusted & quality partners
               </div>
             </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <a href="tel:0552830456" style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', textDecoration: 'none', display: 'block' }}>
-              055 283 0456
-            </a>
-            <span style={{ fontSize: '10px', color: '#64748b' }}>
-              {lang === 'ar' ? 'دعم نفس اليوم' : 'Same Day Support'}
-            </span>
+            <div style={{ textAlign: 'center', padding: '0 8px', borderRight: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                <LuZap size={18} color="#38bdf8" />
+              </div>
+              <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#ffffff', marginBottom: '4px' }}>
+                {lang === 'ar' ? 'استجابة سريعة' : lang === 'ur' ? 'فوری جواب' : 'Quick Response'}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: '1.3' }}>
+                Fast updates & real-time tracking
+              </div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '0 8px', borderRight: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                <LuTag size={18} color="#38bdf8" />
+              </div>
+              <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#ffffff', marginBottom: '4px' }}>
+                {lang === 'ar' ? 'تسعير شفاف' : lang === 'ur' ? 'شفاف قیمتیں' : 'Transparent Pricing'}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: '1.3' }}>
+                No hidden charges, honest estimates
+              </div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '0 8px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                <LuHeadphones size={18} color="#38bdf8" />
+              </div>
+              <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#ffffff', marginBottom: '4px' }}>
+                {lang === 'ar' ? 'دعم مخصص' : lang === 'ur' ? 'مخصوص سپورٹ' : 'Dedicated Support'}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: '1.3' }}>
+                We're here for you every step
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* RIGHT PANEL */}
       <div className="auth-right" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '40px 32px' }}>
-        <div style={{ maxWidth: '520px', width: '100%', margin: '0 auto' }}>
+        <div style={{ maxWidth: '640px', width: '100%', margin: '0 auto' }}>
           <Link to="/" className="auth-back" style={{ marginBottom: '24px' }}>
             <LuArrowLeft size={16} style={{ transform: lang === 'ar' || lang === 'ur' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             <span>{lt('back_to_site')}</span>
@@ -614,33 +643,33 @@ const Signup = () => {
           )}
 
           <form onSubmit={handleSubmit}>
-            <div className="row g-3 mb-3" style={{ display: 'flex', gap: '12px' }}>
-              <div style={{ flex: 1 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+              <div>
                 <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>First Name</label>
                 <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
                   <LuUser className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
-                  <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First name" required />
+                  <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="Enter first name" required />
                 </div>
               </div>
-              <div style={{ flex: 1 }}>
+              <div>
                 <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>Last Name</label>
                 <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
                   <LuUser className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
-                  <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last name" required />
+                  <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Enter last name" required />
                 </div>
               </div>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('email_address')}</label>
+              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>Email Address *</label>
               <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
                 <LuMail className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
-                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="name@domain.com" required />
+                <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Enter your email address" required />
               </div>
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('phone_number')} *</label>
+              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>Phone Number *</label>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <div style={{ width: '185px', flexShrink: 0 }}>
                   <CustomDropdown
@@ -652,37 +681,42 @@ const Signup = () => {
                 </div>
                 <div className="auth-iw" style={{ marginBottom: 0, position: 'relative', flex: 1 }}>
                   <LuPhone className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
-                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="e.g. 501234567 or 9876543210" required />
+                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="e.g. 50 123 4567" required />
                 </div>
               </div>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('password')}</label>
-              <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
-                <LuLock className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
-                <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} placeholder="Minimum 6 characters" required />
-                <button type="button" className="auth-eye" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}>
-                  {showPassword ? <LuEyeOff size={18} /> : <LuEye size={18} />}
-                </button>
+            {/* Password & Confirm Password — 2 Column Row matching reference */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+              <div>
+                <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>Password *</label>
+                <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
+                  <LuLock className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
+                  <input type={showPassword ? 'text' : 'password'} name="password" value={formData.password} onChange={handleChange} placeholder="Create a strong password" required />
+                  <button type="button" className="auth-eye" onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    {showPassword ? <LuEyeOff size={18} /> : <LuEye size={18} />}
+                  </button>
+                </div>
               </div>
-            </div>
-
-            <div style={{ marginBottom: '20px' }}>
-              <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>{lt('confirm_password')}</label>
-              <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
-                <LuLock className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
-                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm your password" required />
+              <div>
+                <label className="auth-label" style={{ fontSize: '13.5px', fontWeight: '700', color: '#334155', marginBottom: '8px', display: 'block' }}>Confirm Password *</label>
+                <div className="auth-iw" style={{ marginBottom: 0, position: 'relative' }}>
+                  <LuLock className="auth-input-icon" size={18} style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8', pointerEvents: 'none', transition: 'color 0.2s' }} />
+                  <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} placeholder="Confirm your password" required />
+                  <button type="button" className="auth-eye" onClick={() => setShowConfirmPassword(!showConfirmPassword)} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer' }}>
+                    {showConfirmPassword ? <LuEyeOff size={18} /> : <LuEye size={18} />}
+                  </button>
+                </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
               <input type="checkbox" id="terms" required style={{ width: '18px', height: '18px', accentColor: '#ff5c1a', cursor: 'pointer' }} />
               <label htmlFor="terms" style={{ fontSize: '13.5px', color: '#475569', cursor: 'pointer', userSelect: 'none', fontWeight: '700' }}>
-                {lt('agree_to')}{' '}
-                <Link to="/terms" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>{lt('terms')}</Link>
-                {' '}{lt('and')}{' '}
-                <Link to="/privacy" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>{lt('privacy')}</Link>
+                I agree to the{' '}
+                <Link to="/terms" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>Terms & Conditions</Link>
+                {' '}and{' '}
+                <Link to="/privacy" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>Privacy Policy</Link>
               </label>
             </div>
 
@@ -708,12 +742,40 @@ const Signup = () => {
             {lt('already_have_acc')}{' '}
             <Link to="/login" style={{ color: '#ff5c1a', fontWeight: '700', textDecoration: 'none' }}>{lt('sign_in')}</Link>
           </div>
+
+          {/* Welcome Offer Block — Approved Reference UI-003 */}
+          <div style={{
+            background: '#04122e',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            marginTop: '24px',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            border: '1px solid rgba(255, 92, 26, 0.25)',
+            boxShadow: '0 8px 24px rgba(4, 18, 46, 0.12)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ fontSize: '26px' }}>🎟️</div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14.5px', fontWeight: '800', color: '#ffffff' }}>Welcome Offer!</span>
+                  <span style={{ background: '#c2410c', color: '#ffedd5', fontSize: '11px', fontWeight: '900', padding: '2px 8px', borderRadius: '12px', letterSpacing: '0.03em' }}>SAVE AED 200</span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.4' }}>
+                  Use code <strong style={{ color: '#ff7c40' }}>GARRO200</strong> and get up to AED 200 off on your first booking
+                </p>
+              </div>
+            </div>
+            <div style={{ color: '#f59e0b', fontSize: '18px' }}>✨</div>
+          </div>
           
-          <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '11px', color: '#94a3b8' }}>
-            By signing up, you agree to our{' '}
-            <a href="#" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '600' }}>Terms & Conditions</a>
+          <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '12.5px', color: '#64748b' }}>
+            <span style={{ opacity: 0.8 }}>🔒 </span>By signing up, you agree to our{' '}
+            <Link to="/terms" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>Terms & Conditions</Link>
             {' '}and{' '}
-            <a href="#" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '600' }}>Privacy Policy</a>.
+            <Link to="/privacy" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>Privacy Policy</Link>.
           </div>
 
         </div>

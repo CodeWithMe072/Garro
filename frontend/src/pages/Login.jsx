@@ -9,6 +9,7 @@ import {
   LuChevronDown,
   LuCheck,
   LuShield,
+  LuZap,
   LuClock,
   LuTag,
   LuHeadphones,
@@ -40,7 +41,7 @@ const localT = {
     sign_in: "Sign In",
     sign_in_desc: "Enter your email address or phone number",
     email_or_phone: "Email or Phone Number *",
-    email_or_phone_placeholder: "e.g. name@domain.com or +971501234567",
+    email_or_phone_placeholder: "e.g. name@domain.com or 50 123 4567",
     password: "Password *",
     password_placeholder: "Enter your password",
     remember_me: "Remember me",
@@ -69,7 +70,7 @@ const localT = {
     sign_in: "تسجيل الدخول",
     sign_in_desc: "أدخل بريدك الإلكتروني أو رقم الهاتف",
     email_or_phone: "البريد الإلكتروني أو رقم الهاتف *",
-    email_or_phone_placeholder: "مثال: name@domain.com أو +971501234567",
+    email_or_phone_placeholder: "مثال: name@domain.com أو 50 123 4567",
     password: "كلمة المرور *",
     password_placeholder: "أدخل كلمة المرور",
     remember_me: "تذكرني",
@@ -98,7 +99,7 @@ const localT = {
     sign_in: "سائن ان کریں",
     sign_in_desc: "اپنا ای میل یا فون نمبر درج کریں",
     email_or_phone: "ای میل یا فون نمبر *",
-    email_or_phone_placeholder: "مثال: name@domain.com یا +971501234567",
+    email_or_phone_placeholder: "مثال: name@domain.com یا 50 123 4567",
     password: "پاس ورڈ *",
     password_placeholder: "اپنا پاس ورڈ درج کریں",
     remember_me: "مجھے یاد رکھیں",
@@ -242,13 +243,15 @@ const Login = () => {
         }
         
         .auth-left {
-          background: #f8fafc url('/assets/images/login-hero.jpg') no-repeat center center / cover !important;
-          padding: 32px !important;
+          background: radial-gradient(circle at 70% 45%, #08255c 0%, #020b1c 100%) !important;
+          padding: 36px 40px !important;
           display: flex !important;
           flex-direction: column !important;
           justify-content: space-between !important;
-          min-height: 100vh !important;
+          min-height: 100% !important;
           position: relative !important;
+          overflow: hidden !important;
+          color: #ffffff !important;
         }
         
         /* Input fields styling */
@@ -374,6 +377,32 @@ const Login = () => {
         html[lang="ar"] .auth-back:hover, html[lang="ur"] .auth-back:hover {
           transform: translateX(-3px) !important;
         }
+
+        /* Responsive small screen support */
+        @media (max-width: 1200px) {
+          .auth-mascot-img {
+            max-height: 280px !important;
+          }
+        }
+        @media (max-width: 992px) {
+          .auth-left {
+            padding: 24px 20px !important;
+          }
+          .auth-mascot-img {
+            max-height: 220px !important;
+          }
+        }
+        @media (max-width: 860px) {
+          .auth-body {
+            grid-template-columns: 1fr !important;
+          }
+          .auth-left {
+            display: none !important;
+          }
+          .auth-right {
+            padding: 24px 16px !important;
+          }
+        }
       `}</style>
 
       {/* Floating Language Switcher */}
@@ -476,129 +505,129 @@ const Login = () => {
 
       {/* LEFT */}
       <div className="auth-left">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '40px', zIndex: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', marginBottom: '24px', zIndex: 2 }}>
           <Link to="/" className="auth-brand" style={{ marginBottom: 0 }}>
-            <div className="auth-brand-ico">
-              <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+            <div className="auth-brand-ico" style={{ background: 'linear-gradient(135deg, #ff5c1a, #ff7c40)' }}>
+              <svg viewBox="0 0 24 24"><path fill="#ffffff" d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
             </div>
-            <span className="auth-brand-nm" style={{ color: '#0f172a' }}>Ga<span style={{ color: '#ff5c1a' }}>rro</span></span>
+            <span className="auth-brand-nm" style={{ color: '#ffffff' }}>Ga<span style={{ color: '#ff5c1a' }}>rro</span></span>
           </Link>
           <div style={{
-            background: 'rgba(255, 255, 255, 0.95)',
+            background: 'rgba(255, 255, 255, 0.08)',
             backdropFilter: 'blur(8px)',
-            border: '1.5px solid #e2e8f0',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
             borderRadius: '20px',
             padding: '6px 14px',
             fontSize: '12px',
-            color: '#1e293b',
+            color: '#ffffff',
             fontWeight: '700',
             display: 'inline-flex',
             alignItems: 'center',
-            gap: '6px',
-            boxShadow: '0 4px 12px rgba(15, 23, 42, 0.05)'
+            gap: '8px'
           }}>
-            <span>🇦🇪</span> {lang === 'ar' ? 'نطلق الآن في دبي' : lang === 'ur' ? 'اب دبئی میں لانچ ہو رہا ہے' : 'Now Launching in Dubai'}
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }}></span>
+            <span>100% Trustworthy & Safe</span>
           </div>
         </div>
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', margin: '24px 0', zIndex: 2 }}>
-          <div style={{ color: '#ff5c1a', fontSize: '12px', fontWeight: '800', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '12px' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', margin: '20px 0 24px', zIndex: 2, position: 'relative' }}>
+          <div style={{ color: '#ff7c40', fontSize: '12px', fontWeight: '800', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>
             {lang === 'ar' ? 'منصة خدمات السيارات الحديثة في الإمارات' : lang === 'ur' ? 'یو اے ای کا جدید کار سروس پلیٹ فارم' : "UAE'S MODERN CAR SERVICE PLATFORM"}
           </div>
-          <h1 className="auth-headline" style={{ fontSize: 'clamp(2rem, 3.5vw, 2.8rem)', fontWeight: '900', lineHeight: '1.15', color: '#0f172a', marginBottom: '16px' }}>
+          <h1 className="auth-headline" style={{ fontSize: 'clamp(2rem, 3.2vw, 2.7rem)', fontWeight: '900', lineHeight: '1.15', color: '#ffffff', marginBottom: '14px' }}>
             {lang === 'en' ? (
-              <>Smart car care.<br/>Simplified <span style={{ color: '#ff5c1a' }}>for you.</span></>
+              <>Smart car care.<br/>Simplified <span style={{ color: '#ff7c40' }}>for you.</span></>
             ) : lang === 'ar' ? (
-              <>رعاية ذكية للسيارات.<br/><span style={{ color: '#ff5c1a' }}>مبسطة لأجلك.</span></>
+              <>رعاية ذكية للسيارات.<br/><span style={{ color: '#ff7c40' }}>مبسطة لأجلك.</span></>
             ) : (
-              <>سمارٹ کار کیئر۔<br/><span style={{ color: '#ff5c1a' }}>آپ کے لیے آسان۔</span></>
+              <>سمارٹ کار کیئر۔<br/><span style={{ color: '#ff7c40' }}>آپ کے لیے آسان۔</span></>
             )}
           </h1>
-          <p className="auth-sub" style={{ color: '#475569', fontSize: '15px', lineHeight: '1.6', maxWidth: '460px', marginBottom: '32px', fontWeight: '500' }}>
-            {lang === 'en' ? 'Book services, track your car, and get quotations from verified garages — all in one place.' : 
+          <p className="auth-sub" style={{ color: '#94a3b8', fontSize: '14.5px', lineHeight: '1.6', maxWidth: '480px', marginBottom: '16px', fontWeight: '500' }}>
+            {lang === 'en' ? 'Book service, track your car, and get instant quotes from verified garages — all in one place.' : 
              lang === 'ar' ? 'احجز الخدمات، وتتبع سيارتك، واحصل على عروض أسعار فورية من كراجات معتمدة - كل ذلك في مكان واحد.' :
              'سروسز بک کریں، اپنی کار کو ٹریک کریں، اور تصدیق شدہ گیراجز سے فوری کوٹیشنز حاصل کریں — سب ایک ہی جگہ پر۔'}
           </p>
 
-          {/* Features Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', marginTop: '20px', maxWidth: '500px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ffffff', border: '1.5px solid #ffe8df', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(255, 92, 26, 0.08)' }}>
-                <LuShield size={20} color="#ff5c1a" />
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', textShadow: '0 1px 3px #ffffff, 0 1px 6px #ffffff' }}>
-                {lang === 'ar' ? 'كراجات معتمدة' : lang === 'ur' ? 'تصدیق شدہ گیراجز' : 'Verified Garages'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ffffff', border: '1.5px solid #ffe8df', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(255, 92, 26, 0.08)' }}>
-                <LuClock size={20} color="#ff5c1a" />
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', textShadow: '0 1px 3px #ffffff, 0 1px 6px #ffffff' }}>
-                {lang === 'ar' ? 'استجابة سريعة' : lang === 'ur' ? 'فوری جواب' : 'Quick Response'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ffffff', border: '1.5px solid #ffe8df', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(255, 92, 26, 0.08)' }}>
-                <LuTag size={20} color="#ff5c1a" />
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', textShadow: '0 1px 3px #ffffff, 0 1px 6px #ffffff' }}>
-                {lang === 'ar' ? 'تسعير شفاف' : lang === 'ur' ? 'شفاف قیمتیں' : 'Transparent Pricing'}
-              </span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '8px' }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#ffffff', border: '1.5px solid #ffe8df', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(255, 92, 26, 0.08)' }}>
-                <LuHeadphones size={20} color="#ff5c1a" />
-              </div>
-              <span style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', textShadow: '0 1px 3px #ffffff, 0 1px 6px #ffffff' }}>
-                {lang === 'ar' ? 'دعم مخصص' : lang === 'ur' ? 'مخصوص سپورٹ' : 'Dedicated Support'}
-              </span>
-            </div>
+          {/* Center Mascot Image — Large & Responsive */}
+          <div style={{ textAlign: 'center', margin: '10px 0 20px', position: 'relative', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+            <img 
+              src="/assets/images/login-signup.png" 
+              alt="Garro Mascot" 
+              className="auth-mascot-img"
+              style={{ 
+                maxHeight: '340px', 
+                maxWidth: '100%', 
+                objectFit: 'contain', 
+                filter: 'drop-shadow(0 14px 30px rgba(0,0,0,0.6))'
+              }} 
+            />
           </div>
-        </div>
 
-        {/* Help card */}
-        <div style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(8px)',
-          borderRadius: '16px',
-          padding: '16px 20px',
-          border: '1.5px solid #e2e8f0',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          width: '100%',
-          marginTop: 'auto',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-          zIndex: 2
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#fff4ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <LuHeadphones size={18} color="#ff5c1a" />
-            </div>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>
-                {lang === 'ar' ? 'تحتاج إلى مساعدة؟' : lang === 'ur' ? 'مدد چاہیے؟' : 'Need help?'}
+          {/* Features Row — Approved Continuous 4-Card Container Layout */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
+            padding: '16px 8px',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(4, 1fr)',
+            width: '100%',
+            marginTop: 'auto',
+            backdropFilter: 'blur(12px)',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)'
+          }}>
+            <div style={{ textAlign: 'center', padding: '0 8px', borderRight: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                <LuShield size={18} color="#38bdf8" />
               </div>
-              <div style={{ fontSize: '11px', color: '#64748b' }}>
-                {lang === 'ar' ? 'نحن هنا لمساعدتك.' : lang === 'ur' ? 'ہم آپ کی مدد کے لیے حاضر ہیں۔' : "We're here to assist you."}
+              <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#ffffff', marginBottom: '4px' }}>
+                {lang === 'ar' ? 'كراجات معتمدة' : lang === 'ur' ? 'تصدیق شدہ گیراجز' : 'Verified Garages'}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: '1.3' }}>
+                Only trusted & quality partners
               </div>
             </div>
-          </div>
-          <div style={{ textAlign: 'right' }}>
-            <a href="tel:+971501234567" style={{ fontSize: '14px', fontWeight: '800', color: '#0f172a', textDecoration: 'none', display: 'block' }}>
-              +971 50 123 4567
-            </a>
-            <span style={{ fontSize: '10px', color: '#64748b' }}>
-              {lang === 'ar' ? 'دعم نفس اليوم' : 'Same Day Support'}
-            </span>
+            <div style={{ textAlign: 'center', padding: '0 8px', borderRight: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                <LuZap size={18} color="#38bdf8" />
+              </div>
+              <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#ffffff', marginBottom: '4px' }}>
+                {lang === 'ar' ? 'استجابة سريعة' : lang === 'ur' ? 'فوری جواب' : 'Quick Response'}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: '1.3' }}>
+                Fast updates & real-time tracking
+              </div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '0 8px', borderRight: '1px solid rgba(255, 255, 255, 0.1)' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                <LuTag size={18} color="#38bdf8" />
+              </div>
+              <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#ffffff', marginBottom: '4px' }}>
+                {lang === 'ar' ? 'تسعير شفاف' : lang === 'ur' ? 'شفاف قیمتیں' : 'Transparent Pricing'}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: '1.3' }}>
+                No hidden charges, honest estimates
+              </div>
+            </div>
+            <div style={{ textAlign: 'center', padding: '0 8px' }}>
+              <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'rgba(15, 23, 42, 0.7)', border: '1px solid rgba(255, 255, 255, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px' }}>
+                <LuHeadphones size={18} color="#38bdf8" />
+              </div>
+              <div style={{ fontSize: '12.5px', fontWeight: '800', color: '#ffffff', marginBottom: '4px' }}>
+                {lang === 'ar' ? 'دعم مخصص' : lang === 'ur' ? 'مخصوص سپورٹ' : 'Dedicated Support'}
+              </div>
+              <div style={{ fontSize: '10.5px', color: '#94a3b8', lineHeight: '1.3' }}>
+                We're here for you every step
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* RIGHT */}
       <div className="auth-right" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-        <div style={{ maxWidth: '520px', width: '100%', margin: '0 auto', padding: '0 12px' }}>
+        <div style={{ maxWidth: '640px', width: '100%', margin: '0 auto', padding: '0 16px' }}>
           <Link to="/" className="auth-back" style={{ marginBottom: '24px' }}>
             <LuArrowLeft size={16} style={{ transform: lang === 'ar' || lang === 'ur' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
             <span>{lt('back_to_site')}</span>
@@ -684,49 +713,47 @@ const Login = () => {
             </button>
           </form>
 
-          <div className="auth-divider" style={{ margin: '24px 0' }}>{lt('or')}</div>
+          <div className="auth-divider" style={{ margin: '20px 0' }}>{lt('or')}</div>
           
           <Link to="/signup" className="auth-alt-btn">
             <LuUserPlus size={18} />
             <span>{lt('create_account')}</span>
           </Link>
 
-          {/* Trust features row */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '32px', borderTop: '1.5px solid #f1f5f9', paddingTop: '20px' }}>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <LuShield size={16} color="#10b981" />
-              </div>
+          {/* Welcome Offer Block — Approved Reference UI-002 */}
+          <div style={{
+            background: '#04122e',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            marginTop: '24px',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            border: '1px solid rgba(255, 92, 26, 0.25)',
+            boxShadow: '0 8px 24px rgba(4, 18, 46, 0.12)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ fontSize: '26px' }}>🎟️</div>
               <div>
-                <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' }}>Secure & Safe</div>
-                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Data protected</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '14.5px', fontWeight: '800', color: '#ffffff' }}>Welcome Offer!</span>
+                  <span style={{ background: '#c2410c', color: '#ffedd5', fontSize: '11px', fontWeight: '900', padding: '2px 8px', borderRadius: '12px', letterSpacing: '0.03em' }}>SAVE AED 200</span>
+                </div>
+                <p style={{ margin: '4px 0 0', fontSize: '12.5px', color: '#94a3b8', lineHeight: '1.4' }}>
+                  Use code <strong style={{ color: '#ff7c40' }}>GARRO200</strong> and get up to AED 200 off on your first booking
+                </p>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <LuLock className="auth-input-icon" size={16} color="#3b82f6" />
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' }}>Easy & Fast</div>
-                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>Login in seconds</div>
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#fff7ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <LuHeadphones size={16} color="#ea580c" />
-              </div>
-              <div>
-                <div style={{ fontSize: '12px', fontWeight: '800', color: '#0f172a', lineHeight: '1.2' }}>Need help?</div>
-                <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>We're here to help</div>
-              </div>
-            </div>
+            <div style={{ color: '#f59e0b', fontSize: '18px' }}>✨</div>
           </div>
 
-          {/* Footer terms */}
-          <div style={{ textAlign: 'center', marginTop: '28px', fontSize: '13px', color: '#64748b' }}>
+          {/* Footer terms — WEB-016 Terms & Conditions */}
+          <div style={{ textAlign: 'center', marginTop: '24px', fontSize: '12.5px', color: '#64748b' }}>
+            <span style={{ opacity: 0.8 }}>🔒 </span>
             {lang === 'ar' ? 'من خلال الاستمرار، فإنك توافق على ' : lang === 'ur' ? 'جاری رکھ کر، آپ متفق ہیں ' : 'By continuing, you agree to our '}
             <Link to="/terms" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>
-              {lang === 'ar' ? 'شروط الخدمة' : lang === 'ur' ? 'سروس کی شرائط' : 'Terms & Conditions'}
+              {lang === 'ar' ? 'الشروط والأحكام' : lang === 'ur' ? 'شرائط و ضوابط' : 'Terms & Conditions'}
             </Link>
             {lang === 'ar' ? ' و ' : lang === 'ur' ? ' اور ' : ' and '}
             <Link to="/privacy" style={{ color: '#ff5c1a', textDecoration: 'none', fontWeight: '700' }}>

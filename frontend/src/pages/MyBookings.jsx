@@ -508,9 +508,9 @@ import {
       ) : (
         <div className="text-center py-5 bg-white rounded-3 shadow-sm">
           <div style={{ display: 'flex', justifyContent: 'center', opacity: 0.5, marginBottom: '20px' }}><LuCalendar size={64} /></div>
-          <h5 className="fw-bold">No bookings yet</h5>
-          <p className="text-muted">You haven't made any garage bookings yet.</p>
-          <Link to="/get-quote" className="btn btn-primary-garro mt-2">Book Now</Link>
+          <h5 className="fw-bold">{isAdmin ? 'No customer bookings yet' : 'No bookings yet'}</h5>
+          <p className="text-muted">{isAdmin ? 'Customer booking history will appear here once bookings are placed.' : "You haven't made any garage bookings yet."}</p>
+          {!isAdmin && <Link to="/get-quote" className="btn btn-primary-garro mt-2">Book Now</Link>}
         </div>
       )}
 

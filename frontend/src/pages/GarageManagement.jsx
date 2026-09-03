@@ -464,7 +464,7 @@ const GarageManagement = () => {
       <AdminSidebar activeTab="garages" />
 
       {/* Main Content Area */}
-      <main className="admin-main-content flex-grow-1 p-4" style={{ background: '#f8fafc', minHeight: '100vh' }}>
+      <main className="admin-main-content flex-grow-1 p-4" style={{ background: '#f8fafc', minHeight: '100vh', minWidth: 0, overflowX: 'auto' }}>
         <div className="container-fluid max-w-7xl mx-auto">
           
           {/* Header */}

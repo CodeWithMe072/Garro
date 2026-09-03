@@ -82,9 +82,7 @@ export const apiFetch = async (url, options = {}) => {
       } catch (refreshErr) {
         isRefreshing = false;
         processQueue(refreshErr, null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
+        console.error('Network error during background token refresh:', refreshErr);
         return response;
       }
     }
