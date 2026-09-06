@@ -104,11 +104,13 @@ export const register = async (req, res) => {
     const isStaffRole = ['helper', 'staff', 'manager'].includes(role);
     const initialStatus = isStaffRole || ['admin', 'superadmin'].includes(req.user?.role) ? 'active' : 'inactive';
 
+    const hashedPassword = await bcrypt.hash(password, 12);
+
     const user = await User.create({
       name: name.trim(),
       email: cleanEmail,
       phone: cleanPhone,
-      password: hashed,
+      password: hashedPassword,
       role: role || 'customer',
       department: req.body.department || 'General',
       employeeId: req.body.employeeId || '',
