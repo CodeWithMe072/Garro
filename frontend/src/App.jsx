@@ -22,6 +22,7 @@ const MyRequests = React.lazy(() => import('./pages/MyRequests'));
 const TrackRequest = React.lazy(() => import('./pages/TrackRequest'));
 const Insurance = React.lazy(() => import('./pages/Insurance'));
 const InsuranceQuote = React.lazy(() => import('./pages/InsuranceQuote'));
+const Packages = React.lazy(() => import('./pages/Packages'));
 const Roadside = React.lazy(() => import('./pages/Roadside'));
 const EndOfLife = React.lazy(() => import('./pages/EndOfLife'));
 const EmergencyPickup = React.lazy(() => import('./pages/EmergencyPickup'));
@@ -174,6 +175,7 @@ const App = () => {
             
             <Route path="/insurance" element={<PageLayout><Insurance /></PageLayout>} />
             <Route path="/insurance/:slug/quote" element={<ProtectedRoute><PageLayout><InsuranceQuote /></PageLayout></ProtectedRoute>} />
+            <Route path="/packages" element={<PageLayout><Packages /></PageLayout>} />
             <Route path="/roadside" element={<PageLayout><Roadside /></PageLayout>} />
             <Route path="/emergency-pickup" element={<ProtectedRoute><PageLayout><EmergencyPickup /></PageLayout></ProtectedRoute>} />
             <Route path="/end-of-life" element={<PageLayout><EndOfLife /></PageLayout>} />

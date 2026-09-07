@@ -7,7 +7,7 @@ import {
   LuHouse, LuShield, LuTruck, LuRecycle, LuZap, LuBell, LuUser, LuLogOut,
   LuClipboardList, LuCar, LuFileText, LuFileCheck, LuReceipt, LuSiren,
   LuLayoutDashboard, LuUsers, LuGlobe, LuCheck, LuChevronDown,
-  LuMessageSquare, LuCircleHelp
+  LuMessageSquare, LuCircleHelp, LuPackage
 } from 'react-icons/lu';
 
 const Navbar = () => {
@@ -105,6 +105,11 @@ const Navbar = () => {
           <li>
             <Link to={isAuthenticated ? "/home" : "/"} className={isActive('/home') || isActive('/')}>
               <LuHouse size={15} /> {t('home')}
+            </Link>
+          </li>
+          <li>
+            <Link to="/packages" className={isActive('/packages')}>
+              <LuPackage size={15} /> {t('packages') || 'Packages'}
             </Link>
           </li>
           <li>

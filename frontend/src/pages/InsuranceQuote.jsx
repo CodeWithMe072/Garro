@@ -186,6 +186,7 @@ const InsuranceQuote = () => {
                         onChange={(val) => setSelectedYear(val)}
                         placeholder="Select Year"
                         theme="light"
+                        allowCustom={true}
                       />
                     </div>
                     <div className="col-md-6">
