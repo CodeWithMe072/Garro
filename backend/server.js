@@ -35,6 +35,7 @@ import catalogRoutes from './routes/catalog.routes.js';
 import reviewRoutes from './routes/review.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import jwt from 'jsonwebtoken';
+import { getPublicPackages } from './controllers/servicePackage.controller.js';
 import supportRoutes from './routes/support.routes.js';
 import SupportConversation from './models/SupportConversation.js';
 import logger from './utils/logger.js';
@@ -150,6 +151,9 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/users', userRoutes);
+
+// Public Service Packages Endpoint
+app.get('/api/packages', getPublicPackages);
 
 // Time-slot based booking assignment
 app.post('/api/bookings/:bookingId/assign', auth, role('admin'), (req, res, next) => {

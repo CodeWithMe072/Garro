@@ -6,6 +6,7 @@ import * as ctrl from '../controllers/admin.controller.js';
 import * as invoiceCtrl from '../controllers/invoice.controller.js';
 import * as reqCtrl from '../controllers/request.controller.js';
 import * as pricingCtrl from '../controllers/servicePricing.controller.js';
+import * as packageCtrl from '../controllers/servicePackage.controller.js';
 
 router.use(auth, role('admin'));
 
@@ -31,6 +32,12 @@ router.get('/service-pricing',                    pricingCtrl.getServicePricing)
 router.post('/service-pricing',                   pricingCtrl.createServicePricing);
 router.put('/service-pricing/:serviceType',       pricingCtrl.updateServicePricing);
 router.delete('/service-pricing/:serviceType',    pricingCtrl.deleteServicePricing);
+
+// Service Packages (admin-configurable)
+router.get('/packages',                            packageCtrl.getAdminPackages);
+router.post('/packages',                           packageCtrl.createPackage);
+router.put('/packages/:id',                        packageCtrl.updatePackage);
+router.delete('/packages/:id',                     packageCtrl.deletePackage);
 
 // Cancellation & Refund Management
 router.get('/cancellations/stats',                    reqCtrl.getRefundStats);
