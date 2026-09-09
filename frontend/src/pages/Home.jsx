@@ -183,168 +183,170 @@ const Home = () => {
 
   return (
     <>
-      {/* ══ HERO ══ */}
-      <section className="hm-hero">
-        <div className="container hm-hero-inner">
-          <div className="hm-hero-left">
-            <div className="hm-tag"><span className="hm-tag-dot"></span> {t('trusted_platform')}</div>
-            <h1 className="hm-h1">
-              {t('get_help')}
-            </h1>
-            <p className="hm-sub">{t('hero_sub')}</p>
-          </div>
-          <div className="hm-hero-right">
-            <div className="hm-hero-img">
-              <img src="/assets/images/hero.png" alt="Garro diagnostic car" loading="eager" />
+      <div className="hm-hero-wrapper">
+        {/* ══ HERO ══ */}
+        <section className="hm-hero">
+          <div className="container hm-hero-inner">
+            <div className="hm-hero-left">
+              <div className="hm-tag"><span className="hm-tag-dot"></span> {t('trusted_platform')}</div>
+              <h1 className="hm-h1">
+                {t('get_help')}
+              </h1>
+              <p className="hm-sub">{t('hero_sub')}</p>
+            </div>
+            <div className="hm-hero-right">
+              <div className="hm-hero-img">
+                <img src="/assets/images/hero.png" alt="Garro diagnostic car" loading="eager" />
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ══ QUOTE FORM ══ */}
-      <section className="quote-section">
-        <div className="container position-relative" style={{ zIndex: 2 }}>
-          <h2 className="quote-title">{t('get_quotes_title')}</h2>
-          <p className="quote-sub">{t('quotes_sub')}</p>
+        {/* ══ QUOTE FORM ══ */}
+        <section className="quote-section">
+          <div className="container position-relative" style={{ zIndex: 2 }}>
+            <h2 className="quote-title">{t('get_quotes_title')}</h2>
+            <p className="quote-sub">{t('quotes_sub')}</p>
 
-          <form onSubmit={handleQuoteSubmit}>
-            <div className="row g-3">
-              {/* Row 1: Category + Sub-category */}
-              <div className="col-md-6">
-                <div className="qform-label"><span className="material-icons-round">category</span> {t('service_category')}</div>
-                <CustomDropdown
-                  name="category"
-                  placeholder={t('select_category')}
-                  options={categoryOptions}
-                  value={category}
-                  onChange={(val) => {
-                    setCategory(val);
-                    setSubCategory('');
-                  }}
-                  required
-                />
-              </div>
-              <div className="col-md-6">
-                <div className="qform-label"><span className="material-icons-round">list</span> {t('sub_category_label')}</div>
-                <CustomDropdown
-                  name="sub_category"
-                  placeholder={category ? t('select_subcategory') : t('select_category_first')}
-                  options={subCategoryOptions}
-                  value={subCategory}
-                  onChange={setSubCategory}
-                  required
-                />
-              </div>
+            <form onSubmit={handleQuoteSubmit}>
+              <div className="row g-3">
+                {/* Row 1: Category + Sub-category */}
+                <div className="col-md-6">
+                  <div className="qform-label"><span className="material-icons-round">category</span> {t('service_category')}</div>
+                  <CustomDropdown
+                    name="category"
+                    placeholder={t('select_category')}
+                    options={categoryOptions}
+                    value={category}
+                    onChange={(val) => {
+                      setCategory(val);
+                      setSubCategory('');
+                    }}
+                    required
+                  />
+                </div>
+                <div className="col-md-6">
+                  <div className="qform-label"><span className="material-icons-round">list</span> {t('sub_category_label')}</div>
+                  <CustomDropdown
+                    name="sub_category"
+                    placeholder={category ? t('select_subcategory') : t('select_category_first')}
+                    options={subCategoryOptions}
+                    value={subCategory}
+                    onChange={setSubCategory}
+                    required
+                  />
+                </div>
 
-              {/* Row 2: Brand, Model, Year, City, Area */}
-              <div className="col-6 col-md-3">
-                <div className="qform-label"><span className="material-icons-round">directions_car</span> {t('brand')}</div>
-                <CustomDropdown
-                  name="car_brand"
-                  placeholder={t('brand')}
-                  options={brandOptions}
-                  value={carBrand}
-                  onChange={(val) => {
-                    setCarBrand(val);
-                    setCarModel('');
-                  }}
-                  required
-                />
-              </div>
-              <div className="col-6 col-md-2">
-                <div className="qform-label"><span className="material-icons-round">tune</span> {t('model')}</div>
-                <CustomDropdown
-                  name="car_model"
-                  placeholder={carBrand ? t('model') : t('select_brand_first')}
-                  options={modelOptions}
-                  value={carModel}
-                  onChange={setCarModel}
-                  required
-                />
-              </div>
-              <div className="col-4 col-md-1">
-                <div className="qform-label"><span className="material-icons-round">calendar_today</span> {t('year')}</div>
-                <CustomDropdown
-                  name="car_year"
-                  placeholder={t('year')}
-                  options={Array.from({ length: 20 }, (_, i) => String(new Date().getFullYear() - i))}
-                  value={carYear}
-                  onChange={setCarYear}
-                  required
-                />
-              </div>
-              <div className="col-4 col-md-3">
-                <div className="qform-label"><span className="material-icons-round">location_city</span> {t('city')}</div>
-                <CustomDropdown
-                  name="city_name"
-                  placeholder={t('city')}
-                  options={cityOptions}
-                  value={cityName}
-                  onChange={(val) => {
-                    setCityName(val);
-                    setArea('');
-                  }}
-                  required
-                />
-              </div>
-              <div className="col-4 col-md-3">
-                <div className="qform-label"><span className="material-icons-round">location_on</span> {t('area_label')}</div>
-                <CustomDropdown
-                  name="area"
-                  placeholder={cityName ? t('area_label') : t('select_city_first')}
-                  options={areaOptions}
-                  value={area}
-                  onChange={setArea}
-                  required
-                />
-              </div>
+                {/* Row 2: Brand, Model, Year, City, Area */}
+                <div className="col-6 col-md-3">
+                  <div className="qform-label"><span className="material-icons-round">directions_car</span> {t('brand')}</div>
+                  <CustomDropdown
+                    name="car_brand"
+                    placeholder={t('brand')}
+                    options={brandOptions}
+                    value={carBrand}
+                    onChange={(val) => {
+                      setCarBrand(val);
+                      setCarModel('');
+                    }}
+                    required
+                  />
+                </div>
+                <div className="col-6 col-md-2">
+                  <div className="qform-label"><span className="material-icons-round">tune</span> {t('model')}</div>
+                  <CustomDropdown
+                    name="car_model"
+                    placeholder={carBrand ? t('model') : t('select_brand_first')}
+                    options={modelOptions}
+                    value={carModel}
+                    onChange={setCarModel}
+                    required
+                  />
+                </div>
+                <div className="col-4 col-md-1">
+                  <div className="qform-label"><span className="material-icons-round">calendar_today</span> {t('year')}</div>
+                  <CustomDropdown
+                    name="car_year"
+                    placeholder={t('year')}
+                    options={Array.from({ length: 20 }, (_, i) => String(new Date().getFullYear() - i))}
+                    value={carYear}
+                    onChange={setCarYear}
+                    required
+                  />
+                </div>
+                <div className="col-4 col-md-3">
+                  <div className="qform-label"><span className="material-icons-round">location_city</span> {t('city')}</div>
+                  <CustomDropdown
+                    name="city_name"
+                    placeholder={t('city')}
+                    options={cityOptions}
+                    value={cityName}
+                    onChange={(val) => {
+                      setCityName(val);
+                      setArea('');
+                    }}
+                    required
+                  />
+                </div>
+                <div className="col-4 col-md-3">
+                  <div className="qform-label"><span className="material-icons-round">location_on</span> {t('area_label')}</div>
+                  <CustomDropdown
+                    name="area"
+                    placeholder={cityName ? t('area_label') : t('select_city_first')}
+                    options={areaOptions}
+                    value={area}
+                    onChange={setArea}
+                    required
+                  />
+                </div>
 
-              {/* Row 3: Issue, Contact, VIN, Time, Submit */}
-              <div className="col-md-3">
-                <div className="qform-label"><span className="material-icons-round">description</span> {t('describe_issue')}</div>
-                <input type="text" name="problem_title" className="qform-input" placeholder={t('desc_placeholder')} />
+                {/* Row 3: Issue, Contact, VIN, Time, Submit */}
+                <div className="col-md-3">
+                  <div className="qform-label"><span className="material-icons-round">description</span> {t('describe_issue')}</div>
+                  <input type="text" name="problem_title" className="qform-input" placeholder={t('desc_placeholder')} />
+                </div>
+                <div className="col-md-2">
+                  <div className="qform-label"><span className="material-icons-round">phone</span> {t('contact_info')}</div>
+                  <input type="tel" name="phone" className="qform-input" placeholder={t('phone_placeholder')} />
+                </div>
+                <div className="col-md-3">
+                  <div className="qform-label"><span className="material-icons-round">subtitles</span> VIN / Chassis No. (Optional)</div>
+                  <input type="text" name="vin_number" className="qform-input" placeholder="e.g. 17-digit VIN" value={vinNumber} onChange={(e) => setVinNumber(e.target.value)} />
+                </div>
+                <div className="col-md-2">
+                  <div className="qform-label"><span className="material-icons-round">access_time</span> {t('preferred_time')}</div>
+                  <CustomDropdown
+                    name="urgency"
+                    placeholder={t('select_time')}
+                    options={[
+                      { value: 'asap', label: t('time_asap') },
+                      { value: 'today', label: t('time_today') },
+                      { value: 'this_week', label: t('time_week') },
+                      { value: 'flexible', label: t('time_flexible') }
+                    ]}
+                    value={urgency}
+                    onChange={setUrgency}
+                    required
+                  />
+                </div>
+                <div className="col-md-2 d-flex align-items-end flex-column justify-content-end" style={{ gap: '6px' }}>
+                  <button
+                    type="submit"
+                    className="btn-quote-submit"
+                    disabled={submitting || isReadOnly}
+                    style={{
+                      cursor: submitting || isReadOnly ? 'not-allowed' : 'pointer',
+                      opacity: submitting || isReadOnly ? 0.7 : 1
+                    }}
+                  >
+                    {submitting ? 'Submitting...' : t('get_a_quote')}
+                  </button>
+                </div>
               </div>
-              <div className="col-md-2">
-                <div className="qform-label"><span className="material-icons-round">phone</span> {t('contact_info')}</div>
-                <input type="tel" name="phone" className="qform-input" placeholder={t('phone_placeholder')} />
-              </div>
-              <div className="col-md-3">
-                <div className="qform-label"><span className="material-icons-round">subtitles</span> VIN / Chassis No. (Optional)</div>
-                <input type="text" name="vin_number" className="qform-input" placeholder="e.g. 17-digit VIN" value={vinNumber} onChange={(e) => setVinNumber(e.target.value)} />
-              </div>
-              <div className="col-md-2">
-                <div className="qform-label"><span className="material-icons-round">access_time</span> {t('preferred_time')}</div>
-                <CustomDropdown
-                  name="urgency"
-                  placeholder={t('select_time')}
-                  options={[
-                    { value: 'asap', label: t('time_asap') },
-                    { value: 'today', label: t('time_today') },
-                    { value: 'this_week', label: t('time_week') },
-                    { value: 'flexible', label: t('time_flexible') }
-                  ]}
-                  value={urgency}
-                  onChange={setUrgency}
-                  required
-                />
-              </div>
-              <div className="col-md-2 d-flex align-items-end flex-column justify-content-end" style={{ gap: '6px' }}>
-                <button
-                  type="submit"
-                  className="btn-quote-submit"
-                  disabled={submitting || isReadOnly}
-                  style={{
-                    cursor: submitting || isReadOnly ? 'not-allowed' : 'pointer',
-                    opacity: submitting || isReadOnly ? 0.7 : 1
-                  }}
-                >
-                  {submitting ? 'Submitting...' : t('get_a_quote')}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </section>
+            </form>
+          </div>
+        </section>
+      </div>
 
       {/* ══ HOW GARRO WORKS ══ */}
       <section className="py-5 bg-white">

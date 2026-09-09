@@ -127,6 +127,158 @@ const Navbar = () => {
               <LuRecycle size={15} /> {t('scrap')}
             </Link>
           </li>
+
+          {/* Mobile Only: Notifications inside hamburger drawer */}
+          {isAuthenticated && (
+            <li className="d-lg-none" style={{ borderTop: '1px solid #f1f5f9', paddingTop: '10px', marginTop: '6px' }}>
+              <div style={{ padding: '8px 14px' }}>
+                <div
+                  onClick={() => setIsNotifOpen(!isNotifOpen)}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    cursor: 'pointer', fontSize: '13.5px', fontWeight: 600, color: '#475569'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <LuBell size={16} /> Notifications
+                  </span>
+                  {unreadCount > 0 && (
+                    <span style={{
+                      background: '#ff5c1a', color: '#fff', borderRadius: '12px',
+                      padding: '2px 8px', fontSize: '11px', fontWeight: 700
+                    }}>
+                      {unreadCount} new
+                    </span>
+                  )}
+                </div>
+
+                {isNotifOpen && (
+                  <div style={{ marginTop: '10px', background: '#f8fafc', borderRadius: '12px', padding: '10px', maxHeight: '250px', overflowY: 'auto', border: '1px solid #e2e8f0' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid #e2e8f0' }}>
+                      <span style={{ fontWeight: 700, fontSize: '12px', color: '#0f172a' }}>Notifications</span>
+                      <button
+                        onClick={async () => {
+                          const unread = notifications.filter(n => !n.read);
+                          await Promise.all(unread.map(n => handleMarkAsRead(n._id)));
+                        }}
+                        style={{ background: 'none', border: 'none', color: '#ff5c1a', fontSize: '11px', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                      >
+                        Mark all read
+                      </button>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <div style={{ fontSize: '12px', color: '#94a3b8', textAlign: 'center', padding: '8px' }}>No notifications yet.</div>
+                    ) : (
+                      notifications.map(n => (
+                        <div
+                          key={n._id}
+                          onClick={() => handleMarkAsRead(n._id)}
+                          style={{ padding: '8px 10px', borderBottom: '1px solid #e2e8f0', fontSize: '12px', color: n.read ? '#64748b' : '#0f172a', borderRadius: '6px', background: n.read ? 'transparent' : 'rgba(255,92,26,0.05)', marginBottom: '4px' }}
+                        >
+                          <div style={{ fontWeight: n.read ? 500 : 700 }}>{n.message}</div>
+                          <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                            {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+            </li>
+          )}
+
+          {/* Mobile Only: User Profile / Account section inside hamburger drawer */}
+          {isAuthenticated ? (
+            <>
+              <li className="d-lg-none" style={{ borderTop: '1px solid #f1f5f9', marginTop: '6px', paddingTop: '6px' }}>
+                <Link to="/profile" className={isActive('/profile')} onClick={() => setIsMobileMenuOpen(false)}>
+                  <LuUser size={15} /> {t('profile')}
+                </Link>
+              </li>
+
+              {user?.role === 'customer' && (
+                <>
+                  <li className="d-lg-none">
+                    <Link to="/customer/dashboard" className={isActive('/customer/dashboard')} onClick={() => setIsMobileMenuOpen(false)}>
+                      <LuLayoutDashboard size={15} /> {t('customer_portal')}
+                    </Link>
+                  </li>
+                  <li className="d-lg-none">
+                    <Link to="/my-requests" className={isActive('/my-requests')} onClick={() => setIsMobileMenuOpen(false)}>
+                      <LuClipboardList size={15} /> {t('my_bookings')}
+                    </Link>
+                  </li>
+                  <li className="d-lg-none">
+                    <Link to="/my-vehicles" className={isActive('/my-vehicles')} onClick={() => setIsMobileMenuOpen(false)}>
+                      <LuCar size={15} /> {t('vehicles')}
+                    </Link>
+                  </li>
+                  <li className="d-lg-none">
+                    <Link to="/help-center" className={isActive('/help-center')} onClick={() => setIsMobileMenuOpen(false)}>
+                      <LuCircleHelp size={15} /> Help Center
+                    </Link>
+                  </li>
+                </>
+              )}
+
+              {['staff', 'helper'].includes(user?.role) && (
+                <li className="d-lg-none">
+                  <Link to="/admin/staff" className={isActive('/admin/staff')} onClick={() => setIsMobileMenuOpen(false)}>
+                    <LuLayoutDashboard size={15} /> {t('dashboard') || 'Dashboard'}
+                  </Link>
+                </li>
+              )}
+
+              {user?.role === 'garage' && (
+                <li className="d-lg-none">
+                  <Link to="/garage-portal" className={isActive('/garage-portal')} onClick={() => setIsMobileMenuOpen(false)}>
+                    <LuLayoutDashboard size={15} /> Garage Portal
+                  </Link>
+                </li>
+              )}
+
+              {['manager', 'superadmin', 'admin'].includes(user?.role) && (
+                <>
+                  <li className="d-lg-none">
+                    <Link to="/admin" className={isActive('/admin')} onClick={() => setIsMobileMenuOpen(false)}>
+                      <LuLayoutDashboard size={15} /> {t('admin_dashboard')}
+                    </Link>
+                  </li>
+                  <li className="d-lg-none">
+                    <Link to="/admin/staff" className={isActive('/admin/staff')} onClick={() => setIsMobileMenuOpen(false)}>
+                      <LuUsers size={15} /> {t('staff_view')}
+                    </Link>
+                  </li>
+                </>
+              )}
+
+              <li className="d-lg-none" style={{ marginTop: '4px' }}>
+                <button
+                  onClick={() => { logout(); setIsMobileMenuOpen(false); navigate('/login'); }}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px',
+                    background: '#fef2f2', color: '#ef4444', border: 'none', borderRadius: '10px',
+                    fontSize: '15px', fontWeight: 600, cursor: 'pointer', width: '100%',
+                    textAlign: 'left'
+                  }}
+                >
+                  <LuLogOut size={15} /> {t('sign_out')}
+                </button>
+              </li>
+            </>
+          ) : (
+            <li className="d-lg-none" style={{ borderTop: '1px solid #f1f5f9', paddingTop: '12px', marginTop: '6px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '4px 0' }}>
+                <Link to="/login" className="btn-ghost" style={{ width: '100%', textAlign: 'center' }} onClick={() => setIsMobileMenuOpen(false)}>
+                  Sign In
+                </Link>
+                <Link to="/signup" className="btn-brand" style={{ width: '100%', textAlign: 'center' }} onClick={() => setIsMobileMenuOpen(false)}>
+                  Get Started
+                </Link>
+              </div>
+            </li>
+          )}
         </ul>
 
         {/* Right Side */}
@@ -185,8 +337,8 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {/* Notification Bell */}
-              <div className={`g-dropdown ${isNotifOpen ? 'open' : ''}`} ref={notifRef} style={{ marginRight: '16px', position: 'relative' }}>
+              {/* Notification Bell — Desktop Only */}
+              <div className={`g-dropdown g-notif-desktop-only ${isNotifOpen ? 'open' : ''}`} ref={notifRef} style={{ marginRight: '16px', position: 'relative' }}>
                 <button
                   onClick={() => setIsNotifOpen(!isNotifOpen)}
                   className="g-nav-icon-btn"
@@ -253,7 +405,7 @@ const Navbar = () => {
               </div>
 
               {/* Profile Dropdown */}
-              <div className={`g-dropdown ${isDropdownOpen ? 'open' : ''}`} ref={dropdownRef}>
+              <div className={`g-dropdown g-profile-desktop-only ${isDropdownOpen ? 'open' : ''}`} ref={dropdownRef}>
                 <div className="g-avatar" style={{ background: 'linear-gradient(135deg,#ff5c1a,#f97316)' }} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                   {getInitial(user?.firstName || user?.email)}{getInitial(user?.lastName)}
                 </div>
@@ -286,8 +438,6 @@ const Navbar = () => {
                     </>
                   )}
 
-
-
                   {['staff', 'helper'].includes(user?.role) && (
                     <>
                       <Link to="/admin/staff" className="g-dropdown-item" onClick={() => setIsDropdownOpen(false)}>
@@ -318,7 +468,7 @@ const Navbar = () => {
                   <div className="g-dropdown-divider"></div>
                   <button
                     className="g-dropdown-item danger"
-                    onClick={() => { logout(); navigate('/login'); }}
+                    onClick={() => { logout(); setIsDropdownOpen(false); navigate('/login'); }}
                     style={{ width: '100%', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer' }}
                   >
                     <LuLogOut size={16} />{t('sign_out')}
@@ -327,10 +477,10 @@ const Navbar = () => {
               </div>
             </>
           ) : (
-            <>
+            <div className="g-profile-desktop-only" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <Link to="/login" className="btn-ghost">Sign In</Link>
               <Link to="/signup" className="btn-brand">Get Started</Link>
-            </>
+            </div>
           )}
 
           {/* Mobile menu toggle */}
